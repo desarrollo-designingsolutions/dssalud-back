@@ -142,8 +142,8 @@ class UserRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['status_id'])) {
-                $query->where('status_id', $request['status_id']);
+            if (!empty($request['status'])) {
+                $query->where('status', $request['status']);
             }
 
             // rol_in_id
