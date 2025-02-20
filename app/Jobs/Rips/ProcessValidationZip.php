@@ -59,7 +59,7 @@ class ProcessValidationZip implements ShouldQueue
             $rip->save();
 
             //eliminamos el archivo zip subido
-            deletefileZipData($rip->id);
+            deletefileZipData($rip);
         } else {
             if (is_bool($infoValidationZip) && $infoValidationZip == true) {
 

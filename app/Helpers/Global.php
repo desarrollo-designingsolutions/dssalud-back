@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-function filterComponent($query, $request, $model = null)
+function filterComponent($query, &$request, $model = null)
 {
     if (isset($request["searchQuery"]) && is_string($request["searchQuery"])) {
         $request["searchQuery"] = json_decode($request["searchQuery"], 1);
@@ -180,12 +180,12 @@ function truncate_text($text, $maxLength = 15)
     return $text;
 }
 
-function formatNumber($number)
+function formatNumber($number, $currency_symbol = '$ ')
 {
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, 2, ',', '.');
 
-    return $formattedNumber;
+    return $currency_symbol . $formattedNumber;
 }
 
 
@@ -293,7 +293,7 @@ function customSort($a, $b, $sortingRules)
                 }
                 break;
 
-            // Puedes agregar más tipos de ordenación según sea necesario
+                // Puedes agregar más tipos de ordenación según sea necesario
 
             default:
                 // Si el tipo de orden no es 'asc' ni 'desc', no realizar ninguna comparación

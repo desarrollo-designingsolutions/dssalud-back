@@ -2,12 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\Rip;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Filing;
 
-class RipRepository extends BaseRepository
+class FilingRepository extends BaseRepository
 {
-    public function __construct(Rip $modelo)
+    public function __construct(Filing $modelo)
     {
         parent::__construct($modelo);
     }
@@ -56,55 +55,21 @@ class RipRepository extends BaseRepository
         return $data;
     }
 
-    public function searchOne($request = [], $with = [], $idsAllowed = [], $format = null)
+    public function searchOne($request = [], $with = [], $idsAllowed = [])
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
             if (!empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
-            if (!empty($request['codigo'])) {
-                $query->where('codigo', $request['codigo']);
-            }
-            if (!empty($request['nombre'])) {
-                $query->where('nombre', 'like', '%' . $request['nombre'] . '%');
-            }
         });
 
         // Obtener el primer resultado
         $data = $data->first();
 
-        // Formatear el resultado según el formato especificado
-        if ($data && $format) {
-            switch ($format) {
-                case 'selectInfinite':
-                    return [
-                        'value' => $data->id,
-                        'title' => $data->codigo . ' - ' . $data->nombre,
-                        'code' => $data->codigo,
-                    ];
-                case 'onlyTitle':
-                    return $data->codigo . ' - ' . $data->nombre;
-                default:
-                    // Si el formato no es reconocido, retorna el objeto original
-                    return $data;
-            }
-        }
-
         return $data;
     }
 
-    function numerationGenerate($company_id, $type = "Atomatic")
-    {
-
-        $numeration = 1;
-        $rip = $this->model::where('company_id', $company_id)->where('type', $type)->latest()->first();
-        if ($rip) {
-            $numeration = $rip->numeration + 1;
-        }
-
-        return $numeration;
-    }
 
     function getValidationsErrorMessages($id)
     {
@@ -117,8 +82,6 @@ class RipRepository extends BaseRepository
         $validations = [
             ['key' => 'validationZip', 'type' => 'ZIP'],
             ['key' => 'validationTxt', 'type' => 'TXT'],
-            ['key' => 'validationExcel', 'type' => 'EXCEL'],
-            ['key' => 'validationXml', 'type' => 'XML'],
             // Agrega más objetos de validación aquí según sea necesario
         ];
 
@@ -143,9 +106,7 @@ class RipRepository extends BaseRepository
         }
         return [
             "errorMessages" => $errorMessages,
-            "validationTxt" => json_decode($rip->validationTxt,1),
-            "validationExcel" => json_decode($rip->validationExcel,1),
-            "validationXml" => json_decode($rip->validationXml,1),
+            "validationTxt" => json_decode($rip->validationTxt, 1),
         ];
     }
 }

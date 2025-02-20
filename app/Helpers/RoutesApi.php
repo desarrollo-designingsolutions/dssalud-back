@@ -19,5 +19,6 @@ class RoutesApi
         'routes/files.php',
         'routes/notification.php',
         'routes/rip.php',
+        'routes/filing.php',
     ];
 }

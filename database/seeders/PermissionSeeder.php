@@ -49,22 +49,34 @@ class PermissionSeeder extends Seeder
             ],
             [
                 'id' => 6,
-                'name' => 'menu.rips',
-                'description' => 'Visualizar Menu Rips',
+                'name' => 'menu.filing',
+                'description' => 'Visualizar Menu Radicación',
                 'menu_id' => 6,
             ],
             [
                 'id' => 7,
-                'name' => 'rips.automatic.list',
-                'description' => 'Visualizar Módulo Rips Automatico',
+                'name' => 'filing.new.index',
+                'description' => 'Visualizar Módulo Radicación',
                 'menu_id' => 7,
             ],
-            [
-                'id' => 8,
-                'name' => 'rips.manual.list',
-                'description' => 'Visualizar Módulo Rips Manual',
-                'menu_id' => 8,
-            ],
+            // [
+            //     'id' => 6,
+            //     'name' => 'menu.rips',
+            //     'description' => 'Visualizar Menu Rips',
+            //     'menu_id' => 6,
+            // ],
+            // [
+            //     'id' => 7,
+            //     'name' => 'rips.automatic.list',
+            //     'description' => 'Visualizar Módulo Rips Automatico',
+            //     'menu_id' => 7,
+            // ],
+            // [
+            //     'id' => 8,
+            //     'name' => 'rips.manual.list',
+            //     'description' => 'Visualizar Módulo Rips Manual',
+            //     'menu_id' => 8,
+            // ],
 
         ];
 

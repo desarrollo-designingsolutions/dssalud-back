@@ -58,7 +58,6 @@ class UpdateNotificationEvent implements ShouldBroadcast
             ];
         });
 
-        // logMessage($notifications->values());
         return [
             'activeNotificationsCount' => $activeNotificationsCount,
             'notifications' => $notifications->values(),

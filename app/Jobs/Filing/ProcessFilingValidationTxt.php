@@ -1,23 +1,25 @@
 <?php
 
-namespace App\Jobs\Rips;
+namespace App\Jobs\Filing;
 
-use App\Enums\StatusRipsEnum;
-use App\Jobs\ProcessSendEmail;
-use App\Models\Rip;
+use App\Enums\Filing\StatusFilingEnum;
+use App\Events\FilingFinishProcessJob;
+use App\Events\FilingProgressEvent;
+use App\Models\Filing;
+use App\Services\Redis\TemporaryFilingService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessValidationTxt implements ShouldQueue
+class ProcessFilingValidationTxt implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $build;
 
-    public $ripId;
+    public $filingId;
 
     public $userData;
 
@@ -26,10 +28,10 @@ class ProcessValidationTxt implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($ripId, $build, $userData = null, $lastProcess = true)
+    public function __construct($filingId, $build, $userData = null, $lastProcess = true)
     {
         $this->build = $build;
-        $this->ripId = $ripId;
+        $this->filingId = $filingId;
         $this->userData = $userData;
         $this->lastProcess = $lastProcess;
     }
@@ -37,11 +39,11 @@ class ProcessValidationTxt implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(TemporaryFilingService $tempFilingService): void
     {
         // Obtener los datos JSON de la base de datos
-        $rip = Rip::select('id', 'validationTxt', 'status')->find($this->ripId);
-        $contenido_json = json_decode($rip->validationTxt, true); // Decodificar los datos JSON en un array asociativo
+        $filing = Filing::select('id', 'validationTxt', 'status')->find($this->filingId);
+        $contenido_json = json_decode($filing->validationTxt, true); // Decodificar los datos JSON en un array asociativo
 
         // Ejecutar la función validateDataFilesTxt para obtener los nuevos datos
         $infoValidation = validateDataFilesTxt($this->build);
@@ -83,28 +85,29 @@ class ProcessValidationTxt implements ShouldQueue
         });
 
         // Actualizar la información de la validación excel en el registro
-        $rip->validationTxt = json_encode($contenido_json2);
-        $rip->save();
+        $filing->validationTxt = json_encode($contenido_json2);
+        $filing->save();
 
-        if (! empty($this->lastProcess)) {
+        if (!empty($this->lastProcess)) {
+
             if (count($contenido_json2['errorMessages']) > 0) {
                 // Si tiene errores de validación, cambio el estado
-                $rip->status = StatusRipsEnum::PROCESSED;
-                $rip->save();
+                $status = StatusFilingEnum::ERROR_TXT;
+                //mostrar la modal errores
             } else {
-
-                // Si no tiene errores de validación
-                ProcessSaveRips::dispatch($rip->id, $this->userData);
+                $status = StatusFilingEnum::PROCESSED;
+                //modal no hay errores
             }
+
+            $filing->status = $status;
+            $filing->save();
+
+            FilingFinishProcessJob::dispatch($filing->id);
 
             // Eliminamos el archivo zip subido
-            deletefileZipData($rip);
+            deletefileZipData($filing);
 
-            if ($this->userData) {
-                ProcessSendEmail::dispatch($this->userData->email, 'Mails.Rips.ValidationTxt', 'Información Validaciones TXT', [
-                    'infoValidation' => $infoValidation,
-                ]);
-            }
+            FilingProgressEvent::dispatch($filing->id, 100);
         }
     }
 }

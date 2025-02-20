@@ -13,11 +13,11 @@ enum StatusInvoiceEnum: string
     //ERROR
     #[Description('Error Excel')]
     #[BackgroundColor('#F4511E')]
-    case ERROR_EXCEL = 'EXCEL ERROR';
+    case ERROR_EXCEL = 'ERROR_EXCEL';
 
     #[Description('Error XML')]
     #[BackgroundColor('')]
-    case ERROR_XML = 'XML ERROR';
+    case ERROR_XML = 'ERROR_XML';
 
     //OTROS
     #[Description('Completado')]
@@ -29,7 +29,7 @@ enum StatusInvoiceEnum: string
     case INCOMPLETE = 'INCOMPLETE';
 
     #[Description('Validado')]
-    #[BackgroundColor('')]
+    #[BackgroundColor('success')]
     case VALIDATED = 'VALIDATED';
 
     #[Description('Sin validar')]

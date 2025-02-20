@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Repositories\CityRepository;
+use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
 use App\Repositories\StateRepository;
 use App\Repositories\UserRepository;
@@ -16,6 +19,7 @@ class QueryController extends Controller
         protected StateRepository $stateRepository,
         protected CityRepository $cityRepository,
         protected UserRepository $userRepository,
+        protected ContractRepository $contractRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -67,17 +71,59 @@ class QueryController extends Controller
         ]);
     }
 
-    // public function selectInifiniteInsurance(Request $request)
-    // {
-    //     $request['status'] = 1;
-    //     $insurance = $this->insuranceRepository->list($request->all());
-    //     $dataInsurance = SelectInsuranceResource::collection($insurance);
+    public function selectStatusFillingInvoiceEnum(Request $request)
+    {
+        $status = StatusFillingInvoiceEnum::cases();
 
-    //     return [
-    //         'code' => 200,
-    //         'insurance_arrayInfo' => $dataInsurance,
-    //         'insurance_countLinks' => $insurance->lastPage(),
-    //     ];
-    // }
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
 
+        return [
+            'code' => 200,
+            'statusFillingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusFillingInvoiceEnum_countLinks' => 1,
+        ];
+    }
+    public function selectStatusXmlFillingInvoiceEnum(Request $request)
+    {
+        $status = StatusFillingInvoiceEnum::cases();
+
+
+        $status = array_filter($status, function ($case)  {
+            return in_array($case->value, ["VALIDATED", "NOT_VALIDATED"]);
+        });
+
+
+
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'code' => 200,
+            'statusXmlFillingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusXmlFillingInvoiceEnum_countLinks' => 1,
+        ];
+    }
+
+
+    public function selectInfiniteContract(Request $request)
+    {
+        $request['status'] = 1;
+        $contract = $this->contractRepository->list($request->all());
+        $dataContract = ContractSelectInfiniteResource::collection($contract);
+
+        return [
+            'code' => 200,
+            'contract_arrayInfo' => $dataContract,
+            'contract_countLinks' => $contract->lastPage(),
+        ];
+    }
 }

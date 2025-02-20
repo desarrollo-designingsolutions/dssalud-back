@@ -53,18 +53,18 @@ enum StatusRipsEnum: string
     //ERROR
     #[Description('Error NIT')]
     #[BackgroundColor('')]
-    case ERROR_NIT = 'NIT ERROR';
+    case ERROR_NIT = 'ERROR_NIT';
 
     #[Description('Error XML')]
     #[BackgroundColor('')]
-    case ERROR_XML = 'XML ERROR';
+    case ERROR_XML = 'ERROR_XML';
 
     #[Description('Error Zip')]
     #[BackgroundColor('')]
-    case ERROR_ZIP = 'ZIP ERROR';
+    case ERROR_ZIP = 'ERROR_ZIP';
 
     #[Description('Error Excel')]
     #[BackgroundColor('')]
-    case ERROR_EXCEL = 'EXCEL ERROR';
+    case ERROR_EXCEL = 'ERROR_EXCEL';
 
 }

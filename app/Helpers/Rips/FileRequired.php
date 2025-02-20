@@ -60,7 +60,7 @@ function openFileZip($fileZip, $company_id = null)
         return false; // O manejar el error de apertura del archivo ZIP de la forma que desees.
     }
 }
-function validationFileZip(Rip $rip, &$errorMessages)
+function validationFileZip($rip, &$errorMessages)
 {
     $allowedInitialer = [
         [
@@ -1358,7 +1358,6 @@ function generateDataJsonAndExcel($ripId, $type = "automatic")
     //guardo el registro del rip en la bd
 }
 
-
 //suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
 function sumVrServicioRips($invoices)
 {
@@ -1450,12 +1449,10 @@ function saveReloadDataInvoice($ripId, $valueJsonInvoice, $counErrorExcelInvoice
     $invoice->save();
 }
 
-function deletefileZipData($ripId)
+function deletefileZipData($data)
 {
-    $rip = Rip::find($ripId);
-
     //eliminamos el archivo zip subido
-    $fileDelete = env("SYSTEM_URL_BACK") . $rip->path_zip;
+    $fileDelete = env("SYSTEM_URL_BACK") . $data->path_zip;
 
     $fileDelete = public_path($fileDelete);
 
@@ -1463,8 +1460,8 @@ function deletefileZipData($ripId)
         unlink($fileDelete);
     }
 
-    $rip->path_zip = null;
-    $rip->save();
+    $data->path_zip = null;
+    $data->save();
 }
 
 function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
