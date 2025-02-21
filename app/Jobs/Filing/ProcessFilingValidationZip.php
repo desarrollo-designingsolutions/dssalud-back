@@ -3,6 +3,7 @@
 namespace App\Jobs\Filing;
 
 use App\Enums\Filing\StatusFilingEnum;
+use App\Events\FilingFinishProcessJob;
 use App\Events\FilingProgressEvent;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Models\Filing;
@@ -61,6 +62,11 @@ class ProcessFilingValidationZip implements ShouldQueue
 
             //eliminamos el archivo zip subido
             deletefileZipData($filing);
+
+            // Emitimos un evento con el progreso actual
+            FilingProgressEvent::dispatch($filing->id, 100);
+
+            FilingFinishProcessJob::dispatch($filing->id);
         } else {
             if (is_bool($infoValidationZip) && $infoValidationZip == true) {
 
@@ -70,8 +76,11 @@ class ProcessFilingValidationZip implements ShouldQueue
                 //se contruye un array con toda la data de los txt unida
                 $build = buildAllDataTogether($files);
 
+                //genero los consecutivos para usuarios y servicios tomando encuenta que deben ser consecutivos e iniciar en uno en los servicios y en usuarios
+                generateConsecutive($build['data']);
+
                 //actualizo mi data temporal
-                $tempFilingService->addToTemporaryData($filing->id, "invoices", $build['data']);
+                // $tempFilingService->addToTemporaryData($filing->id, "invoices", $build['data']);
 
                 $partitions = array_chunk($build['data'], env('CHUNKSIZE', 10));
 

@@ -107,6 +107,7 @@ class FilingRepository extends BaseRepository
         return [
             "errorMessages" => $errorMessages,
             "validationTxt" => json_decode($rip->validationTxt, 1),
+            "validationZip" => json_decode($rip->validationZip, 1),
         ];
     }
 }

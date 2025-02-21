@@ -39,7 +39,7 @@ class ProcessFilingValidationTxt implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(TemporaryFilingService $tempFilingService): void
+    public function handle(): void
     {
         // Obtener los datos JSON de la base de datos
         $filing = Filing::select('id', 'validationTxt', 'status')->find($this->filingId);
@@ -104,8 +104,8 @@ class ProcessFilingValidationTxt implements ShouldQueue
 
             FilingFinishProcessJob::dispatch($filing->id);
 
-            // Eliminamos el archivo zip subido
-            deletefileZipData($filing);
+            // // Eliminamos el archivo zip subido
+            // deletefileZipData($filing);
 
             FilingProgressEvent::dispatch($filing->id, 100);
         }

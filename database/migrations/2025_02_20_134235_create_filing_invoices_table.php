@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('filing_invoices', function (Blueprint $table) {
             $table->uuid("id")->primary();
             $table->foreignUuid('filing_id')->constrained();
-            $table->string('invoice_number');
+            $table->string('invoice_number')->comment("Columna del txt (numFactura), archivo AF");
             $table->string('case_number');
 
             $table->string("status");
@@ -23,6 +23,16 @@ return new class extends Migration
             $table->dateTime('date')->comment("fecha de preradicado y fecha de radicado");
 
             $table->string('sumVr')->default(0);
+
+            $table->string('users_count')->default(0)->comment("cantidad de usaurios en la factura");
+            $table->string('path_json')->nullable()->comment("ruta del archivo json");
+
+
+            // $table->string('record_id');// valore polimorficos
+            // $table->string('record_type');// valore polimorficos
+
+
+
 
             $table->timestamps();
             $table->softDeletes();

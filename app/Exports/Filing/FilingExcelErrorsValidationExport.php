@@ -23,7 +23,15 @@ class FilingExcelErrorsValidationExport implements FromView, WithEvents, ShouldA
 
     public function view(): View
     {
-        return view('Exports.Filing.FilingExcelErrorsValidationExport', ['data' => $this->data]);
+        if (!empty($this->data['validationTxt']['errorMessages'] ?? [])) {
+            return view('Exports.Filing.FilingExcelErrorsValidationTxtExport', ['data' => $this->data['errorMessages']]);
+        }
+
+        if (!empty($this->data['validationZip']['errorMessages'] ?? [])) {
+            return view('Exports.Filing.FilingExcelErrorsValidationZipExport', ['data' => $this->data['errorMessages']]);
+        }
+
+
     }
 
 

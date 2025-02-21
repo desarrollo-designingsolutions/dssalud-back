@@ -15,6 +15,8 @@ use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class FilingController extends Controller
@@ -46,7 +48,7 @@ class FilingController extends Controller
             ]);
 
             //guardo temporalmente el valor en redis
-            $this->tempFilingService->saveTemporaryData($filing->id, ["filing" => $filing]);
+            // $this->tempFilingService->saveTemporaryData($filing->id, ["filing" => $filing]);
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
@@ -87,7 +89,7 @@ class FilingController extends Controller
             // Obtener los mensajes de errores de las validaciones
             $data = $this->filingRepository->getValidationsErrorMessages($request->input('id'));
 
-            $excel = Excel::raw(new FilingExcelErrorsValidationExport($data["errorMessages"]), \Maatwebsite\Excel\Excel::XLSX);
+            $excel = Excel::raw(new FilingExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
 
@@ -124,11 +126,8 @@ class FilingController extends Controller
 
             $filing = $this->filingRepository->find($filing_id);
 
-            // $tempFiling =  $this->tempFilingService->getTemporaryData($filing_id);
-
             $validationTxt =  json_decode($filing->validationTxt, 1);
             $jsonSuccessfullInvoices = $validationTxt["jsonSuccessfullInvoices"];
-
 
             $sumVr = sumVrServicioRips($jsonSuccessfullInvoices);
 
@@ -138,17 +137,41 @@ class FilingController extends Controller
                 "contract_id" => $request->input("contract_id"),
             ]);
 
+            //tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
+            $buildDataFinal = json_decode(collect($jsonSuccessfullInvoices), 1);
+            //le quitamos al array  general las key que no se deben guardar en json
+            eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
+            //quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
+            deleteFieldsPerzonalizedJson($buildDataFinal);
 
-            foreach ($jsonSuccessfullInvoices as $key => $invoice) {
-                $this->filingInvoiceRepository->store([
+
+            //Recorremos las facturas
+            foreach ($buildDataFinal as $invoice) {
+
+                //genero y guardo el archivo JSON de la factura
+                $nameFile = $invoice['numFactura'] . '.json';
+                $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
+                Storage::disk('public')->put($routeJson, json_encode($invoice)); //guardo el archivo
+
+                // Guardamos la factura y obtenemos el modelo creado
+                $filingInvoice = $this->filingInvoiceRepository->store([
                     "filing_id" => $filing_id,
-                    "invoice_number" => $invoice["numFactura"],
-                    "case_number" => $key + 1,
+                    "case_number" => $this->filingInvoiceRepository->generateCaseNumber(),
                     "status" => StatusFillingInvoiceEnum::PRE_FILING,
                     "status_xml" => StatusFillingInvoiceEnum::NOT_VALIDATED,
                     "sumVr" => sumVrServicio($invoice),
                     "date" => Carbon::now(),
+                    "invoice_number" => $invoice["numFactura"],
+                    "users_count" => count($invoice["usuarios"]),
+                    "path_json" => $routeJson,
                 ]);
+
+                // Guardar los usuarios en una lista de Redis
+                $users = $invoice['usuarios'] ?? [];
+                $redisKey = "invoice:{$filingInvoice->id}:users"; // Usamos el ID del modelo
+                foreach ($users as $user) {
+                    Redis::rpush($redisKey, json_encode($user));
+                }
             }
 
             return [
@@ -156,6 +179,24 @@ class FilingController extends Controller
                 'message' => "Radicación actualizada con éxito.",
             ];
         });
+    }
+
+    // Nuevo método para paginación
+    public function getPaginatedUsers(Request $request, $invoiceId)
+    {
+        //OPCION 1
+
+
+        //OPCION 2
+        // return $this->execute(function () use ($request, $invoiceId) {
+
+        //     $invoice = $this->filingInvoiceRepository->find($invoiceId);
+        //     if (!$invoice) {
+        //         return response()->json(['message' => 'Factura no encontrada'], 404);
+        //     }
+
+        //     return getPaginatedDataRedis($request, $invoiceId);
+        // });
     }
 
     public function list(Request $request)
@@ -182,7 +223,7 @@ class FilingController extends Controller
 
             $filter = $request->all();
 
-             $filing = $this->filingRepository->find($request->input("filing_id"));
+            $filing = $this->filingRepository->find($request->input("filing_id"));
 
             $data = [
                 [

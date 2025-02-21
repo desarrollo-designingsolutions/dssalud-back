@@ -2,11 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\FilingInvoice;
+use App\Models\FilingInvoiceUser;
 
-class FilingInvoiceRepository extends BaseRepository
+class FilingInvoiceUserUserRepository extends BaseRepository
 {
-    public function __construct(FilingInvoice $modelo)
+    public function __construct(FilingInvoiceUser $modelo)
     {
         parent::__construct($modelo);
     }
@@ -18,13 +18,14 @@ class FilingInvoiceRepository extends BaseRepository
                 filterComponent($query, $request);
 
                 if (!empty($request['company_id'])) {
-                    $query->whereHas("filing", function ($subQuery) use ($request) {
+                    $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
                         $subQuery->where("company_id", $request['company_id']);
                     });
                 }
                 if (!empty($request['filing_id'])) {
                     $query->where("filing_id", $request['filing_id']);
                 }
+
             });
 
         $data = $data->orderBy('id', 'desc');
@@ -79,7 +80,7 @@ class FilingInvoiceRepository extends BaseRepository
                 $query->whereIn('id', $request['idsAllowed']);
             }
             if (!empty($request['company_id'])) {
-                $query->whereHas("filing", function ($subQuery) use ($request) {
+                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
                     $subQuery->where("company_id", $request['company_id']);
                 });
             }
@@ -112,7 +113,7 @@ class FilingInvoiceRepository extends BaseRepository
     {
         $data = $this->model->where(function ($query) use ($request) {
             if (!empty($request['company_id'])) {
-                $query->whereHas("filing", function ($subQuery) use ($request) {
+                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
                     $subQuery->where("company_id", $request['company_id']);
                 });
             }

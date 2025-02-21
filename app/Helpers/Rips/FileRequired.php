@@ -323,14 +323,23 @@ function buildAllDataTogether($files)
     $dataArrayAN = collect($dataArrayAN);
     $dataArrayAT = collect($dataArrayAT);
 
+
+
     $dataArrayAF = $dataArrayAF->map(function ($item) use ($dataArrayAC, $dataArrayUS, $dataArrayAP, $dataArrayAM, $dataArrayAU, $dataArrayAH, $dataArrayAN, $dataArrayAT) {
 
+
         invoiceUserServices($dataArrayAC, $dataArrayUS, $item, 'consultas');
+
         invoiceUserServices($dataArrayAP, $dataArrayUS, $item, 'procedimientos');
+
         invoiceUserServices($dataArrayAM, $dataArrayUS, $item, 'medicamentos');
+
         invoiceUserServices($dataArrayAU, $dataArrayUS, $item, 'urgencias');
+
         invoiceUserServices($dataArrayAH, $dataArrayUS, $item, 'hospitalizacion');
+
         invoiceUserServices($dataArrayAN, $dataArrayUS, $item, 'recienNacidos');
+
         invoiceUserServices($dataArrayAT, $dataArrayUS, $item, 'otrosServicios');
 
         return $item;

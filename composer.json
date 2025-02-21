@@ -36,6 +36,7 @@
         },
         "files": [
             "app/Helpers/Global.php",
+            "app/Helpers/Filing/GenerateValues.php",
             "app/Helpers/Rips/FileRequired.php",
             "app/Helpers/Rips/Validations.php",
             "app/Helpers/Rips/ValidationsTxt.php",

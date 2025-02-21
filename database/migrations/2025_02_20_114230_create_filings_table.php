@@ -19,7 +19,9 @@ return new class extends Migration
 
             $table->foreignUuid('contract_id')->nullable()->constrained();
 
-            $table->text('path_zip')->nullable()->comment("ruta del archivo zip");
+            $table->string('path_zip')->nullable()->comment("ruta del archivo zip");
+            $table->string('path_json')->nullable()->comment("ruta del archivo json");
+
 
             $table->json('validationZip')->nullable()->comment("errores de validacion Zip");
             $table->json('validationTxt')->nullable()->comment("errores de validacion TXT");
