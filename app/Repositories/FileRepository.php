@@ -48,7 +48,6 @@ class FileRepository extends BaseRepository
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
-            $data["user_id"] = auth()->id();
         }
 
         foreach ($request as $key => $value) {

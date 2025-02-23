@@ -34,6 +34,11 @@ class FilingInvoice extends Model
         return $this->hasMany(FilingInvoiceUser::class, 'filing_invoice_id');
     }
 
+    public function company()
+    {
+        return $this->filing->company();
+    }
+
 
     public function getFilesCountAttribute(): int
     {

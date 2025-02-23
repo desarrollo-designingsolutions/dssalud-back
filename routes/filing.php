@@ -23,7 +23,7 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     Route::post('/filing/updateContract', [FilingController::class, 'updateContract']);
 
 
-     /*
+    /*
     |--------------------------------------------------------------------------
     | Filing Invoices
     |--------------------------------------------------------------------------

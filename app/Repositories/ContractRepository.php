@@ -76,7 +76,6 @@ class ContractRepository extends BaseRepository
             if (!empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
-            $query->where('viewable', '1');
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
             $data = [
                 'value' => $value->$fieldValue,

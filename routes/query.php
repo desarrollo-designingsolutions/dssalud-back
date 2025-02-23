@@ -14,4 +14,4 @@ Route::post('/selectStatusFillingInvoiceEnum', [QueryController::class, 'selectS
 Route::post('/selectStatusXmlFillingInvoiceEnum', [QueryController::class, 'selectStatusXmlFillingInvoiceEnum']);
 
 Route::post('/selectInfiniteContract', [QueryController::class, 'selectInfiniteContract']);
-
+Route::post('/selectInfiniteSupportType', [QueryController::class, 'selectInfiniteSupportType']);

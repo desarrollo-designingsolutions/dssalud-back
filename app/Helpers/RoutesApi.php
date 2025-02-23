@@ -16,7 +16,7 @@ class RoutesApi
         'routes/user.php',
         'routes/role.php',
         'routes/audit.php',
-        'routes/files.php',
+        'routes/file.php',
         'routes/notification.php',
         'routes/rip.php',
         'routes/filing.php',

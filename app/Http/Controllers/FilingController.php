@@ -7,9 +7,11 @@ use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Http\Resources\Filing\FilingInvoiceListResource;
+use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
+use App\Repositories\SupportTypeRepository;
 use App\Repositories\UserRepository;
 use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
@@ -28,6 +30,7 @@ class FilingController extends Controller
         protected FilingRepository $filingRepository,
         protected TemporaryFilingService $tempFilingService,
         protected FilingInvoiceRepository $filingInvoiceRepository,
+        protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
     public function uploadZip(Request $request)
@@ -172,6 +175,7 @@ class FilingController extends Controller
                 foreach ($users as $user) {
                     Redis::rpush($redisKey, json_encode($user));
                 }
+                Redis::expire($redisKey, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
             }
 
             return [
@@ -184,19 +188,10 @@ class FilingController extends Controller
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
     {
-        //OPCION 1
-
-
         //OPCION 2
-        // return $this->execute(function () use ($request, $invoiceId) {
-
-        //     $invoice = $this->filingInvoiceRepository->find($invoiceId);
-        //     if (!$invoice) {
-        //         return response()->json(['message' => 'Factura no encontrada'], 404);
-        //     }
-
-        //     return getPaginatedDataRedis($request, $invoiceId);
-        // });
+        return $this->execute(function () use ($request, $invoiceId) {
+            return getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
+        });
     }
 
     public function list(Request $request)
@@ -229,10 +224,10 @@ class FilingController extends Controller
                 [
                     "icon" => "tabler-checkup-list",
                     "color" => "success",
-                    "title" => "Facturas Radicadas",
-                    "value" =>  $this->filingInvoiceRepository->countData([
+                    "title" => "Facturas Pre-radicadas",
+                    "value" => $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFillingInvoiceEnum::FILING
+                        "status" => StatusFillingInvoiceEnum::PRE_FILING
                     ]),
                     "isHover" => false,
                     "to" => null,
@@ -240,10 +235,10 @@ class FilingController extends Controller
                 [
                     "icon" => "tabler-checkup-list",
                     "color" => "success",
-                    "title" => "Facturas re-radicadas",
-                    "value" => $this->filingInvoiceRepository->countData([
+                    "title" => "Facturas Radicadas",
+                    "value" =>  $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFillingInvoiceEnum::PRE_FILING
+                        "status" => StatusFillingInvoiceEnum::FILING
                     ]),
                     "isHover" => false,
                     "to" => null,
@@ -274,4 +269,5 @@ class FilingController extends Controller
             ];
         });
     }
+
 }

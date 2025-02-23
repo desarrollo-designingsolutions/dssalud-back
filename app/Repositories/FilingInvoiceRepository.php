@@ -83,7 +83,7 @@ class FilingInvoiceRepository extends BaseRepository
                     $subQuery->where("company_id", $request['company_id']);
                 });
             }
-            $query->where('viewable', '1');
+
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
             $data = [
                 'value' => $value->$fieldValue,

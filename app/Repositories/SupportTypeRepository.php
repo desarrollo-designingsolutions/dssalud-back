@@ -2,11 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\FilingInvoiceUser;
+use App\Models\SupportType;
 
-class FilingInvoiceUserUserRepository extends BaseRepository
+class SupportTypeRepository extends BaseRepository
 {
-    public function __construct(FilingInvoiceUser $modelo)
+    public function __construct(SupportType $modelo)
     {
         parent::__construct($modelo);
     }
@@ -18,14 +18,8 @@ class FilingInvoiceUserUserRepository extends BaseRepository
                 filterComponent($query, $request);
 
                 if (!empty($request['company_id'])) {
-                    $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                        $subQuery->where("company_id", $request['company_id']);
-                    });
+                    $query->where("company_id", $request['company_id']);
                 }
-                if (!empty($request['filing_id'])) {
-                    $query->where("filing_id", $request['filing_id']);
-                }
-
             });
 
         $data = $data->orderBy('id', 'desc');
@@ -73,18 +67,15 @@ class FilingInvoiceUserUserRepository extends BaseRepository
         return $data;
     }
 
-    public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
+    public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
             if (!empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
             if (!empty($request['company_id'])) {
-                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
-                });
+                $query->where('company_id', $request['company_id']);
             }
-
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
             $data = [
                 'value' => $value->$fieldValue,
@@ -107,31 +98,4 @@ class FilingInvoiceUserUserRepository extends BaseRepository
 
         return $data;
     }
-
-
-    public function countData($request = [])
-    {
-        $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['company_id'])) {
-                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
-                });
-            }
-            if (!empty($request['status'])) {
-                $query->where("status", $request['status']);
-            }
-        });
-
-        $data = $data->count();
-
-        return $data;
-    }
-
-    public function generateCaseNumber()
-    {
-
-        return random_int(100,700);
-    }
-
-
 }

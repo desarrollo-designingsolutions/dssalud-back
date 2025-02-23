@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
+use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
 use App\Repositories\CityRepository;
 use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
 use App\Repositories\StateRepository;
+use App\Repositories\SupportTypeRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 
@@ -20,6 +22,7 @@ class QueryController extends Controller
         protected CityRepository $cityRepository,
         protected UserRepository $userRepository,
         protected ContractRepository $contractRepository,
+        protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -124,6 +127,19 @@ class QueryController extends Controller
             'code' => 200,
             'contract_arrayInfo' => $dataContract,
             'contract_countLinks' => $contract->lastPage(),
+        ];
+    }
+
+    public function selectInfiniteSupportType(Request $request)
+    {
+        $request['status'] = 1;
+        $supportType = $this->supportTypeRepository->list($request->all());
+        $dataSupportType = SupportTypeSelectInfiniteResource::collection($supportType);
+
+        return [
+            'code' => 200,
+            'supportType_arrayInfo' => $dataSupportType,
+            'supportType_countLinks' => $supportType->lastPage(),
         ];
     }
 }
