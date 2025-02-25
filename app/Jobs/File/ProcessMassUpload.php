@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
 use App\Events\FileUploadProgress;
+use App\Events\ProgressCircular;
 use App\Repositories\FileRepository;
 
 class ProcessMassUpload implements ShouldQueue
@@ -39,17 +40,11 @@ class ProcessMassUpload implements ShouldQueue
         Storage::disk('public')->move($this->tempPath, $this->finalPath);
 
 
-        logMessage([
-            "company_id" => $this->data["company_id"],
-            "fileable_type" => $this->data["fileable_type"],
-            "fileable_id" => $this->data["fileable_id"],
-            "pathname" => $this->finalPath,
-            "filename" => $this->fileName,
-        ]);
         $fileRepository->store([
             "company_id" => $this->data["company_id"],
             "fileable_type" => $this->data["fileable_type"],
             "fileable_id" => $this->data["fileable_id"],
+            "support_type_id" => $this->data["support_type_id"],
             "pathname" => $this->finalPath,
             "filename" => $this->fileName,
         ]);
@@ -65,5 +60,10 @@ class ProcessMassUpload implements ShouldQueue
             $progress,
             $this->finalPath
         );
+
+        if(isset($this->data["channel"])){
+            ProgressCircular::dispatch($this->data["channel"], $progress);
+        }
+        sleep(4);
     }
 }

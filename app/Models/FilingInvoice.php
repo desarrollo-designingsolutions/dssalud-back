@@ -40,8 +40,13 @@ class FilingInvoice extends Model
     }
 
 
+    public function files()
+    {
+        return $this->morphMany(File::class, 'fileable');
+    }
+
     public function getFilesCountAttribute(): int
     {
-        return 0; // Actualmente retorna cero
+        return $this->files()->count();
     }
 }

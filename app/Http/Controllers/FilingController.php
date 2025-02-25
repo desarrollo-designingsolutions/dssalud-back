@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
+use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Http\Resources\Filing\FilingInvoiceListResource;
 use App\Jobs\File\ProcessMassUpload;
@@ -270,4 +271,101 @@ class FilingController extends Controller
         });
     }
 
+    public function getDataModalSupportMasiveFiles($filingId)
+    {
+        return $this->execute(function () use ($filingId) {
+            $validInvoiceNumbers = $this->filingInvoiceRepository->validInvoiceNumbers($filingId);
+            $validSupportCodes = $this->supportTypeRepository->validInvoiceNumbers($filingId);
+
+            return [
+                'code' => 200,
+                'validInvoiceNumbers' => $validInvoiceNumbers,
+                'validSupportCodes' => $validSupportCodes,
+            ];
+        });
+    }
+
+    public function saveDataModalSupportMasiveFiles(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            if (!$request->hasFile('files')) {
+                return ['code' => 400, 'message' => 'No se encontraron archivos'];
+            }
+
+            $company_id = $request->input('company_id');
+            $modelType = $request->input('fileable_type');
+            $modelId = $request->input('fileable_id');
+
+            // Validar parámetros requeridos
+            if (!$company_id || !$modelType || !$modelId) {
+                return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
+            }
+
+
+            $files = $request->file('files');
+            $files = is_array($files) ? $files : [$files];
+            $fileCount = count($files);
+            $uploadId = uniqid();
+
+            // Resolver el modelo completo
+            $modelClass = 'App\\Models\\' . $modelType;
+            if (!class_exists($modelClass)) {
+                return ['code' => 400, 'message' => 'Modelo no válido'];
+            }
+            $modelInstance = $modelClass::find($modelId);
+            $modelInstance->load(["filingInvoice"]);
+            if (!$modelInstance) {
+                return ['code' => 404, 'message' => 'Instancia no encontrada'];
+            }
+
+
+            $supportTypes = $this->supportTypeRepository->all();
+
+
+            foreach ($files as $index => $file) {
+                $tempPath = $file->store('temp', 'public');
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+
+                // Construcción dinámica del finalPath con el nombre del archivo
+                $separatedName = explode('_', $originalName);
+                list($nit, $numFac, $codeSupport, $consecutive) = $separatedName;
+
+
+                $invoice = $modelInstance->filingInvoice()->where("invoice_number", $numFac)->first();
+                $supportType = $supportTypes->where("code", $codeSupport)->first();
+
+                $supportName = str_replace(' ', '_', strtoupper($codeSupport));
+                $finalName = "{$nit}_{$numFac}_{$supportName}_{$consecutive}";
+                $finalPath = "companies/company_{$company_id}/filings/{$modelInstance->type->value}/filing_{$modelId}/invoices/{$numFac}/supports/{$finalName}";
+
+                $data = [
+                    'company_id' => $company_id,
+                    'fileable_type' =>  'App\\Models\\FilingInvoice',
+                    'fileable_id' => $invoice->id,
+                    'support_type_id' => $supportType->id,
+                ];
+
+                ProcessMassUpload::dispatch(
+                    $tempPath,
+                    $originalName,
+                    $uploadId,
+                    $index + 1,
+                    $fileCount,
+                    $finalPath,
+                    $data
+                );
+
+                FilingInvoiceRowUpdated::dispatch($invoice->id);
+            }
+
+            return [
+                'code' => 200,
+                'message' => "Se enviaron {$fileCount} archivos a la cola",
+                'upload_id' => $uploadId,
+                'count' => $fileCount
+            ];
+        }, 202);
+    }
 }

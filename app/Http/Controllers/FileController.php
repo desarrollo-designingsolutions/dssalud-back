@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FilingInvoiceRowUpdated;
 use App\Http\Requests\File\FileStoreRequest;
 use App\Http\Resources\File\FileFormResource;
 use App\Http\Resources\File\FileListResource;
@@ -204,6 +205,7 @@ class FileController extends Controller
     public function massUpload(Request $request)
     {
         try {
+
             if (!$request->hasFile('files')) {
                 return response()->json(['code' => 400, 'message' => 'No se encontraron archivos'], 400);
             }
@@ -252,6 +254,8 @@ class FileController extends Controller
                     'company_id' => $company_id,
                     'fileable_type' => $modelClass,
                     'fileable_id' => $modelId,
+                    'support_type_id' => $request->input('support_type_id', null),
+                    'channel' => "filing_invoice.".$modelId,
                 ];
 
                 ProcessMassUpload::dispatch(
@@ -264,6 +268,11 @@ class FileController extends Controller
                     $data
                 );
             }
+
+            $this->dispatchEventFinal($modelType, $modelId);
+
+
+
 
             return response()->json([
                 'code' => 200,
@@ -288,13 +297,36 @@ class FileController extends Controller
         // Caso específico para FilingInvoice
         if ($modelType === 'FilingInvoice') {
             // Si existe support_type_id en los parámetros
-            if (isset($requestParams['support_type_id']) && isset($requestParams['support_type_name'])) {
-                    $supportName = str_replace(' ', '_', strtolower($requestParams['support_type_name']));
-                    $sequentialNumber = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
-                    $finalName = "{$modelInstance->invoice_number}_{$supportName}_{$sequentialNumber}.{$extension}";
-                    $basePath = "companies/company_{$modelInstance->company->id}/filings/{$modelInstance->filing->type->value}/filing_{$modelInstance->filing->id}/invoices/{$modelInstance->invoice_number}/supports/{$finalName}";
+            if (isset($requestParams['support_type_id']) && isset($requestParams['support_type_code']) && isset($requestParams['company_nit'])) {
+                $company_nit = $requestParams['company_nit'];
+                $supportName = str_replace(' ', '_', strtoupper($requestParams['support_type_code']));
+                $sequentialNumber = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
+                $finalName = "{$company_nit}_{$modelInstance->invoice_number}_{$supportName}_{$sequentialNumber}.{$extension}";
+                $basePath = "companies/company_{$modelInstance->company->id}/filings/{$modelInstance->filing->type->value}/filing_{$modelInstance->filing->id}/invoices/{$modelInstance->invoice_number}/supports/{$finalName}";
             }
         }
         return $basePath;
+    }
+    private function dispatchEventFinal($modelType, $modelId)
+    {
+        if ($modelType === 'FilingInvoice') {
+            FilingInvoiceRowUpdated::dispatch($modelId);
+        }
+    }
+
+
+    public function listExpansionPanel(Request $request)
+    {
+        try {
+            $files = $this->fileRepository->listExpansionPanel($request->all());
+
+            return [
+                'code' => 200,
+                'files' => $files,
+            ];
+        } catch (Throwable $th) {
+
+            return response()->json(['code' => 500, 'message' => 'Error Al Buscar Los Datos', $th->getMessage(), $th->getLine()]);
+        }
     }
 }

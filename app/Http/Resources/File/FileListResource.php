@@ -21,7 +21,6 @@ class FileListResource extends JsonResource
             'pathname' => $this->pathname,
             'filename' => $this->filename,
             'created_at' => $this->created_at->format('d/m/Y'),
-            'user_name' => $this->user?->full_name,
         ];
     }
 }

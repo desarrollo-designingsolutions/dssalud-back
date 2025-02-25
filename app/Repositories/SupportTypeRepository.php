@@ -98,4 +98,9 @@ class SupportTypeRepository extends BaseRepository
 
         return $data;
     }
+
+    public function validInvoiceNumbers(){
+        $data = $this->model->get()->pluck("code")->toArray();
+        return $data;
+    }
 }

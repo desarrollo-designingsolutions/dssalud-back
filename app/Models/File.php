@@ -17,8 +17,13 @@ class File extends Model
         return $this->morphTo(__FUNCTION__, 'fileable_type', 'fileable_id');
     }
 
-    public function user()
+    // public function user()
+    // {
+    //     return $this->hasOne(User::class,"id","user_id");
+    // }
+
+    public function supportType()
     {
-        return $this->hasOne(User::class,"id","user_id");
+        return $this->belongsTo(SupportType::class);
     }
 }

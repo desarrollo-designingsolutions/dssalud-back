@@ -16,7 +16,8 @@ class SupportTypeSelectInfiniteResource extends JsonResource
     {
         return [
             'value' => $this->id,
-            'title' => $this->name,
+            'title' => $this->code.' - '.$this->name,
+            'code' => $this->code,
         ];
     }
 }

@@ -22,6 +22,11 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::post('/filing/updateContract', [FilingController::class, 'updateContract']);
 
+    Route::get('/filing/{id}/getDataModalSupportMasiveFiles', [FilingController::class, 'getDataModalSupportMasiveFiles']);
+
+    Route::post('/filing/saveDataModalSupportMasiveFiles', [FilingController::class, 'saveDataModalSupportMasiveFiles']);
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -34,4 +39,5 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     Route::get('/filing/countAllDataFiling', [FilingController::class, 'countAllDataFiling']);
 
     Route::get('/filing-invoices/{invoiceId}/users', [FilingController::class, 'getPaginatedUsers']);
+
 });

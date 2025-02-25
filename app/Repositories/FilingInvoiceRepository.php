@@ -83,7 +83,6 @@ class FilingInvoiceRepository extends BaseRepository
                     $subQuery->where("company_id", $request['company_id']);
                 });
             }
-
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
             $data = [
                 'value' => $value->$fieldValue,
@@ -129,8 +128,12 @@ class FilingInvoiceRepository extends BaseRepository
     public function generateCaseNumber()
     {
 
-        return random_int(100,700);
+        return random_int(100, 700);
     }
 
 
+    public function validInvoiceNumbers($filing_id)
+    {
+        return  $this->model->where("filing_id", $filing_id)->pluck("invoice_number")->toArray();
+    }
 }

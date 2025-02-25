@@ -17,18 +17,18 @@ class FileRepository extends BaseRepository
             ->with($with)
             ->where(function ($query) use ($request) {
                 if (! empty($request['name'])) {
-                    $query->where('id', 'like', '%'.$request['name'].'%');
+                    $query->where('id', 'like', '%' . $request['name'] . '%');
                 }
                 if (! empty($request['fileable_id'])) {
                     $query->where('fileable_id', $request['fileable_id']);
                 }
                 if (! empty($request['fileable_type'])) {
-                    $query->where('fileable_type', 'App\\Models\\'.$request['fileable_type']);
+                    $query->where('fileable_type', 'App\\Models\\' . $request['fileable_type']);
                 }
             })
             ->where(function ($query) use ($request) {
                 if (! empty($request['searchQuery'])) {
-                    $query->where('name', 'like', '%'.$request['searchQuery'].'%');
+                    $query->where('name', 'like', '%' . $request['searchQuery'] . '%');
                 }
             });
         if (empty($request['typeData'])) {
@@ -55,6 +55,46 @@ class FileRepository extends BaseRepository
         }
 
         $data->save();
+
+        return $data;
+    }
+
+
+    public function listExpansionPanel($request = [], $with = [], $select = ['*'])
+    {
+        $data = $this->model->select($select)
+            ->with($with)
+            ->where(function ($query) use ($request) {
+                if (!empty($request['fileable_id'])) {
+                    $query->where('fileable_id', $request['fileable_id']);
+                }
+                if (!empty($request['fileable_type'])) {
+                    $query->where('fileable_type', 'App\\Models\\' . $request['fileable_type']);
+                }
+            })
+            ->with(['supportType' => function ($query) {
+                $query->select('id', 'name'); // Selecciona solo id y name de support_type
+            }])
+            ->get()
+            ->groupBy('support_type_id')
+            ->map(function ($group, $supportTypeId) {
+                return [
+                    'support_type' => [
+                        'id' => $supportTypeId,
+                        'name' => $group->first()->supportType->name ?? null
+                    ],
+                    'items' => $group->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'fileable_type' => $item->fileable_type,
+                            'fileable_id' => $item->fileable_id,
+                            'pathname' => $item->pathname,
+                            'filename' => $item->filename,
+                            'created_at' => $item->created_at->format('d/m/Y'),
+                        ];
+                    })
+                ];
+            });
 
         return $data;
     }
