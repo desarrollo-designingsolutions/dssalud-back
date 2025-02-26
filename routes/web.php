@@ -11,11 +11,11 @@ Route::get('/', function () {
 
 Route::get('/ftp', function () {
     // Obtener datos necesarios del request
-    $folderPath = "prueba";
+    $folderPath = "Nueva carpeta";
+    $modelId = "9e4c79f4-94bc-4463-bf9f-1834d9ce5caa";
     $company_id = "23a0eb68-95b6-49c0-9ad3-0f60627bf220";
     $company = Company::find($company_id);
     $modelType = "Filing";
-    $modelId = "9e4c79f4-94bc-4463-bf9f-1834d9ce5caa";
 
 
 
