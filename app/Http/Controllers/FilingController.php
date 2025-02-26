@@ -345,11 +345,12 @@ class FilingController extends Controller
                     'fileable_type' =>  'App\\Models\\FilingInvoice',
                     'fileable_id' => $invoice->id,
                     'support_type_id' => $supportType->id,
+                    'channel' => 'filing'. $modelId,
                 ];
 
                 ProcessMassUpload::dispatch(
                     $tempPath,
-                    $originalName,
+                    $finalName,
                     $uploadId,
                     $index + 1,
                     $fileCount,

@@ -6,8 +6,10 @@ use App\Events\FilingInvoiceRowUpdated;
 use App\Http\Requests\File\FileStoreRequest;
 use App\Http\Resources\File\FileFormResource;
 use App\Http\Resources\File\FileListResource;
+use App\Http\Resources\File\FileListTableV2Resource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Repositories\FileRepository;
+use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +17,8 @@ use Throwable;
 
 class FileController extends Controller
 {
+    use HttpTrait;
+
     public function __construct(
         protected FileRepository $fileRepository,
     ) {}
@@ -144,8 +148,11 @@ class FileController extends Controller
     {
         try {
             DB::beginTransaction();
-            $this->fileRepository->delete($id);
+
+            $file = $this->fileRepository->delete($id);
             DB::commit();
+
+            $this->dispatchEventFinal(class_basename($file->fileable_type), $file->fileable_id);
 
             return response()->json(['code' => 200, 'message' => 'Registro eliminado correctamente']);
         } catch (Throwable $th) {
@@ -240,7 +247,7 @@ class FileController extends Controller
                 $extension = $file->getClientOriginalExtension();
 
                 // Construcción dinámica del finalPath pasando todos los parámetros del request
-                $finalPath = $this->buildFinalPath(
+                $buildFile = $this->buildFinalPath(
                     $company_id,
                     $modelType,
                     $modelInstance,
@@ -260,11 +267,11 @@ class FileController extends Controller
 
                 ProcessMassUpload::dispatch(
                     $tempPath,
-                    $originalName,
+                    $buildFile['finalName'],
                     $uploadId,
                     $index + 1,
                     $fileCount,
-                    $finalPath,
+                    $buildFile['basePath'],
                     $data
                 );
             }
@@ -285,7 +292,6 @@ class FileController extends Controller
         }
     }
 
-
     /**
      * Construye la ruta final del archivo según el modelo y parámetros del request
      */
@@ -305,8 +311,12 @@ class FileController extends Controller
                 $basePath = "companies/company_{$modelInstance->company->id}/filings/{$modelInstance->filing->type->value}/filing_{$modelInstance->filing->id}/invoices/{$modelInstance->invoice_number}/supports/{$finalName}";
             }
         }
-        return $basePath;
+        return [
+            "finalName" => $finalName,
+            "basePath" => $basePath
+        ];
     }
+
     private function dispatchEventFinal($modelType, $modelId)
     {
         if ($modelType === 'FilingInvoice') {
@@ -314,19 +324,20 @@ class FileController extends Controller
         }
     }
 
-
-    public function listExpansionPanel(Request $request)
+    public function listTableV2(Request $request)
     {
-        try {
-            $files = $this->fileRepository->listExpansionPanel($request->all());
+        return $this->execute(function () use ($request) {
+            $data = $this->fileRepository->list($request->all());
+            $tableData = FileListTableV2Resource::collection($data);
 
             return [
                 'code' => 200,
-                'files' => $files,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
             ];
-        } catch (Throwable $th) {
-
-            return response()->json(['code' => 500, 'message' => 'Error Al Buscar Los Datos', $th->getMessage(), $th->getLine()]);
-        }
+        });
     }
 }

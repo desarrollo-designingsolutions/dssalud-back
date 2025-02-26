@@ -25,5 +25,5 @@ Route::get('/file/download', [FileController::class, 'download']);
 
 Route::post('/file/massUpload', [FileController::class, 'massUpload']);
 
-Route::get('/file/listExpansionPanel', [FileController::class, 'listExpansionPanel']);
+Route::get('/file/listTableV2', [FileController::class, 'listTableV2']);
 
