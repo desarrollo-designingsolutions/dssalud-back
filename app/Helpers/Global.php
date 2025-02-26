@@ -432,3 +432,35 @@ function parseDate($fecha)
 
     return $fecha;
 }
+
+
+/**
+ * Normaliza los datos JSON para que siempre sean un arreglo
+ */
+function normalizeJsonData($data): array
+{
+    if (is_null($data) || empty($data)) {
+        return [];
+    }
+
+    // Si es un arreglo asociativo (una sola), lo envolvemos en un arreglo
+    if (is_array($data) && !isNumericArray($data)) {
+        return [$data];
+    }
+
+    // Si ya es un arreglo numérico, lo devolvemos tal cual
+    return is_array($data) ? $data : [$data];
+}
+
+/**
+ * Verifica si un arreglo tiene claves numéricas (es una lista)
+ */
+function isNumericArray(array $array): bool
+{
+    if (empty($array)) {
+        return true; // Un arreglo vacío lo consideramos numérico por conveniencia
+    }
+
+    $keys = array_keys($array);
+    return array_keys($keys) === $keys; // Comprueba si las claves son 0, 1, 2...
+}

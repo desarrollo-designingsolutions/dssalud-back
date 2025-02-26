@@ -38,6 +38,6 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::get('/filing/countAllDataFiling', [FilingController::class, 'countAllDataFiling']);
 
-    Route::get('/filing-invoices/{invoiceId}/users', [FilingController::class, 'getPaginatedUsers']);
+    Route::post('/filing/uploadJson', [FilingController::class, 'uploadJson']);
 
 });

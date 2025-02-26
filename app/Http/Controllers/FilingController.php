@@ -6,9 +6,11 @@ use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
+use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Http\Resources\Filing\FilingInvoiceListResource;
 use App\Jobs\File\ProcessMassUpload;
+use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
@@ -332,7 +334,6 @@ class FilingController extends Controller
                 $separatedName = explode('_', $originalName);
                 list($nit, $numFac, $codeSupport, $consecutive) = $separatedName;
 
-
                 $invoice = $modelInstance->filingInvoice()->where("invoice_number", $numFac)->first();
                 $supportType = $supportTypes->where("code", $codeSupport)->first();
 
@@ -370,4 +371,80 @@ class FilingController extends Controller
         }, 202);
     }
 
+
+    public function uploadJson(Request $request)
+    {
+        return $this->runTransaction(function () use ($request) {
+
+            // Preparar datos iniciales
+            $company_id = $request->input("company_id");
+            $user_id = $request->input("user_id");
+
+            $files = $request->file('files');
+            $files = is_array($files) ? $files : [$files];
+            $totalFiles = count($files);
+            $uploadId = uniqid();
+            $chunkSize = (int) env('CHUNKSIZE', 10);
+
+            // Guardar registro inicial
+            $filing = $this->filingRepository->store([
+                'company_id' => $company_id,
+                'user_id' => $user_id,
+                'type' => TypeFilingEnum::RADICATION_2275,
+                'status' => StatusFilingEnum::IN_PROCESS,
+            ]);
+
+            $processedFiles = 0;
+
+            // Procesar cada archivo
+            foreach ($files as $index => $file) {
+                try {
+                    // Almacenar temporalmente y obtener info
+                    $tempPath = $file->store('temp', 'public');
+                    $originalName = $file->getClientOriginalName();
+
+                    // Leer JSON
+                    $jsonData = openFileJson($tempPath);
+                    $jsonData = normalizeJsonData($jsonData);
+
+
+                    if (empty($jsonData)) {
+                        continue; // Saltar si el archivo está vacío
+                    }
+
+                    // Dividir en pedazos
+                    $partitions = array_chunk($jsonData, $chunkSize);
+                    $totalPartitions = count($partitions);
+                    $lastIndex = $totalPartitions - 1;
+
+                    // Procesar pedazos
+                    foreach ($partitions as $partitionIndex => $chunk) {
+                        $isLast = ($partitionIndex === $lastIndex);
+
+                        ProcessFilingValidationTxt::dispatch(
+                            $filing->id,
+                            $chunk,
+                            $user_id,
+                            $isLast && ($index === $totalFiles - 1) // Solo último pedazo del último archivo
+                        );
+                    }
+
+                    // Actualizar progreso por archivo procesado
+                    $processedFiles++;
+                    $progress = ($processedFiles / $totalFiles) * 100;
+
+                    // Actualizar registro y emitir evento
+                    FilingProgressEvent::dispatch($filing->id, $progress);
+
+                } catch (\Exception $e) {
+                    // Registrar error y continuar
+                    \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
+                    continue;
+                }
+            }
+
+
+            return $filing;
+        });
+    }
 }
