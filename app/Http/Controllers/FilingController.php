@@ -345,7 +345,7 @@ class FilingController extends Controller
                     'fileable_type' =>  'App\\Models\\FilingInvoice',
                     'fileable_id' => $invoice->id,
                     'support_type_id' => $supportType->id,
-                    'channel' => 'filing'. $modelId,
+                    'channel' => "filing.{$modelId}",
                 ];
 
                 ProcessMassUpload::dispatch(
@@ -369,4 +369,5 @@ class FilingController extends Controller
             ];
         }, 202);
     }
+
 }
