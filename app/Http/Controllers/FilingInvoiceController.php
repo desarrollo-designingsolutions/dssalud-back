@@ -26,8 +26,7 @@ class FilingInvoiceController extends Controller
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected CompanyRepository $companyRepository,
-    ) {
-    }
+    ) {}
 
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
@@ -120,6 +119,7 @@ class FilingInvoiceController extends Controller
             if ($request->hasFile('archiveXml')) {
                 // Inicializar variables
                 $company_id = $request->input("company_id");
+                $third_nit = $request->input("third_nit");
                 $company = $this->companyRepository->find($company_id);
                 $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
                 $jsonContents = openFileJson($filing_invoice->path_json);
@@ -136,10 +136,10 @@ class FilingInvoiceController extends Controller
 
                 // Determinar el estado y la ruta del archivo XML
                 if ($infoValidation['totalErrorMessages'] == 0) {
-                    $finalName = "{$company->nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
-                    $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/supports/{$finalName}";
+                    $finalName = "{$third_nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
+                    $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml";
 
-                    $path = $file->store($finalPath);
+                    $path = $file->storeAs($finalPath, $finalName, 'public');
                     $filing_invoice->path_xml = $path;
                     $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
                     $filing_invoice->validationXml = null;
@@ -162,5 +162,4 @@ class FilingInvoiceController extends Controller
             }
         });
     }
-
 }

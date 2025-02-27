@@ -31,6 +31,8 @@ class FilingInvoiceListResource extends JsonResource
             'status_xml' => $this->status_xml,
             'status_xml_backgroundColor' => $this->status_xml->backgroundColor(),
             'status_xml_description' => $this->status_xml->description(),
+
+            'path_xml' => $this->path_xml,
         ];
     }
 }

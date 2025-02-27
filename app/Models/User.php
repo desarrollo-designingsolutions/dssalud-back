@@ -112,4 +112,9 @@ class User extends Authenticatable implements Auditable
     {
         return $this->morphMany(Notification::class, 'notifiable');
     }
+
+    public function third()
+    {
+        return $this->belongsTo(Third::class);
+    }
 }

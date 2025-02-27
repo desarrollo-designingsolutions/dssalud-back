@@ -50,7 +50,9 @@ class FilingInvoiceRowUpdated implements ShouldBroadcast
 
             'status_xml' => $this->filingInvoice->status_xml,
             'status_xml_backgroundColor' => $this->filingInvoice->status_xml->BackgroundColor(),
-            'status_xml_description' => $this->filingInvoice->status_xml->description()
+            'status_xml_description' => $this->filingInvoice->status_xml->description(),
+
+            'path_xml' => $this->filingInvoice->path_xml,
         ];
     }
 

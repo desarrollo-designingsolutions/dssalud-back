@@ -303,11 +303,11 @@ class FileController extends Controller
         // Caso específico para FilingInvoice
         if ($modelType === 'FilingInvoice') {
             // Si existe support_type_id en los parámetros
-            if (isset($requestParams['support_type_id']) && isset($requestParams['support_type_code']) && isset($requestParams['company_nit'])) {
-                $company_nit = $requestParams['company_nit'];
+            if (isset($requestParams['support_type_id']) && isset($requestParams['support_type_code']) && isset($requestParams['third_nit'])) {
+                $third_nit = $requestParams['third_nit'];
                 $supportName = str_replace(' ', '_', strtoupper($requestParams['support_type_code']));
                 $sequentialNumber = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
-                $finalName = "{$company_nit}_{$modelInstance->invoice_number}_{$supportName}_{$sequentialNumber}.{$extension}";
+                $finalName = "{$third_nit}_{$modelInstance->invoice_number}_{$supportName}_{$sequentialNumber}.{$extension}";
                 $basePath = "companies/company_{$modelInstance->company->id}/filings/{$modelInstance->filing->type->value}/filing_{$modelInstance->filing->id}/invoices/{$modelInstance->invoice_number}/supports/{$finalName}";
             }
         }
