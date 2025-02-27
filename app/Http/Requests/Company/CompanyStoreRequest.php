@@ -27,10 +27,10 @@ class CompanyStoreRequest extends FormRequest
             'start_date' => 'required|date',
         ];
 
-        if (!empty($this->email) || $this->email != 'null' || $this->email != null) {
+        if (!empty($this->email)) {
             $rules["email"] = 'required|unique:companies,email,' . $this->id . ',id';
         }
-        if (!empty($this->final_date) && $this->final_date != 'null' && $this->final_date != null) {
+        if (!empty($this->final_date)) {
             $rules["final_date"] = 'required|date|after:start_date';
         }
 
@@ -54,7 +54,11 @@ class CompanyStoreRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([]);
+        $this->merge([
+            "id" => formattedElement($this->id),
+            "email" => formattedElement($this->email),
+            "final_date" => formattedElement($this->final_date),
+        ]);
     }
 
     public function failedValidation(Validator $validator)

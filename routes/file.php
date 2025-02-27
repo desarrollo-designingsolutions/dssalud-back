@@ -22,3 +22,8 @@ Route::post('/file/update/{id}', [FileController::class, 'update']);
 Route::delete('/file/delete/{id}', [FileController::class, 'delete']);
 
 Route::get('/file/download', [FileController::class, 'download']);
+
+Route::post('/file/massUpload', [FileController::class, 'massUpload']);
+
+Route::get('/file/listTableV2', [FileController::class, 'listTableV2']);
+

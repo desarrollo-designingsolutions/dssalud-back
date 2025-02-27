@@ -15,8 +15,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('company_id')->constrained();
             $table->uuidMorphs('fileable');
-            $table->string('pathname');
-            $table->string('filename');
+            $table->text('pathname');
+            $table->text('filename');
             $table->timestamps();
             $table->softDeletes();
         });

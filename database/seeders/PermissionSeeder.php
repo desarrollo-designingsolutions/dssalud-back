@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Helpers\Constants;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -46,6 +47,36 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menú Roles',
                 'menu_id' => 5,
             ],
+            [
+                'id' => 6,
+                'name' => 'menu.filing',
+                'description' => 'Visualizar Menu Radicación',
+                'menu_id' => 6,
+            ],
+            [
+                'id' => 7,
+                'name' => 'filing.new.index',
+                'description' => 'Visualizar Módulo Radicación',
+                'menu_id' => 7,
+            ],
+            // [
+            //     'id' => 6,
+            //     'name' => 'menu.rips',
+            //     'description' => 'Visualizar Menu Rips',
+            //     'menu_id' => 6,
+            // ],
+            // [
+            //     'id' => 7,
+            //     'name' => 'rips.automatic.list',
+            //     'description' => 'Visualizar Módulo Rips Automatico',
+            //     'menu_id' => 7,
+            // ],
+            // [
+            //     'id' => 8,
+            //     'name' => 'rips.manual.list',
+            //     'description' => 'Visualizar Módulo Rips Manual',
+            //     'menu_id' => 8,
+            // ],
 
         ];
 
@@ -53,17 +84,17 @@ class PermissionSeeder extends Seeder
         $this->command->info('Starting Seed Data ...');
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
-        // Insertar o actualizar permisos
-        foreach ($arrayData as $value) {
-            Permission::updateOrCreate(
-                ['id' => $value['id']],
-                [
-                    'name' => $value['name'],
-                    'description' => $value['description'],
-                    'menu_id' => $value['menu_id'],
-                    'guard_name' => 'api'
-                ]
-            );
+        foreach ($arrayData as $key => $value) {
+            $data = Permission::find($value['id']);
+            if (!$data) {
+                $data = new Permission();
+            }
+            $data->id = $value['id'];
+            $data->name = $value['name'];
+            $data->description = $value['description'];
+            $data->menu_id = $value['menu_id'];
+            $data->guard_name = "api";
+            $data->save();
         }
 
 
@@ -71,7 +102,7 @@ class PermissionSeeder extends Seeder
         $permissions = Permission::whereIn('id', collect($arrayData)->pluck('id'))->get();
 
         // Asignar permisos al rol
-        $role = Role::find(1);
+        $role = Role::find(Constants::ROLE_SUPERADMIN_UUID);
         if ($role) {
             $role->syncPermissions($permissions);
         }
