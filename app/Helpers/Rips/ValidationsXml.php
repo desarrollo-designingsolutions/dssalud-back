@@ -1,9 +1,20 @@
 <?php
 
-function validateDataFilesXml($dataXml, $jsonContents)
+use Saloon\XmlWrangler\XmlReader;
+
+function validateDataFilesXml($archivo, $data)
 {
     $errorMessages = [];
     $arrayExito = [];
+
+    $arrayExito[] = validationFileXML($archivo, $data, $errorMessages);
+    if ($arrayExito[0]['result'] == false) {
+        return [
+            'errorMessages' => $errorMessages,
+            'totalErrorMessages' => count($errorMessages),
+        ];
+    }
+    $dataXml = $arrayExito[0]['xmlData'];
 
     $attachedDocument = $dataXml['AttachedDocument'];
     $validation = $attachedDocument['cac:ParentDocumentLineReference']['cac:DocumentReference']['cac:ResultOfVerification'];
@@ -11,10 +22,10 @@ function validateDataFilesXml($dataXml, $jsonContents)
     $arrayExito[] = validationResultCode($dataXml, $validation['cbc:ValidationResultCode'], $errorMessages);
 
     $numFac = $attachedDocument['cbc:ID'];
-    $arrayExito[] = RVC004($jsonContents, $numFac, $errorMessages);
+    $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
 
     $nit = $attachedDocument['cac:SenderParty']['cac:PartyTaxScheme']['cbc:CompanyID'];
-    $arrayExito[] = RVC001($jsonContents, $nit, $errorMessages);
+    $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
 
     return [
         'errorMessages' => $errorMessages,
@@ -45,5 +56,37 @@ function validationResultCode($dataXml, $value2, &$errorMessages)
     return [
         'validacion_type_Y' => 'R',
         'result' => $validation,
+    ];
+}
+
+function validationFileXML($archiveXml, $data, &$errorMessages)
+{
+    $xmlData = [];
+    $validation = true;
+
+    try {
+        $archivoXml = $archiveXml;
+        $contenidoXml = file_get_contents($archivoXml->path());
+        $reader = XmlReader::fromString($contenidoXml);
+        $xmlData = $reader->values(); // Array of values.
+    } catch (\Throwable $th) {
+        $errorMessages[] = [
+            'validacion' => 'validationFileXML',
+            'validacion_type_Y' => 'R',
+            'num_invoice' => $data['numInvoice'],
+            'file' => $data['file_name'] ?? null,
+            'row' => null,
+            'column' => 'validationFileXML',
+            'data' => null,
+            'error' => 'No se pudo leer el archivo XML, ' . $th->getMessage(),
+        ];
+
+        $validation = false;
+    }
+
+    return [
+        'valdiacion_type_Y' => 'R',
+        'result' => $validation,
+        'xmlData' => $xmlData,
     ];
 }

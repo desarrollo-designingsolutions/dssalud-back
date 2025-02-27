@@ -26,7 +26,8 @@ class FilingInvoiceController extends Controller
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected CompanyRepository $companyRepository,
-    ) {}
+    ) {
+    }
 
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
@@ -79,7 +80,7 @@ class FilingInvoiceController extends Controller
                     "icon" => "tabler-checkup-list",
                     "color" => "success",
                     "title" => "Facturas Radicadas",
-                    "value" =>  $this->filingInvoiceRepository->countData([
+                    "value" => $this->filingInvoiceRepository->countData([
                         ...$filter,
                         "status" => StatusFillingInvoiceEnum::FILING
                     ]),
@@ -116,55 +117,49 @@ class FilingInvoiceController extends Controller
     public function uploadXML(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $company_id = $request->input("company_id");
-            $company = $this->companyRepository->find($company_id);
-            $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
-            $jsonContents = openFileJson($filing_invoice->path_json);
-
-            // Inicializar variables
-            $xmlData = [];
-            $infoValidation = [
-                'errorMessages' => [],
-                'totalErrorMessages' => 0,
-            ];
-
-            // Procesar el archivo XML si está presente
             if ($request->hasFile('archiveXml')) {
-                $archivoXml = $request->file('archiveXml');
-                $contenidoXml = file_get_contents($archivoXml->path());
-                // $reader = XmlReader::fromString($contenidoXml);
-                // $xmlData = $reader->values(); // Array of values.
-            }
-
-            // Validar datos del XML
-            // $infoValidation = validateDataFilesXml($xmlData, $jsonContents);
-
-            // Determinar el estado y la ruta del archivo XML
-            if ($infoValidation['totalErrorMessages'] == 0) {
+                // Inicializar variables
+                $company_id = $request->input("company_id");
+                $company = $this->companyRepository->find($company_id);
+                $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
+                $jsonContents = openFileJson($filing_invoice->path_json);
                 $file = $request->file('archiveXml');
-                $finalName = "{$company->nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
-                $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/supports/{$finalName}";
 
-                $path = $file->store($finalPath);
-                $filing_invoice->path_xml = $path;
-                $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
-                $filing_invoice->validationXml = null;
-            } else {
-                $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
-                $filing_invoice->validationXml = json_encode($infoValidation);
+                $data = [
+                    'numInvoice' => $filing_invoice->invoice_number,
+                    'file_name' => $file->getClientOriginalName(),
+                    'jsonContents' => $jsonContents,
+                ];
+
+                // Validar datos del XML
+                $infoValidation = validateDataFilesXml($request->file('archiveXml'), $data);
+
+                // Determinar el estado y la ruta del archivo XML
+                if ($infoValidation['totalErrorMessages'] == 0) {
+                    $finalName = "{$company->nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
+                    $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/supports/{$finalName}";
+
+                    $path = $file->store($finalPath);
+                    $filing_invoice->path_xml = $path;
+                    $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
+                    $filing_invoice->validationXml = null;
+                } else {
+                    $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
+                    $filing_invoice->validationXml = json_encode($infoValidation);
+                }
+
+                // Guardar el estado de la factura y validar el estado del filing
+                $filing_invoice->save();
+                validateFilingStatus($filing_invoice->filing->id);
+                FilingInvoiceRowUpdated::dispatch($filing_invoice->id);
+
+                // Devolver la respuesta adecuada
+                return [
+                    'code' => 200,
+                    'message' => $infoValidation['totalErrorMessages'] == 0 ? 'Archivo subido con éxito' : 'Validaciones finalizadas',
+                    'data' => ['validationXml' => json_encode($infoValidation)],
+                ];
             }
-
-            // Guardar el estado de la factura y validar el estado del filing
-            $filing_invoice->save();
-            validateFilingStatus($filing_invoice->filing->id);
-            FilingInvoiceRowUpdated::dispatch($filing_invoice->id);
-
-            // Devolver la respuesta adecuada
-            return [
-                'code' => 200,
-                'message' => $infoValidation['totalErrorMessages'] == 0 ? 'Archivo subido con éxito' : 'Validaciones finalizadas',
-                'data' => $infoValidation['totalErrorMessages'] == 0 ? $xmlData : ['validationXml' => json_encode($infoValidation)],
-            ];
         });
     }
 

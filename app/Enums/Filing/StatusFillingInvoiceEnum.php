@@ -30,7 +30,7 @@ enum StatusFillingInvoiceEnum: string
 
     //ERROR
     #[Description('Error XML')]
-    #[BackgroundColor('')]
+    #[BackgroundColor('error')]
     case ERROR_XML = 'ERROR_XML';
 
 }
