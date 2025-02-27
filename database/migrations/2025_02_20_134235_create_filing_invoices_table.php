@@ -25,13 +25,11 @@ return new class extends Migration
             $table->string('sumVr')->default(0);
 
             $table->string('users_count')->default(0)->comment("cantidad de usaurios en la factura");
+
             $table->string('path_json')->nullable()->comment("ruta del archivo json");
+            $table->string('path_xml')->nullable()->comment("ruta del archivo xml");
 
-
-            // $table->string('record_id');// valore polimorficos
-            // $table->string('record_type');// valore polimorficos
-
-
+            $table->json('validationXml')->nullable()->comment("errores de validacion XML");
 
 
             $table->timestamps();

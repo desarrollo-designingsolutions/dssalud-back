@@ -23,6 +23,14 @@ enum StatusFilingEnum: string
     #[BackgroundColor('success')]
     case FILING = 'FILING';
 
+    #[Description('Incompleto')]
+    #[BackgroundColor('error')]
+    case INCOMPLETE = 'INCOMPLETE';
+
+    #[Description('Completo')]
+    #[BackgroundColor('success')]
+    case COMPLETED = 'COMPLETED';
+
 
     //PENDING
 

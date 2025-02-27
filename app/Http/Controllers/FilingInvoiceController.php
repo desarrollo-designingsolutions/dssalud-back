@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Http\Resources\Filing\FilingInvoiceListResource;
+use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -11,6 +12,7 @@ use App\Repositories\UserRepository;
 use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
+use Saloon\XmlWrangler\XmlReader;
 
 class FilingInvoiceController extends Controller
 {
@@ -22,6 +24,7 @@ class FilingInvoiceController extends Controller
         protected TemporaryFilingService $tempFilingService,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
+        protected CompanyRepository $companyRepository,
     ) {}
 
     // Nuevo método para paginación
@@ -112,26 +115,69 @@ class FilingInvoiceController extends Controller
     public function uploadXML(Request $request)
     {
         return $this->execute(function () use ($request) {
-
-            // $company_id = $request->input("company_id");
+            $company_id = $request->input("company_id");
             // $user_id = $request->input("user_id");
+            $company = $this->companyRepository->find($company_id);
+            $xmlData = [];
 
-            // if ($request->hasFile('archiveXML')) {
-            //     $file = $request->file('archiveXML');
-            //     $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
-            //     $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
-            //     $path_zip = $file->storeAs($ruta, $nombreArchivo, 'public'); // Guarda el archivo con el nombre original
+            if ($request->hasFile('archiveXml')) {
+                // Obtiene el archivo
+                $archivoXml = $request->file('archiveXml');
 
-            //     $filing->path_zip = $path_zip;
-            //     $filing->save();
-            // }
+                $contenidoXml = file_get_contents($archivoXml->path());
+                $reader = XmlReader::fromString($contenidoXml);
+                $xmlData = $reader->values(); // Array of values.
+            }
 
-            // $auth = $this->userRepository->find($user_id);
+            $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
+            $jsonContents = openFileJson($filing_invoice->path_json);
 
-            // //VALIDACION XML
-            // ProcessFilingValidationXML::dispatch($filing->id, $auth, $company_id);
+            // $infoValidation = validateDataFilesXml($xmlData, $jsonContents);
+            $infoValidation = [
+                'errorMessages' => [],
+                'totalErrorMessages' => 0,
+            ];
 
-            // return $filing;
+            if ($infoValidation['totalErrorMessages'] == 0) {
+                // Guarda el JSON en el sistema de archivos usando el disco predeterminado (puede configurar otros discos si es necesario)
+                $file = $request->file('archiveXml');
+
+                // Nombre del archivo en el sistema de archivos
+                $finalName = "{$company->nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
+
+                // Ruta del archivo en el sistema de archivos
+                $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/supports/{$finalName}";
+
+                $path = $file->store($finalPath);
+                $filing_invoice->path_xml = $path;
+                $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
+                $filing_invoice->validationXml = null;
+                $filing_invoice->save();
+
+                //esto es para revisar si alguna factura tiene el estado sin validar ps el rips sigue en pendiente por xml
+                validateFilingStatus($filing_invoice->filing->id);
+
+                return [
+                    'code' => 200,
+                    'message' => 'Archivo subido con éxito',
+                    'data' => $xmlData,
+                ];
+            } else {
+                $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
+                $filing_invoice->validationXml = json_encode($infoValidation);
+                $filing_invoice->save();
+            }
+
+            //esto es para revisar si alguna factura tiene el estado sin validar ps el rips sigue en pendiente por xml
+            validateFilingStatus($filing_invoice->filing->id);
+
+            return [
+                'code' => 200,
+                'message' => 'Validaciones finalizadas',
+                'infoValidation' => [
+                    'validationXml' => json_encode($infoValidation),
+                ],
+            ];
         });
     }
 }

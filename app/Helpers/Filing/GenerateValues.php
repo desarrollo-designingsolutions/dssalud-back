@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Filing\StatusFilingEnum;
+use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Models\Filing;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Redis;
@@ -178,4 +181,53 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
             'to' => $paginator->lastItem(),
         ]
     ];
+}
+
+function validateFilingStatus($filing_id)
+{
+    $filing = Filing::find($filing_id);
+
+    if (!$filing) {
+        // Manejar el caso en que no se encuentra el filing
+        return;
+    }
+
+    $invoices = $filing->filingInvoice;
+
+    // Verificar si todas las facturas están en status 'prefiling' y status_xml 'no validated'
+    $allPrefilingAndNoValidated = $invoices->every(function ($invoice) {
+        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING && $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+    });
+
+    // Verificar si al menos una factura está en status 'prefiling' o status_xml 'no validated'
+    $anyPrefilingOrNoValidated = $invoices->contains(function ($invoice) {
+        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING || $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+    });
+
+    // Verificar si todas las facturas están en status 'filing' y al menos una tiene status_xml 'no validated'
+    $allFilingAndAnyNoValidated = $invoices->every(function ($invoice) {
+        return $invoice->status === StatusFillingInvoiceEnum::FILING;
+    }) && $invoices->contains(function ($invoice) {
+        return $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+    });
+
+    // Verificar si al menos una factura está en status 'prefiling' y todas tienen status_xml 'validated'
+    $anyPrefilingAndAllValidated = $invoices->contains(function ($invoice) {
+        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING;
+    }) && $invoices->every(function ($invoice) {
+        return $invoice->status_xml === StatusFillingInvoiceEnum::VALIDATED;
+    });
+
+    // Verificar si todas las facturas están en status 'filing' y todas tienen status_xml 'validated'
+    $allFilingAndAllValidated = $invoices->every(function ($invoice) {
+        return $invoice->status === StatusFillingInvoiceEnum::FILING && $invoice->status_xml === StatusFillingInvoiceEnum::VALIDATED;
+    });
+
+    if ($allPrefilingAndNoValidated || $anyPrefilingOrNoValidated || $allFilingAndAnyNoValidated || $anyPrefilingAndAllValidated) {
+        $filing->status = StatusFilingEnum::INCOMPLETE;
+    } elseif ($allFilingAndAllValidated) {
+        $filing->status = StatusFilingEnum::COMPLETED;
+    }
+
+    $filing->save();
 }
