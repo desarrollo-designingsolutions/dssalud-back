@@ -13,7 +13,6 @@ use App\Repositories\UserRepository;
 use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
-use Saloon\XmlWrangler\XmlReader;
 
 class FilingInvoiceController extends Controller
 {
@@ -31,9 +30,16 @@ class FilingInvoiceController extends Controller
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
     {
-        //OPCION 2
         return $this->execute(function () use ($request, $invoiceId) {
-            return getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
+            $filingInvoice = $this->filingInvoiceRepository->find($invoiceId,select:["id","invoice_number"]);
+
+            $getPaginatedDataRedis = getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
+
+            return [
+                "filingInvoice" => $filingInvoice,
+                "dataUsers" => $getPaginatedDataRedis["data"],
+                "pagination" => $getPaginatedDataRedis["pagination"],
+            ];
         });
     }
 

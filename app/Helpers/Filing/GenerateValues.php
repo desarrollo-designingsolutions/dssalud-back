@@ -73,7 +73,7 @@ function getPaginatedDataRedisold(Request $request, $invoiceId)
 }
 
 
-function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefix = 'invoice')
+function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefix = 'filingInvoice')
 {
     // Parámetros de paginación y ordenamiento
     $perPage = $request->input('per_page', 10);
@@ -102,6 +102,13 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
                 ]
             ];
         }
+        logMessage("no deberia entrar aqui");
+
+        // Guardar el elemnto de la factura en Redis
+        $redisKeyInvoice = "filingInvoice:{$invoice->id}:dataBd";
+        Redis::set($redisKeyInvoice, json_encode($invoice));
+        Redis::expire($redisKeyInvoice, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
+
 
         $jsonPath = storage_path('app/public/' . $invoice->path_json);
         if (file_exists($jsonPath)) {

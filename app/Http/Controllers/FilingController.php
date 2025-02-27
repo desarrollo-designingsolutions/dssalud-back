@@ -170,9 +170,15 @@ class FilingController extends Controller
                     "path_json" => $routeJson,
                 ]);
 
+                // Guardar el elemnto de la factura en Redis
+                $redisKeyInvoice = "filingInvoice:{$filingInvoice->id}:dataBd";
+                Redis::del($redisKeyInvoice); // Elimina la clave si existe, sin importar su tipo
+                Redis::set($redisKeyInvoice, json_encode($filingInvoice));
+                Redis::expire($redisKeyInvoice, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
+
                 // Guardar los usuarios en una lista de Redis
                 $users = $invoice['usuarios'] ?? [];
-                $redisKey = "invoice:{$filingInvoice->id}:users"; // Usamos el ID del modelo
+                $redisKey = "filingInvoice:{$filingInvoice->id}:users"; // Usamos el ID del modelo
                 foreach ($users as $user) {
                     Redis::rpush($redisKey, json_encode($user));
                 }
@@ -348,7 +354,6 @@ class FilingController extends Controller
 
                     // Actualizar registro y emitir evento
                     FilingProgressEvent::dispatch($filing->id, $progress);
-
                 } catch (\Exception $e) {
                     // Registrar error y continuar
                     \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
