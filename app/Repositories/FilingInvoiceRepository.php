@@ -125,13 +125,6 @@ class FilingInvoiceRepository extends BaseRepository
         return $data;
     }
 
-    public function generateCaseNumber()
-    {
-
-        return random_int(100, 700);
-    }
-
-
     public function validInvoiceNumbers($filing_id)
     {
         return  $this->model->where("filing_id", $filing_id)->pluck("invoice_number")->toArray();

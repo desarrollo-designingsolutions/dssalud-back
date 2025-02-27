@@ -2,6 +2,7 @@
 
 use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
+use App\Models\FilingInvoice;
 use App\Models\SupportType;
 use Illuminate\Support\Facades\Route;
 

@@ -28,6 +28,9 @@ enum StatusFillingInvoiceEnum: string
     #[BackgroundColor('')]
     case NOT_VALIDATED = 'NOT_VALIDATED';
 
-
+    //ERROR
+    #[Description('Error XML')]
+    #[BackgroundColor('')]
+    case ERROR_XML = 'ERROR_XML';
 
 }

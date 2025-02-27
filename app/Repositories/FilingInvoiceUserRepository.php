@@ -126,12 +126,4 @@ class FilingInvoiceUserUserRepository extends BaseRepository
 
         return $data;
     }
-
-    public function generateCaseNumber()
-    {
-
-        return random_int(100,700);
-    }
-
-
 }

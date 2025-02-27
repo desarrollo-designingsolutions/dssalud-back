@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid("id")->primary();
             $table->foreignUuid('filing_id')->constrained();
             $table->string('invoice_number')->comment("Columna del txt (numFactura), archivo AF");
-            $table->string('case_number');
+            $table->string('case_number')->unique()->comment("Número de radicado unico en todo el sistema");
 
             $table->string("status");
             $table->string('status_xml');

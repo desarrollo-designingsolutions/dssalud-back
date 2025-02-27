@@ -20,5 +20,6 @@ class RoutesApi
         'routes/notification.php',
         'routes/rip.php',
         'routes/filing.php',
+        'routes/filingInvoice.php',
     ];
 }

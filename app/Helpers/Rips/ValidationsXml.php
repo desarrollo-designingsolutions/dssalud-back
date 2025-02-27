@@ -3,6 +3,7 @@
 function validateDataFilesXml($dataXml, $jsonContents)
 {
     $errorMessages = [];
+    $arrayExito = [];
 
     $attachedDocument = $dataXml['AttachedDocument'];
     $validation = $attachedDocument['cac:ParentDocumentLineReference']['cac:DocumentReference']['cac:ResultOfVerification'];

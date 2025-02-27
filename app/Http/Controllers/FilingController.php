@@ -7,7 +7,6 @@ use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
-use App\Http\Resources\Filing\FilingInvoiceListResource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Repositories\FilingInvoiceRepository;
@@ -160,7 +159,6 @@ class FilingController extends Controller
                 // Guardamos la factura y obtenemos el modelo creado
                 $filingInvoice = $this->filingInvoiceRepository->store([
                     "filing_id" => $filing_id,
-                    "case_number" => $this->filingInvoiceRepository->generateCaseNumber(),
                     "status" => StatusFillingInvoiceEnum::PRE_FILING,
                     "status_xml" => StatusFillingInvoiceEnum::NOT_VALIDATED,
                     "sumVr" => sumVrServicio($invoice),
@@ -182,91 +180,6 @@ class FilingController extends Controller
             return [
                 'code' => 200,
                 'message' => "Radicación actualizada con éxito.",
-            ];
-        });
-    }
-
-    // Nuevo método para paginación
-    public function getPaginatedUsers(Request $request, $invoiceId)
-    {
-        //OPCION 2
-        return $this->execute(function () use ($request, $invoiceId) {
-            return getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
-        });
-    }
-
-    public function list(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-
-            $filings = $this->filingInvoiceRepository->list($request->all());
-            $listRips = FilingInvoiceListResource::collection($filings);
-
-            return [
-                'code' => 200,
-                'tableData' => $listRips,
-                'lastPage' => $filings->lastPage(),
-                'totalData' => $filings->total(),
-                'totalPage' => $filings->perPage(),
-                'currentPage' => $filings->currentPage(),
-            ];
-        });
-    }
-
-    public function countAllDataFiling(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-
-            $filter = $request->all();
-
-            $filing = $this->filingRepository->find($request->input("filing_id"));
-
-            $data = [
-                [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Facturas Pre-radicadas",
-                    "value" => $this->filingInvoiceRepository->countData([
-                        ...$filter,
-                        "status" => StatusFillingInvoiceEnum::PRE_FILING
-                    ]),
-                    "isHover" => false,
-                    "to" => null,
-                ],
-                [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Facturas Radicadas",
-                    "value" =>  $this->filingInvoiceRepository->countData([
-                        ...$filter,
-                        "status" => StatusFillingInvoiceEnum::FILING
-                    ]),
-                    "isHover" => false,
-                    "to" => null,
-                ],
-                [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Valor pre-radicado",
-                    "value" => formatNumber($filing->sumVr),
-                    "isHover" => false,
-                    "to" => null,
-                ],
-                [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Cantidad XML",
-                    "value" => $filing->xml_count_validate,
-                    "isHover" => false,
-                    "to" => null,
-                ],
-            ];
-
-
-            return [
-                'code' => 200,
-                'data' => $data,
-
             ];
         });
     }
