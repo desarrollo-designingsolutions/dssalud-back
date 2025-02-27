@@ -37,7 +37,7 @@ class ProcessFilingValidationZip implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(TemporaryFilingService $tempFilingService): void
+    public function handle(): void
     {
         //busco el registro
         $filing = Filing::find($this->filing_id);
@@ -55,7 +55,7 @@ class ProcessFilingValidationZip implements ShouldQueue
         //si el archivo zip de los txt no cumple con las condiciones necesarias
         if (count($errorMessages) > 0) {
 
-            //actualizo la informacion de la validacion excel en el registro
+            //actualizo la informacion de la validacion zip en el registro
             $filing->validationZip = json_encode($infoValidation);
             $filing->status = StatusFilingEnum::ERROR_ZIP;
             $filing->save();
@@ -78,9 +78,6 @@ class ProcessFilingValidationZip implements ShouldQueue
 
                 //genero los consecutivos para usuarios y servicios tomando encuenta que deben ser consecutivos e iniciar en uno en los servicios y en usuarios
                 generateConsecutive($build['data']);
-
-                //actualizo mi data temporal
-                // $tempFilingService->addToTemporaryData($filing->id, "invoices", $build['data']);
 
                 $partitions = array_chunk($build['data'], env('CHUNKSIZE', 10));
 
