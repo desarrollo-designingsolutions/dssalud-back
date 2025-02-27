@@ -1291,6 +1291,7 @@ class ThirdSeeder extends Seeder
 
         foreach ($arrayData as $value) {
             $data = new Third();
+            $data->company_id = Constants::COMPANY_UUID;
             $data->name = $value['name'];
             $data->nit = $value['nit'];
             // $data->email = $value['email'];
