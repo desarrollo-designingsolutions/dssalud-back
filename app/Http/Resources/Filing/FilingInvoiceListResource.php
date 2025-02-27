@@ -25,11 +25,11 @@ class FilingInvoiceListResource extends JsonResource
             'sumVr' => formatNumber($this->sumVr),
 
             'status' => $this->status,
-            'status_background' => $this->status->backgroundColor(),
+            'status_backgroundColor' => $this->status->backgroundColor(),
             'status_description' => $this->status->description(),
 
             'status_xml' => $this->status_xml,
-            'status_xml_background' => $this->status_xml->backgroundColor(),
+            'status_xml_backgroundColor' => $this->status_xml->backgroundColor(),
             'status_xml_description' => $this->status_xml->description(),
         ];
     }
