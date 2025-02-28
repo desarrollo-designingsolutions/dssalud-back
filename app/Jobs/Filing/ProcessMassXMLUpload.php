@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Events\FileUploadProgress;
 use App\Events\ProgressCircular;
 
-class ProcessMassXMLUpload implements ShouldQueue
+class ProcessMassXmlUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 

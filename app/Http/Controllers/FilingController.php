@@ -11,7 +11,7 @@ use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
-use App\Jobs\Filing\ProcessMassXMLUpload;
+use App\Jobs\Filing\ProcessMassXmlUpload;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -366,7 +366,7 @@ class FilingController extends Controller
         });
     }
 
-    public function getDataModalXMLMasiveFiles($filingId)
+    public function getDataModalXmlMasiveFiles($filingId)
     {
         return $this->execute(function () use ($filingId) {
             $validInvoiceNumbers = $this->filingInvoiceRepository->validInvoiceNumbers($filingId);
@@ -378,7 +378,7 @@ class FilingController extends Controller
         });
     }
 
-    public function saveDataModalXMLMasiveFiles(Request $request)
+    public function saveDataModalXmlMasiveFiles(Request $request)
     {
         return $this->execute(function () use ($request) {
 
@@ -413,10 +413,10 @@ class FilingController extends Controller
                     'uploadId' => $uploadId,
                     'fileNumber' => $index + 1,
                     'totalFiles' => $fileCount,
-                    'channel' => "filingXML.{$filing_id}",
+                    'channel' => "filingXml.{$filing_id}",
                 ];
 
-                ProcessMassXMLUpload::dispatch($data)->onQueue('filingXML');
+                ProcessMassXmlUpload::dispatch($data)->onQueue('filingXml');
             }
 
             return [

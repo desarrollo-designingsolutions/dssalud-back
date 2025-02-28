@@ -7,7 +7,7 @@ function validateDataFilesXml($archivo, $data)
     $errorMessages = [];
     $arrayExito = [];
 
-    $arrayExito[] = validationFileXML($archivo, $data, $errorMessages);
+    $arrayExito[] = validationFileXml($archivo, $data, $errorMessages);
     if ($arrayExito[0]['result'] == false) {
         return [
             'errorMessages' => $errorMessages,
@@ -59,7 +59,7 @@ function validationResultCode($dataXml, $value2, &$errorMessages)
     ];
 }
 
-function validationFileXML($archiveXml, $data, &$errorMessages)
+function validationFileXml($archiveXml, $data, &$errorMessages)
 {
     $xmlData = [];
     $validation = true;
