@@ -19,5 +19,4 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::post('/filingInvoice/uploadXML', [FilingInvoiceController::class, 'uploadXML']);
 
-
 });

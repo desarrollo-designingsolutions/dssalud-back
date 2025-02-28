@@ -27,4 +27,9 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     Route::post('/filing/saveDataModalSupportMasiveFiles', [FilingController::class, 'saveDataModalSupportMasiveFiles']);
 
     Route::post('/filing/uploadJson', [FilingController::class, 'uploadJson']);
+
+    Route::get('/filing/{id}/getDataModalXMLMasiveFiles', [FilingController::class, 'getDataModalXMLMasiveFiles']);
+
+    Route::post('/filing/saveDataModalXMLMasiveFiles', [FilingController::class, 'saveDataModalXMLMasiveFiles']);
+
 });

@@ -65,8 +65,7 @@ function validationFileXML($archiveXml, $data, &$errorMessages)
     $validation = true;
 
     try {
-        $archivoXml = $archiveXml;
-        $contenidoXml = file_get_contents($archivoXml->path());
+        $contenidoXml = file_get_contents($archiveXml);
         $reader = XmlReader::fromString($contenidoXml);
         $xmlData = $reader->values(); // Array of values.
     } catch (\Throwable $th) {
