@@ -9,6 +9,7 @@ use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
+use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
@@ -177,7 +178,6 @@ class FilingController extends Controller
             //quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
             deleteFieldsPerzonalizedJson($buildDataFinal);
 
-
             //Recorremos las facturas
             foreach ($buildDataFinal as $invoice) {
 
@@ -201,20 +201,6 @@ class FilingController extends Controller
                     "path_json" => $routeJson,
                     "validationTxt" => json_encode($errorMessagesInvoice->all()),
                 ]);
-
-                // Guardar el elemnto de la factura en Redis
-                $redisKeyInvoice = "filingInvoice:{$filingInvoice->id}:dataBd";
-                Redis::del($redisKeyInvoice); // Elimina la clave si existe, sin importar su tipo
-                Redis::set($redisKeyInvoice, json_encode($filingInvoice));
-                Redis::expire($redisKeyInvoice, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
-
-                // Guardar los usuarios en una lista de Redis
-                $users = $invoice['usuarios'] ?? [];
-                $redisKey = "filingInvoice:{$filingInvoice->id}:users"; // Usamos el ID del modelo
-                foreach ($users as $user) {
-                    Redis::rpush($redisKey, json_encode($user));
-                }
-                Redis::expire($redisKey, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
             }
 
             return [
@@ -321,11 +307,12 @@ class FilingController extends Controller
         }, 202);
     }
 
-    public function uploadJson(Request $request)
+    public function uploadJson(FilingUploadJsonRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
 
             // Preparar datos iniciales
+            $id = $request->input("id", null);
             $company_id = $request->input("company_id");
             $user_id = $request->input("user_id");
 
@@ -337,6 +324,7 @@ class FilingController extends Controller
 
             // Guardar registro inicial
             $filing = $this->filingRepository->store([
+                'id' =>  $id,
                 'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => TypeFilingEnum::RADICATION_2275,
@@ -489,4 +477,3 @@ class FilingController extends Controller
         });
     }
 }
-
