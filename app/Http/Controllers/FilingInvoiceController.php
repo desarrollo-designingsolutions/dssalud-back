@@ -126,7 +126,6 @@ class FilingInvoiceController extends Controller
                 // Inicializar variables
                 $company_id = $request->input("company_id");
                 $third_nit = $request->input("third_nit");
-                $company = $this->companyRepository->find($company_id);
                 $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
                 $jsonContents = openFileJson($filing_invoice->path_json);
                 $file = $request->file('archiveXml');
@@ -138,7 +137,7 @@ class FilingInvoiceController extends Controller
                 ];
 
                 // Validar datos del XML
-                $infoValidation = validateDataFilesXml($request->file('archiveXml'), $data);
+                $infoValidation = validateDataFilesXml($request->file('archiveXml')->path(), $data);
 
                 // Determinar el estado y la ruta del archivo XML
                 if ($infoValidation['totalErrorMessages'] == 0) {

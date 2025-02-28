@@ -11,6 +11,7 @@ use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
+use App\Jobs\Filing\ProcessMassXMLUpload;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -196,7 +197,7 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($filingId) {
             $validInvoiceNumbers = $this->filingInvoiceRepository->validInvoiceNumbers($filingId);
-            $validSupportCodes = $this->supportTypeRepository->validInvoiceNumbers($filingId);
+            $validSupportCodes = $this->supportTypeRepository->validSupportCodes();
 
             return [
                 'code' => 200,
@@ -247,7 +248,6 @@ class FilingController extends Controller
             foreach ($files as $index => $file) {
                 $tempPath = $file->store('temp', 'public');
                 $originalName = $file->getClientOriginalName();
-                $extension = $file->getClientOriginalExtension();
 
                 // Construcción dinámica del finalPath con el nombre del archivo
                 $separatedName = explode('_', $originalName);
@@ -265,7 +265,7 @@ class FilingController extends Controller
                     'fileable_type' =>  'App\\Models\\FilingInvoice',
                     'fileable_id' => $invoice->id,
                     'support_type_id' => $supportType->id,
-                    'channel' => "filing.{$modelId}",
+                    'channel' => "filingSupport.{$modelId}",
                 ];
 
                 ProcessMassUpload::dispatch(
@@ -276,7 +276,7 @@ class FilingController extends Controller
                     $fileCount,
                     $finalPath,
                     $data
-                );
+                )->onQueue('filingSupport');
 
                 FilingInvoiceRowUpdated::dispatch($invoice->id);
             }
@@ -364,5 +364,67 @@ class FilingController extends Controller
 
             return $filing;
         });
+    }
+
+    public function getDataModalXMLMasiveFiles($filingId)
+    {
+        return $this->execute(function () use ($filingId) {
+            $validInvoiceNumbers = $this->filingInvoiceRepository->validInvoiceNumbers($filingId);
+
+            return [
+                'code' => 200,
+                'validInvoiceNumbers' => $validInvoiceNumbers,
+            ];
+        });
+    }
+
+    public function saveDataModalXMLMasiveFiles(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            if (!$request->hasFile('files')) {
+                return ['code' => 400, 'message' => 'No se encontraron archivos'];
+            }
+
+            $company_id = $request->input("company_id");
+            $third_nit = $request->input("third_nit");
+            $filing_id = $request->input('filing_id');
+
+            // Validar parámetros requeridos
+            if (!$company_id || !$third_nit|| !$filing_id) {
+                return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
+            }
+
+            $files = $request->file('files');
+            $files = is_array($files) ? $files : [$files];
+            $fileCount = count($files);
+            $uploadId = uniqid();
+
+            foreach ($files as $index => $file) {
+                $tempPath = $file->store('temp', 'public');
+                $originalName = $file->getClientOriginalName();
+
+                $data = [
+                    'company_id' => $company_id,
+                    'third_nit' => $third_nit,
+                    'filing_id' => $filing_id,
+                    'tempPath' => $tempPath,
+                    'originalName' => $originalName,
+                    'uploadId' => $uploadId,
+                    'fileNumber' => $index + 1,
+                    'totalFiles' => $fileCount,
+                    'channel' => "filingXML.{$filing_id}",
+                ];
+
+                ProcessMassXMLUpload::dispatch($data)->onQueue('filingXML');
+            }
+
+            return [
+                'code' => 200,
+                'message' => "Se enviaron {$fileCount} archivos a la cola",
+                'upload_id' => $uploadId,
+                'count' => $fileCount
+            ];
+        }, 202);
     }
 }
