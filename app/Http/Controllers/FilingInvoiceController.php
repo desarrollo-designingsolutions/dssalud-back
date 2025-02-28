@@ -119,7 +119,7 @@ class FilingInvoiceController extends Controller
         });
     }
 
-    public function uploadXML(Request $request)
+    public function uploadXml(Request $request)
     {
         return $this->execute(function () use ($request) {
             if ($request->hasFile('archiveXml')) {
@@ -155,7 +155,7 @@ class FilingInvoiceController extends Controller
 
                 // Guardar el estado de la factura y validar el estado del filing
                 $filing_invoice->save();
-                validateFilingStatus($filing_invoice->filing->id);
+
                 FilingInvoiceRowUpdated::dispatch($filing_invoice->id);
 
                 // Devolver la respuesta adecuada

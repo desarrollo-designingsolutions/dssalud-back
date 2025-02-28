@@ -12,7 +12,8 @@ use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
-use App\Jobs\Filing\ProcessMassXMLUpload;
+use App\Jobs\Filing\ProcessMassXmlUpload;
+use App\Models\FilingInvoice;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -35,7 +36,8 @@ class FilingController extends Controller
         protected TemporaryFilingService $tempFilingService,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
-    ) {}
+    ) {
+    }
 
     public function showData($id)
     {
@@ -58,7 +60,7 @@ class FilingController extends Controller
             //guardo el registro en la bd
             $filing = $this->filingRepository->store([
                 'id' =>  $id,
-                'company_id' =>  $company_id,
+                'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => $type,
                 'status' => StatusFilingEnum::IN_PROCESS,
@@ -141,8 +143,11 @@ class FilingController extends Controller
 
             $filing = $this->filingRepository->find($filing_id);
 
-            $validationTxt =  json_decode($filing->validationTxt, 1);
+            $validationTxt = json_decode($filing->validationTxt, 1);
             $jsonSuccessfullInvoices = $validationTxt["jsonSuccessfullInvoices"];
+            $errorMessages = collect($validationTxt["errorMessages"]);
+
+            unset($validationTxt["errorMessages"]);
 
             $sumVr = sumVrServicioRips($jsonSuccessfullInvoices);
 
@@ -150,6 +155,7 @@ class FilingController extends Controller
                 "id" => $filing_id,
                 "sumVr" => $sumVr,
                 "contract_id" => $contract_id,
+                "validationTxt" => json_encode($validationTxt),
             ]);
 
             //tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
@@ -162,6 +168,9 @@ class FilingController extends Controller
 
             //Recorremos las facturas
             foreach ($buildDataFinal as $invoice) {
+
+                // Buscar los mensajes de error de la factura
+                $errorMessagesInvoice = $errorMessages->where("num_invoice", $invoice["numFactura"])->values();
 
                 //genero y guardo el archivo JSON de la factura
                 $nameFile = $invoice['numFactura'] . '.json';
@@ -178,6 +187,7 @@ class FilingController extends Controller
                     "invoice_number" => $invoice["numFactura"],
                     "users_count" => count($invoice["usuarios"]),
                     "path_json" => $routeJson,
+                    "validationTxt" => json_encode($errorMessagesInvoice->all()),
                 ]);
 
                 // Guardar el elemnto de la factura en Redis
@@ -271,7 +281,7 @@ class FilingController extends Controller
 
                 $data = [
                     'company_id' => $company_id,
-                    'fileable_type' =>  'App\\Models\\FilingInvoice',
+                    'fileable_type' => 'App\\Models\\FilingInvoice',
                     'fileable_id' => $invoice->id,
                     'support_type_id' => $supportType->id,
                     'channel' => "filingSupport.{$modelId}",
@@ -298,7 +308,6 @@ class FilingController extends Controller
             ];
         }, 202);
     }
-
 
     public function uploadJson(Request $request)
     {
@@ -375,7 +384,7 @@ class FilingController extends Controller
         });
     }
 
-    public function getDataModalXMLMasiveFiles($filingId)
+    public function getDataModalXmlMasiveFiles($filingId)
     {
         return $this->execute(function () use ($filingId) {
             $validInvoiceNumbers = $this->filingInvoiceRepository->validInvoiceNumbers($filingId);
@@ -387,7 +396,7 @@ class FilingController extends Controller
         });
     }
 
-    public function saveDataModalXMLMasiveFiles(Request $request)
+    public function saveDataModalXmlMasiveFiles(Request $request)
     {
         return $this->execute(function () use ($request) {
 
@@ -422,10 +431,10 @@ class FilingController extends Controller
                     'uploadId' => $uploadId,
                     'fileNumber' => $index + 1,
                     'totalFiles' => $fileCount,
-                    'channel' => "filingXML.{$filing_id}",
+                    'channel' => "filingXml.{$filing_id}",
                 ];
 
-                ProcessMassXMLUpload::dispatch($data)->onQueue('filingXML');
+                ProcessMassXmlUpload::dispatch($data)->onQueue('filingXml');
             }
 
             return [
@@ -436,4 +445,25 @@ class FilingController extends Controller
             ];
         }, 202);
     }
+
+    public function getValidationTxtByFilingId($filing_id)
+    {
+        // Consultar todos los registros que coincidan con el filing_id
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->select('validationTxt')->get();
+
+        // Inicializar un arreglo vacío para almacenar todos los validationTxt
+        $combinedValidationTxt = [];
+
+        // Iterar sobre cada registro y unir los arreglos validationTxt
+        foreach ($filingInvoices as $invoice) {
+            // Decodificar el campo validationTxt de JSON a un arreglo
+            $validationTxtArray = json_decode($invoice->validationTxt, true);
+
+            // Unir el arreglo decodificado al arreglo combinado
+            $combinedValidationTxt = array_merge($combinedValidationTxt, $validationTxtArray);
+        }
+
+        return $combinedValidationTxt;
+    }
+
 }

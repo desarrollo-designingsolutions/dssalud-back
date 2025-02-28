@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('path_xml')->nullable()->comment("ruta del archivo xml");
 
             $table->json('validationXml')->nullable()->comment("errores de validacion XML");
+            $table->json('validationTxt')->nullable()->comment("errores de validacion TXT de la factura");
 
 
             $table->timestamps();

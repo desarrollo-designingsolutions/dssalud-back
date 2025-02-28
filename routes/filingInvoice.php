@@ -17,6 +17,6 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::get('/filingInvoice/{invoiceId}/users', [FilingInvoiceController::class, 'getPaginatedUsers']);
 
-    Route::post('/filingInvoice/uploadXML', [FilingInvoiceController::class, 'uploadXML']);
+    Route::post('/filingInvoice/uploadXml', [FilingInvoiceController::class, 'uploadXml']);
 
 });
