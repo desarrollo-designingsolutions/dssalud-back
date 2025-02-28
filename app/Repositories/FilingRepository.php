@@ -74,7 +74,7 @@ class FilingRepository extends BaseRepository
 
     function getValidationsErrorMessages($id)
     {
-        $rip = $this->model::find($id);
+        $data = $this->model::find($id);
 
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
@@ -88,8 +88,8 @@ class FilingRepository extends BaseRepository
 
         // Iterar sobre cada validación
         foreach ($validations as $validation) {
-            if (isset($rip[$validation['key']])) {
-                $parsedData = json_decode($rip[$validation['key']], true);
+            if (isset($data[$validation['key']])) {
+                $parsedData = json_decode($data[$validation['key']], true);
                 if (isset($parsedData['errorMessages'])) {
                     foreach ($parsedData['errorMessages'] as $message) {
                         $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
@@ -99,37 +99,41 @@ class FilingRepository extends BaseRepository
             }
         }
 
-        // Filtrar los mensajes de error por num_invoice si está presente
-        if (isset($rip['num_invoice'])) {
-            $errorMessages = array_filter($errorMessages, function ($ele) use ($rip) {
-                return $ele['num_invoice'] == $rip['num_invoice'];
-            });
-        }
         return [
             "errorMessages" => $errorMessages,
-            "validationTxt" => json_decode($rip->validationTxt, 1),
-            "validationZip" => json_decode($rip->validationZip, 1),
+            "validationTxt" => json_decode($data->validationTxt, 1),
+            "validationZip" => json_decode($data->validationZip, 1),
         ];
     }
 
-    function getAllFilingValidationsTxt($filing_id)
+    function getAllValidation($filing_id)
     {
-        // Consultar todos los registros que coincidan con el filing_id
-        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->select('validationTxt')->whereNotNull('validationTxt')->get();
+        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->select(['validationXml', 'validationTxt'])->get();
 
-        // Inicializar un arreglo vacío para almacenar todos los validationTxt
-        $combinedValidationTxt = [];
+        // Inicializar un array para almacenar los mensajes de error
+        $errorMessages = [];
 
-        // Iterar sobre cada registro y unir los arreglos validationTxt
-        foreach ($filingInvoices as $invoice) {
-            // Decodificar el campo validationTxt de JSON a un arreglo
-            $validationTxtArray = json_decode($invoice->validationTxt, true);
+        // Definir las validaciones
+        $validations = [
+            ['key' => 'validationXml', 'type' => 'XML'],
+            ['key' => 'validationTxt', 'type' => 'TXT'],
+            // Agrega más objetos de validación aquí según sea necesario
+        ];
 
-            // Unir el arreglo decodificado al arreglo combinado
-            $combinedValidationTxt = array_merge($combinedValidationTxt, $validationTxtArray);
+        // Iterar sobre cada validación
+        foreach ($fileInvoices as $fileInvoice) {
+            foreach ($validations as $validation) {
+                if (isset($fileInvoice[$validation['key']])) {
+                    $parsedData = json_decode($fileInvoice[$validation['key']], true);
+                    foreach ($parsedData as $message) {
+                        $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
+                        $errorMessages[] = $message; // Agregar el mensaje al array de errorMessages
+                    }
+                }
+            }
         }
 
-        return $combinedValidationTxt;
+        return $errorMessages;
     }
 
 }

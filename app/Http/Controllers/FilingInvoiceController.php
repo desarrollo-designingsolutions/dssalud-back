@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Filing\StatusFillingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
+use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Http\Resources\Filing\FilingInvoiceListResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
@@ -13,6 +14,7 @@ use App\Repositories\UserRepository;
 use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FilingInvoiceController extends Controller
 {
@@ -151,7 +153,7 @@ class FilingInvoiceController extends Controller
                     $filing_invoice->validationXml = null;
                 } else {
                     $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
-                    $filing_invoice->validationXml = json_encode($infoValidation);
+                    $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
                 }
 
                 // Guardar el estado de la factura y validar el estado del filing
@@ -181,14 +183,35 @@ class FilingInvoiceController extends Controller
         });
     }
 
-    function getFilingInvoiceValidationTxt($filingInvoicesId)
+    public function showErrorsValidation($filingInvoicesId)
     {
         return $this->execute(function () use ($filingInvoicesId) {
-            $filingInvoice = $this->filingInvoiceRepository->find($filingInvoicesId, select: ["id", "validationTxt"]);
+
+            // Obtener los mensajes de errores de las validaciones
+            $errorMessages = $this->filingInvoiceRepository->getValidationsErrorMessages($filingInvoicesId);
 
             return [
                 'code' => 200,
-                'data' => json_decode($filingInvoice->validationTxt),
+                'errorMessages' => $errorMessages
+            ];
+        });
+    }
+
+    public function excelErrorsValidation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            // Obtener los mensajes de errores de las validaciones
+            $data = $this->filingInvoiceRepository->getValidationsErrorMessages($request->input('id'));
+
+            $excel = Excel::raw(new FilingInvoiceExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
             ];
         });
     }

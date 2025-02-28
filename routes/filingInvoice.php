@@ -19,6 +19,9 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::post('/filingInvoice/uploadXml', [FilingInvoiceController::class, 'uploadXml']);
 
-    Route::post('/filingInvoice/getFilingInvoiceValidationTxt/{filingInvoicesId}', [FilingInvoiceController::class, 'getFilingInvoiceValidationTxt']);
+    Route::get('/filingInvoice/showErrorsValidation/{filingInvoicesId}', [FilingInvoiceController::class, 'showErrorsValidation']);
+
+    Route::post('/filingInvoice/excelErrorsValidation', [FilingInvoiceController::class, 'excelErrorsValidation']);
+
 
 });

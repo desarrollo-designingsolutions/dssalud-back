@@ -130,6 +130,34 @@ class FilingInvoiceRepository extends BaseRepository
 
     public function validInvoiceNumbers($filing_id)
     {
-        return  $this->model->where("filing_id", $filing_id)->pluck("invoice_number")->toArray();
+        return $this->model->where("filing_id", $filing_id)->pluck("invoice_number")->toArray();
+    }
+
+    function getValidationsErrorMessages($id)
+    {
+        $data = $this->model::find($id);
+
+        // Inicializar un array para almacenar los mensajes de error
+        $errorMessages = [];
+
+        // Definir las validaciones
+        $validations = [
+            ['key' => 'validationXml', 'type' => 'XML'],
+            ['key' => 'validationTxt', 'type' => 'TXT'],
+            // Agrega más objetos de validación aquí según sea necesario
+        ];
+
+        // Iterar sobre cada validación
+        foreach ($validations as $validation) {
+            if (isset($data[$validation['key']])) {
+                $parsedData = json_decode($data[$validation['key']], true);
+                foreach ($parsedData as $message) {
+                    $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
+                    $errorMessages[] = $message; // Agregar el mensaje al array de errorMessages
+                }
+            }
+        }
+
+        return $errorMessages;
     }
 }

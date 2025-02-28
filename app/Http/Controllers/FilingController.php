@@ -8,6 +8,7 @@ use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
+use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
@@ -457,16 +458,33 @@ class FilingController extends Controller
         }, 202);
     }
 
-    public function getAllValidationTxt($filing_id)
+    public function getAllValidation($filing_id)
     {
         return $this->execute(function () use ($filing_id) {
             // Consultar todos los registros que coincidan con el filing_id
-            $data = $this->filingRepository->getAllFilingValidationsTxt($filing_id);
+            $errorMessages = $this->filingRepository->getAllValidation($filing_id);
 
             return [
                 'code' => 200,
-                'message' => "Se obtuvieron los datos de validación Xml correctamente",
-                'data' => $data
+                'errorMessages' => $errorMessages
+            ];
+        });
+    }
+
+    public function excelAllValidation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            // Obtener los mensajes de errores de las validaciones
+            $data = $this->filingRepository->getAllValidation($request->input('id'));
+
+            $excel = Excel::raw(new FilingInvoiceExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
             ];
         });
     }

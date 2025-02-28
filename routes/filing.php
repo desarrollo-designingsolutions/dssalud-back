@@ -36,6 +36,7 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::post('/filing/saveDataModalXmlMasiveFiles', [FilingController::class, 'saveDataModalXmlMasiveFiles']);
 
-    Route::post('/filing/getAllValidationTxt/{id}', [FilingController::class, 'getAllValidationTxt']);
+    Route::get('/filing/getAllValidation/{id}', [FilingController::class, 'getAllValidation']);
 
+    Route::post('/filing/excelAllValidation', [FilingController::class, 'excelAllValidation']);
 });
