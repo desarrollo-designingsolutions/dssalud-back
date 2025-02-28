@@ -12,6 +12,8 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/filing/showData/{id}', [FilingController::class, 'showData']);
+
     Route::post('/filing/uploadZip', [FilingController::class, 'uploadZip']);
 
     Route::post('/filing/showErrorsValidation', [FilingController::class, 'showErrorsValidation']);
@@ -31,5 +33,4 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     Route::get('/filing/{id}/getDataModalXMLMasiveFiles', [FilingController::class, 'getDataModalXMLMasiveFiles']);
 
     Route::post('/filing/saveDataModalXMLMasiveFiles', [FilingController::class, 'saveDataModalXMLMasiveFiles']);
-
 });

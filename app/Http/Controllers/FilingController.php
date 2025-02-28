@@ -8,6 +8,7 @@ use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
+use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
@@ -36,25 +37,32 @@ class FilingController extends Controller
         protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
-    public function uploadZip(Request $request)
+    public function showData($id)
+    {
+        return $this->execute(function () use ($id) {
+            $data = $this->filingRepository->find($id,select:["id","type"]);
+
+            return  $data;
+        });
+    }
+
+    public function uploadZip(FilingUploadZipRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
 
+            $id = $request->input("id",null);
             $company_id = $request->input("company_id");
             $user_id = $request->input("user_id");
             $type = TypeFilingEnum::RADICATION_OLD;
 
             //guardo el registro en la bd
             $filing = $this->filingRepository->store([
+                'id' =>  $id,
                 'company_id' =>  $company_id,
                 'user_id' => $user_id,
                 'type' => $type,
                 'status' => StatusFilingEnum::IN_PROCESS,
-
             ]);
-
-            //guardo temporalmente el valor en redis
-            // $this->tempFilingService->saveTemporaryData($filing->id, ["filing" => $filing]);
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
@@ -129,6 +137,7 @@ class FilingController extends Controller
         return $this->runTransaction(function () use ($request) {
 
             $filing_id = $request->input("filing_id");
+            $contract_id = $request->input("contract_id");
 
             $filing = $this->filingRepository->find($filing_id);
 
@@ -140,7 +149,7 @@ class FilingController extends Controller
             $filing = $this->filingRepository->store([
                 "id" => $filing_id,
                 "sumVr" => $sumVr,
-                "contract_id" => $request->input("contract_id"),
+                "contract_id" => $contract_id,
             ]);
 
             //tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
@@ -391,7 +400,7 @@ class FilingController extends Controller
             $filing_id = $request->input('filing_id');
 
             // Validar parámetros requeridos
-            if (!$company_id || !$third_nit|| !$filing_id) {
+            if (!$company_id || !$third_nit || !$filing_id) {
                 return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
             }
 
