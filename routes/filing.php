@@ -22,6 +22,8 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::delete('/filing/delete/{id}', [FilingController::class, 'delete']);
 
+    Route::get('/filing/updateValidationTxt/{id}', [FilingController::class, 'updateValidationTxt']);
+
     Route::post('/filing/updateContract', [FilingController::class, 'updateContract']);
 
     Route::get('/filing/{id}/getDataModalSupportMasiveFiles', [FilingController::class, 'getDataModalSupportMasiveFiles']);

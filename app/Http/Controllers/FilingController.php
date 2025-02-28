@@ -22,6 +22,7 @@ use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -36,13 +37,12 @@ class FilingController extends Controller
         protected TemporaryFilingService $tempFilingService,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
-    ) {
-    }
+    ) {}
 
     public function showData($id)
     {
         return $this->execute(function () use ($id) {
-            $data = $this->filingRepository->find($id,select:["id","type"]);
+            $data = $this->filingRepository->find($id, select: ["id", "type", "contract_id", "validationTxt"]);
 
             return  $data;
         });
@@ -52,7 +52,7 @@ class FilingController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
-            $id = $request->input("id",null);
+            $id = $request->input("id", null);
             $company_id = $request->input("company_id");
             $user_id = $request->input("user_id");
             $type = TypeFilingEnum::RADICATION_OLD;
@@ -134,6 +134,19 @@ class FilingController extends Controller
         });
     }
 
+    public function updateValidationTxt($id)
+    {
+        return $this->runTransaction(function () use ($id) {
+
+            $this->filingRepository->changeState($id, null, "validationTxt");
+
+            return [
+                'code' => 200,
+                'message' => "Registro actualizado con éxito.",
+            ];
+        });
+    }
+
     public function updateContract(Request $request)
     {
         return $this->runTransaction(function () use ($request) {
@@ -147,15 +160,13 @@ class FilingController extends Controller
             $jsonSuccessfullInvoices = $validationTxt["jsonSuccessfullInvoices"];
             $errorMessages = collect($validationTxt["errorMessages"]);
 
-            unset($validationTxt["errorMessages"]);
-
             $sumVr = sumVrServicioRips($jsonSuccessfullInvoices);
 
             $filing = $this->filingRepository->store([
                 "id" => $filing_id,
                 "sumVr" => $sumVr,
                 "contract_id" => $contract_id,
-                "validationTxt" => json_encode($validationTxt),
+                "validationTxt" => null,
             ]);
 
             //tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
@@ -295,7 +306,7 @@ class FilingController extends Controller
                     $fileCount,
                     $finalPath,
                     $data
-                )->onQueue('filingSupport');
+                );
 
                 FilingInvoiceRowUpdated::dispatch($invoice->id);
             }
@@ -434,7 +445,7 @@ class FilingController extends Controller
                     'channel' => "filingXml.{$filing_id}",
                 ];
 
-                ProcessMassXmlUpload::dispatch($data)->onQueue('filingXml');
+                ProcessMassXmlUpload::dispatch($data);
             }
 
             return [
@@ -465,5 +476,4 @@ class FilingController extends Controller
 
         return $combinedValidationTxt;
     }
-
 }
