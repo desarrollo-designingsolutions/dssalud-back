@@ -25,13 +25,14 @@ class FilingInvoiceController extends Controller
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected CompanyRepository $companyRepository,
-    ) {}
+    ) {
+    }
 
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
     {
         return $this->execute(function () use ($request, $invoiceId) {
-            $filingInvoice = $this->filingInvoiceRepository->find($invoiceId,select:["id","invoice_number"]);
+            $filingInvoice = $this->filingInvoiceRepository->find($invoiceId, select: ["id", "invoice_number"]);
 
             $getPaginatedDataRedis = getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
 
@@ -165,6 +166,30 @@ class FilingInvoiceController extends Controller
                     'data' => ['validationXml' => json_encode($infoValidation)],
                 ];
             }
+        });
+    }
+
+    public function filingInvoicesId($filingInvoicesId)
+    {
+        return $this->execute(function () use ($filingInvoicesId) {
+            $filingInvoice = $this->filingInvoiceRepository->find($filingInvoicesId);
+
+            return [
+                'code' => 200,
+                'data' => $filingInvoice,
+            ];
+        });
+    }
+
+    function getFilingInvoiceValidationTxt($filingInvoicesId)
+    {
+        return $this->execute(function () use ($filingInvoicesId) {
+            $filingInvoice = $this->filingInvoiceRepository->find($filingInvoicesId, select: ["id", "validationTxt"]);
+
+            return [
+                'code' => 200,
+                'data' => json_decode($filingInvoice->validationTxt),
+            ];
         });
     }
 }

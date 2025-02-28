@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Filing;
+use App\Models\FilingInvoice;
 
 class FilingRepository extends BaseRepository
 {
@@ -111,5 +112,24 @@ class FilingRepository extends BaseRepository
         ];
     }
 
+    function getAllFilingValidationsTxt($filing_id)
+    {
+        // Consultar todos los registros que coincidan con el filing_id
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->select('validationTxt')->whereNotNull('validationTxt')->get();
+
+        // Inicializar un arreglo vacío para almacenar todos los validationTxt
+        $combinedValidationTxt = [];
+
+        // Iterar sobre cada registro y unir los arreglos validationTxt
+        foreach ($filingInvoices as $invoice) {
+            // Decodificar el campo validationTxt de JSON a un arreglo
+            $validationTxtArray = json_decode($invoice->validationTxt, true);
+
+            // Unir el arreglo decodificado al arreglo combinado
+            $combinedValidationTxt = array_merge($combinedValidationTxt, $validationTxtArray);
+        }
+
+        return $combinedValidationTxt;
+    }
 
 }
