@@ -25,6 +25,31 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             // CompanySeeder::class,
             UserSeeder::class,
+
+
+
+
+           //TO VALIDATIONS
+
+           Cie10Seeder::class,
+           CupsRipsSeeder::class,
+           GrupoServicioSeeder::class,
+
+           IpsCodHabilitacionSeeder::class,
+           IpsCodHabilitacionSeeder2::class,
+           IpsCodHabilitacionSeeder3::class,
+           IpsCodHabilitacionSeeder4::class,
+
+           IpsNoRepsSeeder::class,
+           LstSiNoSeeder::class,
+
+           MunicipioSeeder::class,
+           PaisSeeder::class,
+           ServicioSeeder::class,
+           TipoMedicamentoPosVersion2Seeder::class,
+
+           ZonaVersion2Seeder::class,
+
         ]);
 
         $client = new ClientRepository();
