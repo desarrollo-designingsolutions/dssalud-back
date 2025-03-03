@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -16,8 +16,8 @@ class FilingInvoice extends Model
     use HasUuids, SoftDeletes, Searchable;
 
     protected $casts = [
-        'status' => StatusFillingInvoiceEnum::class,
-        'status_xml' => StatusFillingInvoiceEnum::class,
+        'status' => StatusFilingInvoiceEnum::class,
+        'status_xml' => StatusFilingInvoiceEnum::class,
     ];
 
     public static function boot()

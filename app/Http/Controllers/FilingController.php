@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Filing\StatusFilingEnum;
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingProgressEvent;
@@ -11,6 +11,7 @@ use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
+use App\Http\Resources\Filing\FilingListResource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
@@ -41,6 +42,24 @@ class FilingController extends Controller
         protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
+    public function list(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            $filings = $this->filingRepository->list($request->all(), withCount: ['filingInvoicePreRadicated']);
+            $listRips = FilingListResource::collection($filings);
+
+            return [
+                'code' => 200,
+                'tableData' => $listRips,
+                'lastPage' => $filings->lastPage(),
+                'totalData' => $filings->total(),
+                'totalPage' => $filings->perPage(),
+                'currentPage' => $filings->currentPage(),
+            ];
+        });
+    }
+
     public function showData($id)
     {
         return $this->execute(function () use ($id) {
@@ -57,7 +76,7 @@ class FilingController extends Controller
             $id = $request->input("id", null);
             $company_id = $request->input("company_id");
             $user_id = $request->input("user_id");
-            $type = TypeFilingEnum::RADICATION_OLD;
+            $type = TypeFilingEnum::FILING_TYPE_001;
 
             //guardo el registro en la bd
             $filing = $this->filingRepository->store([
@@ -192,8 +211,8 @@ class FilingController extends Controller
                 // Guardamos la factura y obtenemos el modelo creado
                 $filingInvoice = $this->filingInvoiceRepository->store([
                     "filing_id" => $filing_id,
-                    "status" => StatusFillingInvoiceEnum::PRE_FILING,
-                    "status_xml" => StatusFillingInvoiceEnum::NOT_VALIDATED,
+                    "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                    "status_xml" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
                     "sumVr" => sumVrServicio($invoice),
                     "date" => Carbon::now(),
                     "invoice_number" => $invoice["numFactura"],
@@ -327,7 +346,7 @@ class FilingController extends Controller
                 'id' =>  $id,
                 'company_id' => $company_id,
                 'user_id' => $user_id,
-                'type' => TypeFilingEnum::RADICATION_2275,
+                'type' => TypeFilingEnum::FILING_TYPE_002,
                 'status' => StatusFilingEnum::FILING_EST_001,
             ]);
 
@@ -473,6 +492,32 @@ class FilingController extends Controller
             return [
                 'code' => 200,
                 'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function getCountFilingInvoicePreRadicated($id)
+    {
+        return $this->runTransaction(function () use ($id) {
+
+            $countData = $this->filingRepository->getCountFilingInvoicePreRadicated($id);
+
+            return [
+                'code' => 200,
+                'countData' => $countData
+            ];
+        });
+    }
+
+    public function changeStatusFilingInvoicePreRadicated($id)
+    {
+        return $this->runTransaction(function () use ($id) {
+
+            $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($id);
+
+            return [
+                'code' => 200,
+                'data' => $data
             ];
         });
     }

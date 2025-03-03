@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Filing;
 
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdatedNow;
 use App\Repositories\FilingInvoiceRepository;
 use Illuminate\Bus\Queueable;
@@ -55,10 +55,10 @@ class ProcessMassXmlUpload implements ShouldQueue
             Storage::disk('public')->move($this->data['tempPath'], $finalPath);
 
             $filing_invoice->path_xml = $finalPath;
-            $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
+            $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
             $filing_invoice->validationXml = null;
         } else {
-            $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
+            $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_005;
             $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
         }
 

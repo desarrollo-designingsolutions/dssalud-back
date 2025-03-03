@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
 
-class FilingInvoiceListResource extends JsonResource
+class FilingListResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,22 +17,13 @@ class FilingInvoiceListResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'invoice_number' => $this->invoice_number,
-            'users_count' => $this->users_count,
-            'files_count' => $this->files_count,
-            'case_number' => $this->case_number,
-            'date' => Carbon::parse($this->date)->format("d-m-Y H:s"),
+            'contract_name' => $this->contract?->name,
+            'type' => $this->type->description(),
             'sumVr' => formatNumber($this->sumVr),
-
             'status' => $this->status,
+            'filing_invoice_pre_radicated_count' => $this->filing_invoice_pre_radicated_count,
             'status_backgroundColor' => $this->status->backgroundColor(),
             'status_description' => $this->status->description(),
-
-            'status_xml' => $this->status_xml,
-            'status_xml_backgroundColor' => $this->status_xml->backgroundColor(),
-            'status_xml_description' => $this->status_xml->description(),
-
-            'path_xml' => $this->path_xml,
         ];
     }
 }

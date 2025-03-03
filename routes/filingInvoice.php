@@ -23,5 +23,5 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::post('/filingInvoice/excelErrorsValidation', [FilingInvoiceController::class, 'excelErrorsValidation']);
 
-
+    Route::delete('/filingInvoice/delete/{invoiceId}', [FilingInvoiceController::class, 'delete']);
 });

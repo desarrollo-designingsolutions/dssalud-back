@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Models\FilingInvoice;
 
 class FilingInvoiceRepository extends BaseRepository
@@ -121,6 +122,9 @@ class FilingInvoiceRepository extends BaseRepository
             if (!empty($request['status'])) {
                 $query->where("status", $request['status']);
             }
+            if (!empty($request['filing_id'])) {
+                $query->where("filing_id", $request['filing_id']);
+            }
         });
 
         $data = $data->count();
@@ -130,7 +134,7 @@ class FilingInvoiceRepository extends BaseRepository
 
     public function validInvoiceNumbers($filing_id)
     {
-        return $this->model->where("filing_id", $filing_id)->pluck("invoice_number")->toArray();
+        return $this->model->where("filing_id", $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->pluck("invoice_number")->toArray();
     }
 
     function getValidationsErrorMessages($id)

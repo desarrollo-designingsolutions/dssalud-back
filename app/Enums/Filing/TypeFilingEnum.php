@@ -10,8 +10,8 @@ enum TypeFilingEnum: string
     use AttributableEnum;
 
     #[Description('Radicación antigua')]
-    case RADICATION_OLD = 'RADICATION_OLD';
+    case FILING_TYPE_001 = 'FILING_TYPE_001';
 
     #[Description('Radicación 2275')]
-    case RADICATION_2275 = 'RADICATION_2275';
+    case FILING_TYPE_002 = 'FILING_TYPE_002';
 }

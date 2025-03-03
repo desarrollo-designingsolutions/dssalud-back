@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
@@ -74,9 +75,9 @@ class QueryController extends Controller
         ]);
     }
 
-    public function selectStatusFillingInvoiceEnum(Request $request)
+    public function selectStatusFilingInvoiceEnum(Request $request)
     {
-        $status = StatusFillingInvoiceEnum::cases();
+        $status = StatusFilingInvoiceEnum::cases();
 
         $status = collect($status)->map(function ($item) {
             return [
@@ -87,17 +88,17 @@ class QueryController extends Controller
 
         return [
             'code' => 200,
-            'statusFillingInvoiceEnum_arrayInfo' => $status->values(),
-            'statusFillingInvoiceEnum_countLinks' => 1,
+            'statusFilingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusFilingInvoiceEnum_countLinks' => 1,
         ];
     }
-    public function selectStatusXmlFillingInvoiceEnum(Request $request)
+    public function selectStatusXmlFilingInvoiceEnum(Request $request)
     {
-        $status = StatusFillingInvoiceEnum::cases();
+        $status = StatusFilingInvoiceEnum::cases();
 
 
         $status = array_filter($status, function ($case)  {
-            return in_array($case->value, ["VALIDATED", "NOT_VALIDATED"]);
+            return in_array($case->value, ["FILINGINVOICE_EST_003", "FILINGINVOICE_EST_004"]);
         });
 
 
@@ -111,8 +112,8 @@ class QueryController extends Controller
 
         return [
             'code' => 200,
-            'statusXmlFillingInvoiceEnum_arrayInfo' => $status->values(),
-            'statusXmlFillingInvoiceEnum_countLinks' => 1,
+            'statusXmlFilingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusXmlFilingInvoiceEnum_countLinks' => 1,
         ];
     }
 
@@ -140,6 +141,28 @@ class QueryController extends Controller
             'code' => 200,
             'supportType_arrayInfo' => $dataSupportType,
             'supportType_countLinks' => $supportType->lastPage(),
+        ];
+    }
+
+    public function selectStatusFilingEnumOpenAndClosed(Request $request)
+    {
+        $status = StatusFilingEnum::cases();
+
+        $status = array_filter($status, function ($case)  {
+            return in_array($case->value, ["FILING_EST_008", "FILING_EST_009"]);
+        });
+
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'code' => 200,
+            'statusFilingEnumOpenAndClosed_arrayInfo' => $status->values(),
+            'statusFilingEnumOpenAndClosed_countLinks' => 1,
         ];
     }
 }

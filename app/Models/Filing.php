@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Filing\StatusFilingEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Enums\StatusInvoiceEnum;
 use App\Traits\Searchable;
@@ -18,7 +19,7 @@ class Filing extends Model
 
     protected $casts = [
         'type' => TypeFilingEnum::class,
-        'state' => StatusFilingEnum::class,
+        'status' => StatusFilingEnum::class,
     ];
 
     public function company(): BelongsTo
@@ -26,10 +27,20 @@ class Filing extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
 
     public function filingInvoice(): HasMany
     {
         return $this->hasMany(FilingInvoice::class, 'filing_id');
+    }
+
+    public function filingInvoicePreRadicated(): HasMany
+    {
+        return $this->hasMany(FilingInvoice::class, 'filing_id')->where("status", StatusFilingInvoiceEnum::FILINGINVOICE_EST_001);
     }
 
 

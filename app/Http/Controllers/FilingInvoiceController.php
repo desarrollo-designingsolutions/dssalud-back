@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
-use App\Http\Resources\Filing\FilingInvoiceListResource;
+use App\Http\Resources\FilingInvoice\FilingInvoiceListResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
@@ -79,7 +79,7 @@ class FilingInvoiceController extends Controller
                     "title" => "Facturas Pre-radicadas",
                     "value" => $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFillingInvoiceEnum::PRE_FILING
+                        "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001
                     ]),
                     "isHover" => false,
                     "to" => null,
@@ -90,7 +90,7 @@ class FilingInvoiceController extends Controller
                     "title" => "Facturas Radicadas",
                     "value" => $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFillingInvoiceEnum::FILING
+                        "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002
                     ]),
                     "isHover" => false,
                     "to" => null,
@@ -149,10 +149,10 @@ class FilingInvoiceController extends Controller
 
                     $path = $file->storeAs($finalPath, $finalName, 'public');
                     $filing_invoice->path_xml = $path;
-                    $filing_invoice->status_xml = StatusFillingInvoiceEnum::VALIDATED;
+                    $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
                     $filing_invoice->validationXml = null;
                 } else {
-                    $filing_invoice->status_xml = StatusFillingInvoiceEnum::ERROR_XML;
+                    $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_005;
                     $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
                 }
 
@@ -212,6 +212,24 @@ class FilingInvoiceController extends Controller
             return [
                 'code' => 200,
                 'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function delete($id)
+    {
+        return $this->runTransaction(function () use ($id) {
+
+            $data = $this->filingInvoiceRepository->find($id);
+
+            if ($data) {
+                $data->delete();
+            }
+
+
+            return [
+                'code' => 200,
+                'message' => "Registro eliminado con éxito.",
             ];
         });
     }

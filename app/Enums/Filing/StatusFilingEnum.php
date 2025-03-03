@@ -31,17 +31,21 @@ enum StatusFilingEnum: string
     #[BackgroundColor('success')]
     case FILING_EST_005 = 'FILING_EST_005';
 
-
-    //PENDING
-
-
-    //ERROR
     #[Description('Error Zip')]
-    #[BackgroundColor('')]
-    case FILING_EST_006 = 'ERROR_ZIP';
+    #[BackgroundColor('error')]
+    case FILING_EST_006 = 'FILING_EST_006';
 
     #[Description('Error Txt')]
-    #[BackgroundColor('')]
-    case FILING_EST_007 = 'ERROR_TXT';
+    #[BackgroundColor('error')]
+    case FILING_EST_007 = 'FILING_EST_007';
+
+
+    #[Description('Abierto')]
+    #[BackgroundColor('success')]
+    case FILING_EST_008 = 'FILING_EST_008';
+
+    #[Description('Cerrado')]
+    #[BackgroundColor('warning')]
+    case FILING_EST_009 = 'FILING_EST_009';
 
 }

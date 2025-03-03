@@ -12,6 +12,8 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/filing/list', [FilingController::class, 'list']);
+
     Route::get('/filing/showData/{id}', [FilingController::class, 'showData']);
 
     Route::post('/filing/uploadZip', [FilingController::class, 'uploadZip']);
@@ -39,4 +41,9 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     Route::get('/filing/getAllValidation/{id}', [FilingController::class, 'getAllValidation']);
 
     Route::post('/filing/excelAllValidation', [FilingController::class, 'excelAllValidation']);
+
+    Route::get('/filing/getCountFilingInvoicePreRadicated/{id}', [FilingController::class, 'getCountFilingInvoicePreRadicated']);
+
+    Route::get('/filing/changeStatusFilingInvoicePreRadicated/{id}', [FilingController::class, 'changeStatusFilingInvoicePreRadicated']);
+
 });

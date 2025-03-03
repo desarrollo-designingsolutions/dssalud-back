@@ -88,15 +88,8 @@ class ProcessFilingValidationTxt implements ShouldQueue
         $filing->save();
 
         if (!empty($this->lastProcess)) {
-
-            if (count($contenido_json2['errorMessages']) > 0) {
-                // Si tiene errores de validación, cambio el estado
-                $status = StatusFilingEnum::FILING_EST_007;
-                //mostrar la modal errores
-            } else {
-                $status = StatusFilingEnum::FILING_EST_002;
-                //modal no hay errores
-            }
+            // Ya sea que tenga errores txt o no, la radicacion queda abierta
+            $status = StatusFilingEnum::FILING_EST_008;
 
             $filing->status = $status;
             $filing->save();

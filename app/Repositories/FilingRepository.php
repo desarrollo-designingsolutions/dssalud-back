@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Models\Filing;
 use App\Models\FilingInvoice;
 
@@ -12,9 +13,9 @@ class FilingRepository extends BaseRepository
         parent::__construct($modelo);
     }
 
-    public function list($request = [], $with = [], $idsAllowed = [])
+    public function list($request = [], $with = [], $withCount = [])
     {
-        $data = $this->model->with($with)->where(function ($query) {})
+        $data = $this->model->with($with)->withCount($withCount)->where(function ($query) {})
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
@@ -136,4 +137,18 @@ class FilingRepository extends BaseRepository
         return $errorMessages;
     }
 
+    public function getCountFilingInvoicePreRadicated($filing_id)
+    {
+        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->count();
+        return $fileInvoices;
+    }
+
+    public function changeStatusFilingInvoicePreRadicated($filing_id)
+    {
+        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->update([
+            'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002
+        ]);
+
+        return $fileInvoices;
+    }
 }

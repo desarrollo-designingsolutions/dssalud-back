@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\Filing\StatusFilingEnum;
-use App\Enums\Filing\StatusFillingInvoiceEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Models\Filing;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -137,31 +137,31 @@ function validateFilingStatus($filing_id)
 
     // Verificar si todas las facturas están en status 'prefiling' y status_xml 'no validated'
     $allPrefilingAndNoValidated = $invoices->every(function ($invoice) {
-        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING && $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+        return $invoice->status === StatusFilingInvoiceEnum::FILINGINVOICE_EST_001 && $invoice->status_xml === StatusFilingInvoiceEnum::FILINGINVOICE_EST_004;
     });
 
     // Verificar si al menos una factura está en status 'prefiling' o status_xml 'no validated'
     $anyPrefilingOrNoValidated = $invoices->contains(function ($invoice) {
-        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING || $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+        return $invoice->status === StatusFilingInvoiceEnum::FILINGINVOICE_EST_001 || $invoice->status_xml === StatusFilingInvoiceEnum::FILINGINVOICE_EST_004;
     });
 
     // Verificar si todas las facturas están en status 'filing' y al menos una tiene status_xml 'no validated'
     $allFilingAndAnyNoValidated = $invoices->every(function ($invoice) {
-        return $invoice->status === StatusFillingInvoiceEnum::FILING;
+        return $invoice->status === StatusFilingInvoiceEnum::FILINGINVOICE_EST_002;
     }) && $invoices->contains(function ($invoice) {
-        return $invoice->status_xml === StatusFillingInvoiceEnum::NOT_VALIDATED;
+        return $invoice->status_xml === StatusFilingInvoiceEnum::FILINGINVOICE_EST_004;
     });
 
     // Verificar si al menos una factura está en status 'prefiling' y todas tienen status_xml 'validated'
     $anyPrefilingAndAllValidated = $invoices->contains(function ($invoice) {
-        return $invoice->status === StatusFillingInvoiceEnum::PRE_FILING;
+        return $invoice->status === StatusFilingInvoiceEnum::FILINGINVOICE_EST_001;
     }) && $invoices->every(function ($invoice) {
-        return $invoice->status_xml === StatusFillingInvoiceEnum::VALIDATED;
+        return $invoice->status_xml === StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
     });
 
     // Verificar si todas las facturas están en status 'filing' y todas tienen status_xml 'validated'
     $allFilingAndAllValidated = $invoices->every(function ($invoice) {
-        return $invoice->status === StatusFillingInvoiceEnum::FILING && $invoice->status_xml === StatusFillingInvoiceEnum::VALIDATED;
+        return $invoice->status === StatusFilingInvoiceEnum::FILINGINVOICE_EST_002 && $invoice->status_xml === StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
     });
 
     if ($allPrefilingAndNoValidated || $anyPrefilingOrNoValidated || $allFilingAndAnyNoValidated || $anyPrefilingAndAllValidated) {
