@@ -91,10 +91,10 @@ class ProcessFilingValidationTxt implements ShouldQueue
 
             if (count($contenido_json2['errorMessages']) > 0) {
                 // Si tiene errores de validación, cambio el estado
-                $status = StatusFilingEnum::ERROR_TXT;
+                $status = StatusFilingEnum::FILING_EST_007;
                 //mostrar la modal errores
             } else {
-                $status = StatusFilingEnum::PROCESSED;
+                $status = StatusFilingEnum::FILING_EST_002;
                 //modal no hay errores
             }
 

@@ -26,7 +26,6 @@ class ProcessMassXmlUpload implements ShouldQueue
 
     public function handle(FilingInvoiceRepository $filingInvoiceRepository)
     {
-
         // Construcción dinámica del finalPath con el nombre del archivo
         $separatedName = explode('_', $this->data['originalName']);
         list($nit, $numFac, $name) = $separatedName;
@@ -63,6 +62,8 @@ class ProcessMassXmlUpload implements ShouldQueue
             $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
         }
 
+        $filing_invoice->save();
+
         FilingInvoiceRowUpdatedNow::dispatch($filing_invoice->id);
 
         // Calcular progreso global basado en archivos procesados
@@ -80,6 +81,6 @@ class ProcessMassXmlUpload implements ShouldQueue
         if (isset($this->data["channel"])) {
             ProgressCircular::dispatch($this->data["channel"], $progress);
         }
-        sleep(25);
+        sleep(3);
     }
 }

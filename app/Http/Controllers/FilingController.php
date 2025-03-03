@@ -65,7 +65,7 @@ class FilingController extends Controller
                 'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => $type,
-                'status' => StatusFilingEnum::IN_PROCESS,
+                'status' => StatusFilingEnum::FILING_EST_001,
             ]);
 
             if ($request->hasFile('archiveZip')) {
@@ -328,7 +328,7 @@ class FilingController extends Controller
                 'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => TypeFilingEnum::RADICATION_2275,
-                'status' => StatusFilingEnum::IN_PROCESS,
+                'status' => StatusFilingEnum::FILING_EST_001,
             ]);
 
             $processedFiles = 0;

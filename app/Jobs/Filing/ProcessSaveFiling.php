@@ -37,7 +37,7 @@ class ProcessSaveFiling implements ShouldQueue
         $filing = Filing::find($this->filingId);
 
         //cambio el estado a "PROCESSED"
-        $filing->status = StatusFilingEnum::PROCESSED;
+        $filing->status = StatusFilingEnum::FILING_EST_002;
         $filing->save();
 
         FilingFinishProcessJob::dispatch($filing->id);

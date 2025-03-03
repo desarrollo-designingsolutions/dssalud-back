@@ -42,8 +42,6 @@ class FilingInvoiceRowUpdatedNow implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        \Log::error("FilingInvoiceRowUpdatedNow:" . $this->filingInvoice->id);
-
         // Aquí puedes incluir los datos que deseas enviar al frontend
 
         return [

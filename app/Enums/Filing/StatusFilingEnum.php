@@ -13,23 +13,23 @@ enum StatusFilingEnum: string
     //OTROS
     #[Description('En proceso')]
     #[BackgroundColor('warning')]
-    case IN_PROCESS = 'IN PROCESS';
+    case FILING_EST_001 = 'FILING_EST_001';
 
     #[Description('Procesado')]
     #[BackgroundColor('success')]
-    case PROCESSED = 'PROCESSED';
+    case FILING_EST_002 = 'FILING_EST_002';
 
     #[Description('Radicado')]
     #[BackgroundColor('success')]
-    case FILING = 'FILING';
+    case FILING_EST_003 = 'FILING_EST_003';
 
     #[Description('Incompleto')]
     #[BackgroundColor('error')]
-    case INCOMPLETE = 'INCOMPLETE';
+    case FILING_EST_004 = 'FILING_EST_004';
 
     #[Description('Completo')]
     #[BackgroundColor('success')]
-    case COMPLETED = 'COMPLETED';
+    case FILING_EST_005 = 'FILING_EST_005';
 
 
     //PENDING
@@ -38,10 +38,10 @@ enum StatusFilingEnum: string
     //ERROR
     #[Description('Error Zip')]
     #[BackgroundColor('')]
-    case ERROR_ZIP = 'ERROR_ZIP';
+    case FILING_EST_006 = 'ERROR_ZIP';
 
     #[Description('Error Txt')]
     #[BackgroundColor('')]
-    case ERROR_TXT = 'ERROR_TXT';
+    case FILING_EST_007 = 'ERROR_TXT';
 
 }

@@ -57,7 +57,7 @@ class ProcessFilingValidationZip implements ShouldQueue
 
             //actualizo la informacion de la validacion zip en el registro
             $filing->validationZip = json_encode($infoValidation);
-            $filing->status = StatusFilingEnum::ERROR_ZIP;
+            $filing->status = StatusFilingEnum::FILING_EST_006;
             $filing->save();
 
             //eliminamos el archivo zip subido

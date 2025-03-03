@@ -165,9 +165,9 @@ function validateFilingStatus($filing_id)
     });
 
     if ($allPrefilingAndNoValidated || $anyPrefilingOrNoValidated || $allFilingAndAnyNoValidated || $anyPrefilingAndAllValidated) {
-        $filing->status = StatusFilingEnum::INCOMPLETE;
+        $filing->status = StatusFilingEnum::FILING_EST_004;
     } elseif ($allFilingAndAllValidated) {
-        $filing->status = StatusFilingEnum::COMPLETED;
+        $filing->status = StatusFilingEnum::FILING_EST_005;
     }
 
     $filing->save();
