@@ -98,7 +98,7 @@ class FilingInvoiceController extends Controller
                 [
                     "icon" => "tabler-checkup-list",
                     "color" => "success",
-                    "title" => "Valor pre-radicado",
+                    "title" => "Valor facturas",
                     "value" => formatNumber($filing->sumVr),
                     "isHover" => false,
                     "to" => null,
