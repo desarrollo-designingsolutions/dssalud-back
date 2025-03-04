@@ -18,5 +18,6 @@ class RoutesApi
         'routes/audit.php',
         'routes/files.php',
         'routes/notification.php',
+        'routes/fileViewer.php',
     ];
 }
