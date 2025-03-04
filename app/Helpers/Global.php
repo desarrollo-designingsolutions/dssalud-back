@@ -1,9 +1,11 @@
 <?php
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
-function filterComponent($query, $request, $model = null)
+function filterComponent($query, &$request, $model = null)
 {
     if (isset($request["searchQuery"]) && is_string($request["searchQuery"])) {
         $request["searchQuery"] = json_decode($request["searchQuery"], 1);
@@ -172,18 +174,18 @@ function generatePastelColor($opacity = 1.0)
 function truncate_text($text, $maxLength = 15)
 {
     if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength).'...';
+        return substr($text, 0, $maxLength) . '...';
     }
 
     return $text;
 }
 
-function formatNumber($number)
+function formatNumber($number, $currency_symbol = '$ ')
 {
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, 2, ',', '.');
 
-    return $formattedNumber;
+    return $currency_symbol . $formattedNumber;
 }
 
 
@@ -206,4 +208,259 @@ function formattedElement($element)
     }
 
     return $element;
+}
+
+function getStatus($value = null, $types = [], $compareByKey = 'value', $returnByKey = 'title', $typeSearch = '===')
+{
+    if ($value !== null) {
+        // Convierte el valor a minúsculas para comparación insensible
+        $inputValue = strtolower($value);
+
+        foreach ($types as $state) {
+            // Convierte el valor de la base a minúsculas para comparación insensible
+            $stateValue = strtolower($state[$compareByKey]);
+
+            // Compara de acuerdo con el tipo de búsqueda
+            switch ($typeSearch) {
+                case '===': // Compara estrictamente
+                    if ($stateValue === $inputValue) {
+                        return $state[$returnByKey];
+                    }
+                    break;
+
+                case '==': // Compara con igualdad
+                    if ($stateValue == $inputValue) {
+                        return $state[$returnByKey];
+                    }
+                    break;
+
+                case '!=': // Compara desigualdad
+                    if ($stateValue != $inputValue) {
+                        return $state[$returnByKey];
+                    }
+                    break;
+
+                case 'LIKE': // Compara con LIKE (útil para búsquedas parciales)
+                    if (strpos($stateValue, $inputValue) !== false) {
+                        return $state[$returnByKey];
+                    }
+                    break;
+
+                default:
+                    // Si el tipo de comparación no es reconocido, usa estrictamente
+                    if ($stateValue === $inputValue) {
+                        return $state[$returnByKey];
+                    }
+                    break;
+            }
+        }
+    }
+
+    return $types; // Retornar el array si no se encuentra el valor
+}
+
+// Función de comparación personalizada
+function customSort($a, $b, $sortingRules)
+{
+    foreach ($sortingRules as $rule) {
+        $field = $rule['field'];
+
+        if (!isset($a[$field]) || !isset($b[$field])) {
+            // Verificar si el campo existe en ambos elementos para evitar errores
+            continue;
+        }
+
+        $valueA = $a[$field];
+        $valueB = $b[$field];
+
+        // Comparar valores según el tipo de dato
+        switch ($rule['type']) {
+            case 'asc':
+                if ($valueA != $valueB) {
+                    $comparisonResult = customCompare($valueA, $valueB);
+                    if ($comparisonResult !== 0) {
+                        return $comparisonResult;
+                    }
+                }
+                break;
+
+            case 'desc':
+                if ($valueA != $valueB) {
+                    $comparisonResult = customCompare($valueB, $valueA);
+                    if ($comparisonResult !== 0) {
+                        return $comparisonResult;
+                    }
+                }
+                break;
+
+                // Puedes agregar más tipos de ordenación según sea necesario
+
+            default:
+                // Si el tipo de orden no es 'asc' ni 'desc', no realizar ninguna comparación
+                break;
+        }
+    }
+
+    return 0;
+}
+// Función auxiliar para realizar la comparación de valores según el tipo de dato
+function customCompare($valueA, $valueB)
+{
+    if (is_numeric($valueA) && is_numeric($valueB)) {
+        return $valueA - $valueB;  // Comparación numérica para valores numéricos
+    } elseif (is_string($valueA) && is_string($valueB)) {
+        return strcmp($valueA, $valueB);  // Comparación de cadenas para valores de texto
+    } elseif (strtotime($valueA) !== false && strtotime($valueB) !== false) {
+        // Comparación de fechas si ambos valores son fechas válidas
+        return strtotime($valueA) - strtotime($valueB);
+    } else {
+        // Otros tipos de datos o comparaciones personalizadas según sea necesario
+        // Puedes agregar más lógica aquí según los tipos de datos que esperas manejar
+        return 0;
+    }
+}
+
+
+
+function getStatusRips($value = null, $compareByKey = 'value', $returnByKey = 'title', $typeSearch = '===')
+{
+    $types = [
+        ['value' => "Incomplete", 'title' => 'Incompleto'],
+        ['value' => "Completed_for_us", 'title' => 'Completado por nosotros'],
+        ['value' => "Completed_for_them", 'title' => 'Completado por ellos'],
+        ['value' => "Not Sent", 'title' => 'Sin Enviar'],
+        ['value' => "In process", 'title' => 'En proceso'],
+        ['value' => "Zip Error", 'title' => 'Error Zip'],
+        ['value' => "Excel Error", 'title' => 'Error Excel'],
+        ['value' => "Processed", 'title' => 'Procesado'],
+        ['value' => "Not Validated", 'title' => 'Sin Validar'],
+        ['value' => "Pending XML", 'title' => 'Pendiente de XML'],
+        ['value' => "Pending Excel", 'title' => 'Pendiente de EXCEL'],
+        ['value' => "Validated", 'title' => 'Validado'],
+        ['value' => "Nit Error", 'title' => 'Error Nit'],
+    ];
+
+    return getStatus($value, $types, $compareByKey, $returnByKey, $typeSearch);
+}
+function getTypeRips($value = null, $compareByKey = 'value', $returnByKey = 'title', $typeSearch = '===')
+{
+    $types = [
+        ['value' => "Automatic", 'title' => 'Automatico'],
+        ['value' => "Manual", 'title' => 'Manual'],
+    ];
+
+    return getStatus($value, $types, $compareByKey, $returnByKey, $typeSearch);
+}
+
+
+function transformDate($fecha)
+{
+    $dateTime = DateTime::createFromFormat('d/m/Y', $fecha);
+    if ($dateTime) {
+        return $dateTime->format('Y-m-d');
+    }
+    $dateTime = DateTime::createFromFormat('Y/m/d', $fecha);
+    if ($dateTime) {
+        return $dateTime->format('Y-m-d');
+    }
+    $dateTime = DateTime::createFromFormat('d-m-Y', $fecha);
+    if ($dateTime) {
+        return $dateTime->format('Y-m-d');
+    }
+
+    return $fecha;
+}
+
+function transformCodZonaTerritorialResidencia($value)
+{
+    $newValue = $value;
+
+    if (Str::upper($value) == 'R') {
+        $newValue = '01';
+    }
+    if (Str::upper($value) == 'U') {
+        $newValue = '02';
+    }
+
+    return $newValue;
+}
+
+function convertNullToEmptyString(array $data): array
+{
+    return array_map(function ($item) {
+        return $item === null ? '' : $item;
+    }, $data);
+}
+
+
+function parseDate($fecha)
+{
+    // Separar la fecha en día, mes y año
+    $dateType = explode('-', $fecha); // Si no funciona con '/', probar con '-'
+    if (!isset($dateType[0]) || !isset($dateType[1]) || !isset($dateType[2])) {
+        [$dia, $mes, $ano] = explode('/', $fecha);
+    }
+
+    // Crear un objeto DateTime con la fecha en el formato original
+    $datetime = DateTime::createFromFormat('d/m/Y', $fecha);
+    if (!$datetime) {
+        $datetime = DateTime::createFromFormat('d-m-Y', $fecha); // Si no funciona con '/', probar con '-'
+
+        if (!$datetime) {
+            $datetime = DateTime::createFromFormat('Y-m-d', $fecha); // Si no funciona con '/', probar con '-'
+
+            if (!$datetime) {
+                $datetime = DateTime::createFromFormat('Y/m/d', $fecha); // Si no funciona con '/', probar con '-'
+            }
+        }
+    }
+
+    // Formatear la fecha como 'Y-m-d'
+    // $fecha = $datetime->format('Y-m-d');
+
+    $fecha = Carbon::parse($datetime);
+
+    // Validar el valor devuelto
+    if (!$fecha) {
+        throw new Exception('Formato de fecha invalido1');
+    }
+
+    // Validar el valor devuelto por DateTime::createFromFormat()
+    if (!$datetime) {
+        throw new Exception('Formato de fecha invalido2');
+    }
+
+    return $fecha;
+}
+
+
+/**
+ * Normaliza los datos JSON para que siempre sean un arreglo
+ */
+function normalizeJsonData($data): array
+{
+    if (is_null($data) || empty($data)) {
+        return [];
+    }
+
+    // Si es un arreglo asociativo (una sola), lo envolvemos en un arreglo
+    if (is_array($data) && !isNumericArray($data)) {
+        return [$data];
+    }
+
+    // Si ya es un arreglo numérico, lo devolvemos tal cual
+    return is_array($data) ? $data : [$data];
+}
+
+/**
+ * Verifica si un arreglo tiene claves numéricas (es una lista)
+ */
+function isNumericArray(array $array): bool
+{
+    if (empty($array)) {
+        return true; // Un arreglo vacío lo consideramos numérico por conveniencia
+    }
+
+    $keys = array_keys($array);
+    return array_keys($keys) === $keys; // Comprueba si las claves son 0, 1, 2...
 }

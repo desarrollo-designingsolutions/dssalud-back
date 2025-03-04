@@ -54,6 +54,6 @@ class ProcessSendEmail implements ShouldQueue
         $mailService->setEmailTo($emails);
         $mailService->setView($this->view);
         $mailService->setSubject($this->subject);
-        $mailService->sendMessage($this->data);
+        // $mailService->sendMessage($this->data);
     }
 }

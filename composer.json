@@ -15,6 +15,7 @@
         "maatwebsite/excel": "^3.1",
         "owen-it/laravel-auditing": "^13.6",
         "predis/predis": "2.0",
+        "saloonphp/xml-wrangler": "^1.4",
         "spatie/laravel-permission": "^6.9",
         "stancl/tenancy": "^3.8"
     },
@@ -35,7 +36,14 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helpers/Global.php"
+            "app/Helpers/Global.php",
+            "app/Helpers/Filing/GenerateValues.php",
+            "app/Helpers/Rips/FileRequired.php",
+            "app/Helpers/Rips/Validations.php",
+            "app/Helpers/Rips/ValidationsTxt.php",
+            "app/Helpers/Rips/ValidationsExcel.php",
+            "app/Helpers/Rips/ValidationsXml.php",
+            "app/Helpers/Rips/ValidationsRipsManual.php"
         ]
     },
     "autoload-dev": {

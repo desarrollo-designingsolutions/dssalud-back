@@ -137,10 +137,26 @@ class BaseRepository
     public function clearNull($array)
     {
         foreach ($array as $clave => $valor) {
-            // if ($valor === 'null' || $valor === "undefined" || $valor === 0 || $valor === "0") {
-            if ($valor === 'null' || $valor === "undefined") {
-                $array[$clave] = null; // Asignar null en lugar de 'null'
+
+            $element = $valor;
+            switch ($valor) {
+                case 'null':
+                    $element = null;
+                    break;
+                case 'true':
+                    $element = true;
+                    break;
+                case 'false':
+                    $element = false;
+                case 'undefined':
+                    $element = null;
+                    break;
+                default:
+                    // No es necesario hacer nada si el valor no coincide
+                    break;
             }
+            $array[$clave] = $element; // Asignar null en lugar de 'null'
+
         }
 
         return $array;
@@ -161,5 +177,4 @@ class BaseRepository
             $this->model->getConnection()->getDatabaseName(),
         ];
     }
-
 }

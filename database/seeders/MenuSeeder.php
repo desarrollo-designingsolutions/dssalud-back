@@ -54,6 +54,48 @@ class MenuSeeder extends Seeder
                 'father' => 3,
                 'requiredPermission' => 'menu.role',
             ],
+
+            [
+                'id' => 6,
+                'order' => 60,
+                'title' => 'Radicación',
+                'icon' => 'tabler-file-zip',
+                'requiredPermission' => 'menu.filing',
+            ],
+            [
+                'id' => 7,
+                'order' => 70,
+                'title' => 'Nueva Radicación',
+                'to' => 'Filing-New-Index',
+                'icon' => 'tabler-file-zip',
+                'requiredPermission' => 'filing.new.index',
+                'father' => 6,
+            ],
+            // [
+            //     'id' => 6,
+            //     'order' => 60,
+            //     'title' => 'Rips',
+            //     'icon' => 'tabler-file-zip',
+            //     'requiredPermission' => 'menu.rips',
+            // ],
+            // [
+            //     'id' => 7,
+            //     'order' => 70,
+            //     'title' => 'Automático',
+            //     'to' => 'Rips-Automatic-List',
+            //     'icon' => 'tabler-file-zip',
+            //     'requiredPermission' => 'rips.automatic.list',
+            //     'father' => 6,
+            // ],
+            // [
+            //     'id' => 8,
+            //     'order' => 80,
+            //     'title' => 'Manual',
+            //     'to' => 'Rips-Manual-List',
+            //     'icon' => 'tabler-file-zip',
+            //     'requiredPermission' => 'rips.manual.list',
+            //     'father' => 6,
+            // ],
         ];
 
         // Inicializar la barra de progreso

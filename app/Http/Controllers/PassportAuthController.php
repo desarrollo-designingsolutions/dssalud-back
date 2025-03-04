@@ -103,6 +103,11 @@ class PassportAuthController extends Controller
             $obj['rol_name'] = $user->role?->description;
             $obj['role_id'] = $user->role_id;
             $obj['company_id'] = $user->company_id;
+            $obj['third'] = [
+                "id" => $user->third?->id,
+                "nit" => $user->third?->nit,
+                "name" => $user->third?->name,
+            ];
             $obj['photo'] = $user->photo;
             $obj['first_time'] = $user->first_time;
 

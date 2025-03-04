@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Filing\StatusFilingEnum;
+use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
+use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
 use App\Repositories\CityRepository;
+use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
 use App\Repositories\StateRepository;
+use App\Repositories\SupportTypeRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 
@@ -16,6 +22,8 @@ class QueryController extends Controller
         protected StateRepository $stateRepository,
         protected CityRepository $cityRepository,
         protected UserRepository $userRepository,
+        protected ContractRepository $contractRepository,
+        protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -67,17 +75,94 @@ class QueryController extends Controller
         ]);
     }
 
-    // public function selectInifiniteInsurance(Request $request)
-    // {
-    //     $request['status'] = 1;
-    //     $insurance = $this->insuranceRepository->list($request->all());
-    //     $dataInsurance = SelectInsuranceResource::collection($insurance);
+    public function selectStatusFilingInvoiceEnum(Request $request)
+    {
+        $status = StatusFilingInvoiceEnum::cases();
 
-    //     return [
-    //         'code' => 200,
-    //         'insurance_arrayInfo' => $dataInsurance,
-    //         'insurance_countLinks' => $insurance->lastPage(),
-    //     ];
-    // }
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
 
+        return [
+            'code' => 200,
+            'statusFilingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusFilingInvoiceEnum_countLinks' => 1,
+        ];
+    }
+    public function selectStatusXmlFilingInvoiceEnum(Request $request)
+    {
+        $status = StatusFilingInvoiceEnum::cases();
+
+
+        $status = array_filter($status, function ($case)  {
+            return in_array($case->value, ["FILINGINVOICE_EST_003", "FILINGINVOICE_EST_004"]);
+        });
+
+
+
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'code' => 200,
+            'statusXmlFilingInvoiceEnum_arrayInfo' => $status->values(),
+            'statusXmlFilingInvoiceEnum_countLinks' => 1,
+        ];
+    }
+
+
+    public function selectInfiniteContract(Request $request)
+    {
+        $request['status'] = 1;
+        $contract = $this->contractRepository->list($request->all());
+        $dataContract = ContractSelectInfiniteResource::collection($contract);
+
+        return [
+            'code' => 200,
+            'contract_arrayInfo' => $dataContract,
+            'contract_countLinks' => $contract->lastPage(),
+        ];
+    }
+
+    public function selectInfiniteSupportType(Request $request)
+    {
+        $request['status'] = 1;
+        $supportType = $this->supportTypeRepository->list($request->all());
+        $dataSupportType = SupportTypeSelectInfiniteResource::collection($supportType);
+
+        return [
+            'code' => 200,
+            'supportType_arrayInfo' => $dataSupportType,
+            'supportType_countLinks' => $supportType->lastPage(),
+        ];
+    }
+
+    public function selectStatusFilingEnumOpenAndClosed(Request $request)
+    {
+        $status = StatusFilingEnum::cases();
+
+        $status = array_filter($status, function ($case)  {
+            return in_array($case->value, ["FILING_EST_008", "FILING_EST_009"]);
+        });
+
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'code' => 200,
+            'statusFilingEnumOpenAndClosed_arrayInfo' => $status->values(),
+            'statusFilingEnumOpenAndClosed_countLinks' => 1,
+        ];
+    }
 }

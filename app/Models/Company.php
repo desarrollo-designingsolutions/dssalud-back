@@ -39,4 +39,9 @@ class Company extends Model
     {
         return $this->hasMany(User::class, 'company_id', 'id');
     }
+
+    public function nits()
+    {
+        return $this->hasMany(CompanyNit::class, 'company_id', 'id');
+    }
 }

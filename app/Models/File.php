@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class File extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, SoftDeletes, Searchable;
 
 
     public function fileable()
@@ -17,8 +18,13 @@ class File extends Model
         return $this->morphTo(__FUNCTION__, 'fileable_type', 'fileable_id');
     }
 
-    public function user()
+    // public function user()
+    // {
+    //     return $this->hasOne(User::class,"id","user_id");
+    // }
+
+    public function supportType()
     {
-        return $this->hasOne(User::class,"id","user_id");
+        return $this->belongsTo(SupportType::class);
     }
 }

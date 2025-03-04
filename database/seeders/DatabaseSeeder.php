@@ -6,7 +6,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Laravel\Passport\ClientRepository;
 
-
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -19,16 +18,39 @@ class DatabaseSeeder extends Seeder
         // 2. php artisan world:install
         // 3. php artisan world:seeder
 
+        // $this->call([
+        //     WorldTableSeeder::class,
+        //     MenuSeeder::class,
+        //     PermissionSeeder::class,
+        //     RoleSeeder::class,
+        //     // CompanySeeder::class,
+        //     UserSeeder::class,
 
-        $this->call([
-            WorldTableSeeder::class,
-            MenuSeeder::class,
-            PermissionSeeder::class,
-            RoleSeeder::class,
-            // CompanySeeder::class,
-            UserSeeder::class,
-        ]);
 
+
+
+        //    //TO VALIDATIONS
+
+        //    Cie10Seeder::class,
+        //    CupsRipsSeeder::class,
+        //    GrupoServicioSeeder::class,
+
+        //    IpsCodHabilitacionSeeder::class,
+        //    IpsCodHabilitacionSeeder2::class,
+        //    IpsCodHabilitacionSeeder3::class,
+        //    IpsCodHabilitacionSeeder4::class,
+
+        //    IpsNoRepsSeeder::class,
+        //    LstSiNoSeeder::class,
+
+        //    MunicipioSeeder::class,
+        //    PaisSeeder::class,
+        //    ServicioSeeder::class,
+        //    TipoMedicamentoPosVersion2Seeder::class,
+
+        //    ZonaVersion2Seeder::class,
+
+        // ]);
 
         $client = new ClientRepository();
 
