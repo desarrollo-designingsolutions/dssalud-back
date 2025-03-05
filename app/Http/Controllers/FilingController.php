@@ -25,8 +25,6 @@ use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 

@@ -6,7 +6,7 @@ class Constants
 {
     // Agrega más constantes según sea necesario
 
-    public const COMPANY_UUID = "23a0eb68-95b6-49c0-9ad3-0f60627bf220";
+    public const COMPANY_UUID = "9e5aec58-a962-4670-8188-b41c6d0149a3";
 
     public const ROLE_SUPERADMIN_UUID = "21626ff9-4940-4143-879a-0f75b46eadb7";
 
