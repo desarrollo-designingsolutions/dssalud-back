@@ -20,3 +20,5 @@ Route::post('/selectInfiniteSupportType', [QueryController::class, 'selectInfini
 Route::post('/selectStatusFilingEnumOpenAndClosed', [QueryController::class, 'selectStatusFilingEnumOpenAndClosed']);
 
 Route::post('/selectRoleTypeEnum', [QueryController::class, 'selectRoleTypeEnum']);
+
+Route::post('/selectInfiniteThird', [QueryController::class, 'selectInfiniteThird']);

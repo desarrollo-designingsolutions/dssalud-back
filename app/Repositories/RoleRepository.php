@@ -57,7 +57,7 @@ class RoleRepository extends BaseRepository
         return $data;
     }
 
-    public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
+    public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description', $fieldType = 'type')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
             if (!empty($request['idsAllowed'])) {
@@ -67,10 +67,11 @@ class RoleRepository extends BaseRepository
                 $query->where('company_id', $request['company_id']);
             }
             $query->where('viewable', '1');
-        })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
+        })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle, $fieldType) {
             $data = [
                 'value' => $value->$fieldValue,
                 'title' => $value->$fieldTitle,
+                'type' => $value->$fieldType,
             ];
 
             if (count($select) > 0) {

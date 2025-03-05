@@ -71,6 +71,14 @@ class MenuSeeder extends Seeder
                 'requiredPermission' => 'filing.new.index',
                 'father' => 6,
             ],
+            [
+                'id' => 8,
+                'order' => 80,
+                'title' => 'Auditoria Factura',
+                'to' => 'InvoiceAudit-List',
+                'icon' => 'tabler-file',
+                'requiredPermission' => 'invoiceAudit.list',
+            ],
         ];
 
         // Inicializar la barra de progreso

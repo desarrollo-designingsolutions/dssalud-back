@@ -22,5 +22,6 @@ class RoutesApi
         'routes/filing.php',
         'routes/filingInvoice.php',
         'routes/fileViewer.php',
+        'routes/invoiceAudit.php',
     ];
 }

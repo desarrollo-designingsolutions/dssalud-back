@@ -59,6 +59,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Módulo Radicación',
                 'menu_id' => 7,
             ],
+            [
+                'id' => 8,
+                'name' => 'invoiceAudit.list',
+                'description' => 'Visualizar Auditoria Factura',
+                'menu_id' => 8,
+            ],
         ];
 
         // Inicializar la barra de progreso

@@ -2,11 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\Third;
+use App\Models\InvoiceAudit;
 
-class ThirdRepository extends BaseRepository
+class InvoiceAuditRepository extends BaseRepository
 {
-    public function __construct(Third $modelo)
+    public function __construct(InvoiceAudit $modelo)
     {
         parent::__construct($modelo);
     }

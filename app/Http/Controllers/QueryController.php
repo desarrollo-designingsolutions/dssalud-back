@@ -8,11 +8,13 @@ use App\Enums\Role\RoleTypeEnum;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
+use App\Http\Resources\Third\ThirdSelectInfiniteResource;
 use App\Repositories\CityRepository;
 use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
 use App\Repositories\StateRepository;
 use App\Repositories\SupportTypeRepository;
+use App\Repositories\ThirdRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 
@@ -25,6 +27,7 @@ class QueryController extends Controller
         protected UserRepository $userRepository,
         protected ContractRepository $contractRepository,
         protected SupportTypeRepository $supportTypeRepository,
+        protected ThirdRepository $thirdRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -181,6 +184,19 @@ class QueryController extends Controller
         return [
             'roleTypeEnum_arrayInfo' => $types->values(),
             'roleTypeEnum_countLinks' => 1,
+        ];
+    }
+
+    public function selectInfiniteThird(Request $request)
+    {
+        $request['status'] = 1;
+        $third = $this->thirdRepository->list($request->all());
+        $dataThird = ThirdSelectInfiniteResource::collection($third);
+
+        return [
+            'code' => 200,
+            'third_arrayInfo' => $dataThird,
+            'third_countLinks' => $third->lastPage(),
         ];
     }
 }
