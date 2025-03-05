@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Enums\Role\RoleTypeEnum;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
@@ -163,6 +164,23 @@ class QueryController extends Controller
             'code' => 200,
             'statusFilingEnumOpenAndClosed_arrayInfo' => $status->values(),
             'statusFilingEnumOpenAndClosed_countLinks' => 1,
+        ];
+    }
+
+    public function selectRoleTypeEnum(Request $request)
+    {
+        $types = RoleTypeEnum::cases();
+
+        $types = collect($types)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'roleTypeEnum_arrayInfo' => $types->values(),
+            'roleTypeEnum_countLinks' => 1,
         ];
     }
 }

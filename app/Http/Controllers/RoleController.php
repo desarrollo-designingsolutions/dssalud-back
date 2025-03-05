@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role\RoleTypeEnum;
 use App\Http\Requests\Role\RoleStoreRequest;
 use App\Http\Resources\Role\MenuCheckBoxResource;
 use App\Http\Resources\Role\RoleFormResource;
@@ -19,7 +20,8 @@ class RoleController extends Controller
 
     public function __construct(
         protected RoleRepository $roleRepository,
-        protected MenuRepository $menuRepository
+        protected MenuRepository $menuRepository,
+        protected QueryController $queryController,
     ) {}
 
     public function index(Request $request)
@@ -49,8 +51,11 @@ class RoleController extends Controller
 
             $menus = MenuCheckBoxResource::collection($menus);
 
+            $roleTypes = $this->queryController->selectRoleTypeEnum(request());
+
             return [
                 'menus' => $menus,
+                ...$roleTypes,
             ];
         });
     }
@@ -68,10 +73,13 @@ class RoleController extends Controller
 
             $menus = MenuCheckBoxResource::collection($menus);
 
+            $roleTypes = $this->queryController->selectRoleTypeEnum(request());
+
             return [
                 'code' => 200,
                 'role' => new RoleFormResource($role),
                 'menus' => $menus,
+                ...$roleTypes,
             ];
         });
     }
@@ -80,7 +88,11 @@ class RoleController extends Controller
     {
         $transaction = $this->runTransaction(function () use ($request) {
 
-            $post = $request->except(['permissions']);
+            $post = $request->except(['permissions', 'type']);
+
+            $types = $request->input('type');
+
+             $post['type'] = implode(',', $types);
 
             do {
                 $nameRole = Str::random(10); // Genera un string aleatorio de 10 caracteres

@@ -19,6 +19,7 @@ class RoleFormResource extends JsonResource
             'description' => $this->description,
             'company_id' => $this->company_id,
             'permissions' => $this->permissions->pluck('id'),
+            'type' => $this->types,
         ];
     }
 }

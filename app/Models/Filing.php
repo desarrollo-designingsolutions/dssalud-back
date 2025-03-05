@@ -47,7 +47,7 @@ class Filing extends Model
     //contar facturas con xml validados
     public function getXmlCountValidateAttribute(): int
     {
-        return $this->filingInvoice()->where("status_xml", StatusInvoiceEnum::VALIDATED)->count() ?? 0;
+        return $this->filingInvoice()->where("status_xml", StatusFilingInvoiceEnum::FILINGINVOICE_EST_003)->count() ?? 0;
     }
 
 

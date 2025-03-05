@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoices', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('invoice_number');
-            $table->timestamps();
+        Schema::table('roles', function (Blueprint $table) {
+            $table->string('type')->nullable();
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoices');
+        Schema::table('roles', function (Blueprint $table) {
+            $table->dropColumn('type');
+        });
     }
 };

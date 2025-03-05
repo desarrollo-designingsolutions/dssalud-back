@@ -1070,176 +1070,176 @@ function processData($build, $groupedData)
     return $buildData;
 }
 
-function validateNullFileJsonToExcel($ripId, $invoices)
-{
-    try {
-        DB::beginTransaction();
-        $arrayInvoice = [];
-        // return $invoices;
+// function validateNullFileJsonToExcel($ripId, $invoices)
+// {
+//     try {
+//         DB::beginTransaction();
+//         $arrayInvoice = [];
+//         // return $invoices;
 
-        foreach ($invoices as $keyI => $invoice) {
-            $requiredFields = ['TipoNota', 'numNota'];
+//         foreach ($invoices as $keyI => $invoice) {
+//             $requiredFields = ['TipoNota', 'numNota'];
 
-            // Verificar si faltan campos requeridos
-            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $invoice, $invoice['numFactura']);
+//             // Verificar si faltan campos requeridos
+//             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $invoice, $invoice['numFactura']);
 
-            if ($exitoInvoice && count($invoice['usuarios']) > 0) {
+//             if ($exitoInvoice && count($invoice['usuarios']) > 0) {
 
-                //USUARIOS
-                foreach ($invoice['usuarios'] as $keyU => $user) {
-                    $requiredFields = ['fechaNacimiento', 'codPaisResidencia', 'codZonaTerritorialResidencia', 'incapacidad', 'consecutivo'];
-                    // Verificar si faltan campos requeridos
-                    $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $user, $invoice['numFactura']);
-                    if (!$exitoInvoice) {
-                        break;
-                    }
+//                 //USUARIOS
+//                 foreach ($invoice['usuarios'] as $keyU => $user) {
+//                     $requiredFields = ['fechaNacimiento', 'codPaisResidencia', 'codZonaTerritorialResidencia', 'incapacidad', 'consecutivo'];
+//                     // Verificar si faltan campos requeridos
+//                     $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $user, $invoice['numFactura']);
+//                     if (!$exitoInvoice) {
+//                         break;
+//                     }
 
-                    //CONSULTAS
-                    if (isset($user['servicios']['consultas']) && count($user['servicios']['consultas']) > 0) {
-                        foreach ($user['servicios']['consultas'] as $keyC => $value) {
-                            $requiredFields = ['modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //CONSULTAS
+//                     if (isset($user['servicios']['consultas']) && count($user['servicios']['consultas']) > 0) {
+//                         foreach ($user['servicios']['consultas'] as $keyC => $value) {
+//                             $requiredFields = ['modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //PROCEDIMIENTOS
-                    if (isset($user['servicios']['procedimientos']) && count($user['servicios']['procedimientos']) > 0) {
-                        // dd($user["servicios"]["procedimientos"]);
-                        foreach ($user['servicios']['procedimientos'] as $keyP => $value) {
-                            $requiredFields = ['idMIPRES', 'modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //PROCEDIMIENTOS
+//                     if (isset($user['servicios']['procedimientos']) && count($user['servicios']['procedimientos']) > 0) {
+//                         // dd($user["servicios"]["procedimientos"]);
+//                         foreach ($user['servicios']['procedimientos'] as $keyP => $value) {
+//                             $requiredFields = ['idMIPRES', 'modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //MEDICAMENTOS
-                    if (isset($user['servicios']['medicamentos']) && count($user['servicios']['medicamentos']) > 0) {
-                        foreach ($user['servicios']['medicamentos'] as $keyM => $value) {
-                            $requiredFields = ['idMIPRES', 'fechaDispensAdmon', 'codDiagnosticoPrincipal', 'codDiagnosticoRelacionado', 'formaFarmaceutica', 'unidadMinDispensa', 'diasTratamiento', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'vrUnitMedicamento', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //MEDICAMENTOS
+//                     if (isset($user['servicios']['medicamentos']) && count($user['servicios']['medicamentos']) > 0) {
+//                         foreach ($user['servicios']['medicamentos'] as $keyM => $value) {
+//                             $requiredFields = ['idMIPRES', 'fechaDispensAdmon', 'codDiagnosticoPrincipal', 'codDiagnosticoRelacionado', 'formaFarmaceutica', 'unidadMinDispensa', 'diasTratamiento', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'vrUnitMedicamento', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //URGENCIAS
-                    if (isset($user['servicios']['urgencias']) && count($user['servicios']['urgencias']) > 0) {
-                        foreach ($user['servicios']['urgencias'] as $keyU => $value) {
-                            $requiredFields = ['consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //URGENCIAS
+//                     if (isset($user['servicios']['urgencias']) && count($user['servicios']['urgencias']) > 0) {
+//                         foreach ($user['servicios']['urgencias'] as $keyU => $value) {
+//                             $requiredFields = ['consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //OTROS SERVICIOS
-                    if (isset($user['servicios']['otrosServicios']) && count($user['servicios']['otrosServicios']) > 0) {
-                        foreach ($user['servicios']['otrosServicios'] as $keyOS => $value) {
-                            $requiredFields = ['idMIPRES', 'fechaSuministroTecnologia', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //OTROS SERVICIOS
+//                     if (isset($user['servicios']['otrosServicios']) && count($user['servicios']['otrosServicios']) > 0) {
+//                         foreach ($user['servicios']['otrosServicios'] as $keyOS => $value) {
+//                             $requiredFields = ['idMIPRES', 'fechaSuministroTecnologia', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //HOSPITALIZACION
-                    if (isset($user['servicios']['hospitalizacion']) && count($user['servicios']['hospitalizacion']) > 0) {
-                        foreach ($user['servicios']['hospitalizacion'] as $keyH => $value) {
-                            $requiredFields = ['consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
+//                     //HOSPITALIZACION
+//                     if (isset($user['servicios']['hospitalizacion']) && count($user['servicios']['hospitalizacion']) > 0) {
+//                         foreach ($user['servicios']['hospitalizacion'] as $keyH => $value) {
+//                             $requiredFields = ['consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
 
-                    //RECIEN NACIDOS
-                    if (isset($user['servicios']['recienNacidos']) && count($user['servicios']['recienNacidos']) > 0) {
-                        foreach ($user['servicios']['recienNacidos'] as $keyRN => $value) {
-                            $requiredFields = ['tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'numConsultasCPrenatal', 'consecutivo'];
-                            // Verificar si faltan campos requeridos
-                            $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
-                            if (!$exitoInvoice) {
-                                break;
-                            }
-                        }
-                        if (!$exitoInvoice) {
-                            break;
-                        }
-                    }
-                }
-            }
+//                     //RECIEN NACIDOS
+//                     if (isset($user['servicios']['recienNacidos']) && count($user['servicios']['recienNacidos']) > 0) {
+//                         foreach ($user['servicios']['recienNacidos'] as $keyRN => $value) {
+//                             $requiredFields = ['tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'numConsultasCPrenatal', 'consecutivo'];
+//                             // Verificar si faltan campos requeridos
+//                             $exitoInvoice = verifyNullData($arrayInvoice, $requiredFields, $value, $invoice['numFactura']);
+//                             if (!$exitoInvoice) {
+//                                 break;
+//                             }
+//                         }
+//                         if (!$exitoInvoice) {
+//                             break;
+//                         }
+//                     }
+//                 }
+//             }
 
-            if ($exitoInvoice) {
-                $modelInvoice = Invoice::where(function ($query) use ($ripId, $invoice) {
-                    $query->where('rip_id', $ripId);
-                    $query->where('num_invoice', $invoice['numFactura']);
-                })->first();
-                $modelInvoice->status = "Completed";
-                $modelInvoice->save();
-            }
-        }
+//             if ($exitoInvoice) {
+//                 $modelInvoice = Invoice::where(function ($query) use ($ripId, $invoice) {
+//                     $query->where('rip_id', $ripId);
+//                     $query->where('num_invoice', $invoice['numFactura']);
+//                 })->first();
+//                 $modelInvoice->status = "Completed";
+//                 $modelInvoice->save();
+//             }
+//         }
 
-        //esto es para revisar si alguna factura tiene el estado completo ps el rips pasa a completo tambien y si no a pendiente por xml
-        $model_rips = Rip::with(['invoices'])->find($ripId);
+//         //esto es para revisar si alguna factura tiene el estado completo ps el rips pasa a completo tambien y si no a pendiente por xml
+//         $model_rips = Rip::with(['invoices'])->find($ripId);
 
-        $filteredInvoices = $model_rips->invoices->filter(function ($invoice) {
-            return $invoice->status == "Completed";
-        });
-        $filteredInvoicesStatus1 = $model_rips->invoices->filter(function ($invoice) {
-            return $invoice->status == "Incomplete";
-        });
+//         $filteredInvoices = $model_rips->invoices->filter(function ($invoice) {
+//             return $invoice->status == "Completed";
+//         });
+//         $filteredInvoicesStatus1 = $model_rips->invoices->filter(function ($invoice) {
+//             return $invoice->status == "Incomplete";
+//         });
 
-        $allInvoicesWithState2 = $filteredInvoices->count() === $model_rips->invoices->count();
+//         $allInvoicesWithState2 = $filteredInvoices->count() === $model_rips->invoices->count();
 
-        if ($allInvoicesWithState2 && $model_rips->status != "Pending XML") {
-            $model_rips->status = "Pending XML";
-        }
+//         if ($allInvoicesWithState2 && $model_rips->status != "Pending XML") {
+//             $model_rips->status = "Pending XML";
+//         }
 
-        $model_rips->successfulInvoices = $filteredInvoices->count();
-        $model_rips->failedInvoices = $filteredInvoicesStatus1->count();
-        $model_rips->save();
+//         $model_rips->successfulInvoices = $filteredInvoices->count();
+//         $model_rips->failedInvoices = $filteredInvoicesStatus1->count();
+//         $model_rips->save();
 
-        DB::commit();
+//         DB::commit();
 
-        return $arrayInvoice;
-    } catch (\Throwable $th) {
-        DB::rollBack();
-        throw $th;
-    }
-}
+//         return $arrayInvoice;
+//     } catch (\Throwable $th) {
+//         DB::rollBack();
+//         throw $th;
+//     }
+// }
 
 function verifyNullData(&$array, $requiredFields, $value, $element1)
 {
@@ -1256,116 +1256,116 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
     return $exito;
 }
 
-function validateRipsStatus($ripId)
-{
-    $rip = Rip::find($ripId);
+// function validateRipsStatus($ripId)
+// {
+//     $rip = Rip::find($ripId);
 
-    $invoices = $rip->invoices;
+//     $invoices = $rip->invoices;
 
-    if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
-        $rip->status = StatusRipsEnum::COMPLETED;
-        $rip->save();
+//     if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
+//         $rip->status = StatusRipsEnum::COMPLETED;
+//         $rip->save();
 
-        return;
-    }
-
-
-    if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() > 0) {
-        $rip->status = StatusRipsEnum::ERROR_XML;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::COMPLETED)->count() < $invoices->count()) {
-        $rip->status = StatusRipsEnum::INCOMPLETE;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
-        $rip->status = StatusRipsEnum::PENDING_EXCEL;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::ERROR_EXCEL)->count() > 0 && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
-        $rip->status = StatusRipsEnum::ERROR_EXCEL;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() > 0 && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
-        $rip->status = StatusRipsEnum::PENDING_EXCEL;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::ERROR_EXCEL)->count() > 0) {
-        $rip->status = StatusRipsEnum::ERROR_EXCEL;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() === 0) {
-        $rip->status = StatusRipsEnum::PENDING_XML;
-        $rip->save();
-
-        return;
-    }
-
-    if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() > 0) {
-        $rip->status = StatusRipsEnum::ERROR_XML;
-        $rip->save();
-
-        return;
-    }
-
-    $rip->status = StatusRipsEnum::COMPLETED;
-    $rip->save();
-}
-
-function generateDataJsonAndExcel($ripId, $type = "automatic")
-{
-    //generamos el archivo xls con los campos que faltan para todas las facturas
-
-    $rip = Rip::find($ripId);
-
-    $jsonContents = [];
-
-    if (isset($rip->invoices) && count($rip->invoices) > 0) {
-        foreach ($rip->invoices as $key => $value) {
-            $jsonContents[] = openFileJson($value->path_json);
-        }
-    }
+//         return;
+//     }
 
 
-    //EXCELES
-    $nameFile = 'rips_' . $rip->numeration . '.xlsx';
-    $rutaXls = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
-    Excel::store(new RipXlsExport($jsonContents), $rutaXls, 'public', \Maatwebsite\Excel\Excel::XLSX);
+//     if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() > 0) {
+//         $rip->status = StatusRipsEnum::ERROR_XML;
+//         $rip->save();
 
-    //JSONS
-    // Nombre del archivo en el sistema de archivos
-    $nameFile = 'rips_' . $rip->numeration . '.json';
-    // Guarda el JSON en el sistema de archivos usando el disco predeterminado (puede configurar otros discos si es necesario)
-    $ruta = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
-    Storage::disk('public')->put($ruta, json_encode(array_values($jsonContents))); //guardo el archivo
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::COMPLETED)->count() < $invoices->count()) {
+//         $rip->status = StatusRipsEnum::INCOMPLETE;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
+//         $rip->status = StatusRipsEnum::PENDING_EXCEL;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::ERROR_EXCEL)->count() > 0 && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
+//         $rip->status = StatusRipsEnum::ERROR_EXCEL;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() > 0 && $invoices->where('xml_status_id', StatusInvoiceEnum::VALIDATED)->count() === $invoices->count()) {
+//         $rip->status = StatusRipsEnum::PENDING_EXCEL;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::ERROR_EXCEL)->count() > 0) {
+//         $rip->status = StatusRipsEnum::ERROR_EXCEL;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() === 0) {
+//         $rip->status = StatusRipsEnum::PENDING_XML;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     if ($invoices->where('status', StatusInvoiceEnum::COMPLETED)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() > 0) {
+//         $rip->status = StatusRipsEnum::ERROR_XML;
+//         $rip->save();
+
+//         return;
+//     }
+
+//     $rip->status = StatusRipsEnum::COMPLETED;
+//     $rip->save();
+// }
+
+// function generateDataJsonAndExcel($ripId, $type = "automatic")
+// {
+//     //generamos el archivo xls con los campos que faltan para todas las facturas
+
+//     $rip = Rip::find($ripId);
+
+//     $jsonContents = [];
+
+//     if (isset($rip->invoices) && count($rip->invoices) > 0) {
+//         foreach ($rip->invoices as $key => $value) {
+//             $jsonContents[] = openFileJson($value->path_json);
+//         }
+//     }
 
 
-    //actualizo el registro del rip en la bd
-    // return sumVrServicioRips($jsonContents);
-    $rip->sumVr = sumVrServicioRips($jsonContents); //actualizo la suma de los campos vrservicio de los servicios
-    $rip->path_json = $ruta;
-    $rip->path_xls = $rutaXls;
-    $rip->save(); //actualizo el registro
-    //guardo el registro del rip en la bd
-}
+//     //EXCELES
+//     $nameFile = 'rips_' . $rip->numeration . '.xlsx';
+//     $rutaXls = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
+//     Excel::store(new RipXlsExport($jsonContents), $rutaXls, 'public', \Maatwebsite\Excel\Excel::XLSX);
+
+//     //JSONS
+//     // Nombre del archivo en el sistema de archivos
+//     $nameFile = 'rips_' . $rip->numeration . '.json';
+//     // Guarda el JSON en el sistema de archivos usando el disco predeterminado (puede configurar otros discos si es necesario)
+//     $ruta = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
+//     Storage::disk('public')->put($ruta, json_encode(array_values($jsonContents))); //guardo el archivo
+
+
+//     //actualizo el registro del rip en la bd
+//     // return sumVrServicioRips($jsonContents);
+//     $rip->sumVr = sumVrServicioRips($jsonContents); //actualizo la suma de los campos vrservicio de los servicios
+//     $rip->path_json = $ruta;
+//     $rip->path_xls = $rutaXls;
+//     $rip->save(); //actualizo el registro
+//     //guardo el registro del rip en la bd
+// }
 
 //suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
 function sumVrServicioRips($invoices)
@@ -1378,85 +1378,85 @@ function sumVrServicioRips($invoices)
 }
 
 
-function saveReloadDataRips($data, $updateAll = true)
-{
-    DB::beginTransaction();
+// function saveReloadDataRips($data, $updateAll = true)
+// {
+//     DB::beginTransaction();
 
-    $rip = Rip::find($data['ripId']);
-    //actualizo el registro del rip en la bd
-    // $rip->sumVr = sumVrServicioRips($data['arraySuccessfulInvoices']);
-    // $rip->save();
+//     $rip = Rip::find($data['ripId']);
+//     //actualizo el registro del rip en la bd
+//     // $rip->sumVr = sumVrServicioRips($data['arraySuccessfulInvoices']);
+//     // $rip->save();
 
-    if ($updateAll) {
-        //tomamos y hacemos un clon exacto de $arraySuccessfulInvoices
-        $buildDataFinal = json_decode(collect($data['arraySuccessfulInvoices']), 1);
-        //le quitamos al array  general las key que no se deben guardar en json
-        eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
+//     if ($updateAll) {
+//         //tomamos y hacemos un clon exacto de $arraySuccessfulInvoices
+//         $buildDataFinal = json_decode(collect($data['arraySuccessfulInvoices']), 1);
+//         //le quitamos al array  general las key que no se deben guardar en json
+//         eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
 
-        //quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
-        deleteFieldsPerzonalizedJson($buildDataFinal);
+//         //quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
+//         deleteFieldsPerzonalizedJson($buildDataFinal);
 
-        //se guarda el xls nuevo, el json general y los json independientes en la bd
-        saveReloadDataInvoices($rip->id, $buildDataFinal);
-    }
-    DB::commit();
-}
+//         //se guarda el xls nuevo, el json general y los json independientes en la bd
+//         saveReloadDataInvoices($rip->id, $buildDataFinal);
+//     }
+//     DB::commit();
+// }
 
-function saveReloadDataInvoices($ripId, $jsonData)
-{
-    //se generan los json y excel por cada factura y se guarda el archivo
-    foreach ($jsonData as $key => $value) {
-        saveReloadDataInvoice($ripId, $value);
-    }
-}
+// function saveReloadDataInvoices($ripId, $jsonData)
+// {
+//     //se generan los json y excel por cada factura y se guarda el archivo
+//     foreach ($jsonData as $key => $value) {
+//         saveReloadDataInvoice($ripId, $value);
+//     }
+// }
 
-function saveReloadDataInvoice($ripId, $valueJsonInvoice, $counErrorExcelInvoice = 'funciona')
-{
-    $rip = Rip::find($ripId);
+// function saveReloadDataInvoice($ripId, $valueJsonInvoice, $counErrorExcelInvoice = 'funciona')
+// {
+//     $rip = Rip::find($ripId);
 
-    $nameFile = $valueJsonInvoice['numFactura'] . '.xlsx';
-    $routeXls = 'companies/company_' . $rip->company_id . '/rips/automatic/rip_' . $rip->numeration . '/invoices/' . $valueJsonInvoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
-    Excel::store(new RipXlsExport([$valueJsonInvoice]), $routeXls, 'public', \Maatwebsite\Excel\Excel::XLSX);
+//     $nameFile = $valueJsonInvoice['numFactura'] . '.xlsx';
+//     $routeXls = 'companies/company_' . $rip->company_id . '/rips/automatic/rip_' . $rip->numeration . '/invoices/' . $valueJsonInvoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
+//     Excel::store(new RipXlsExport([$valueJsonInvoice]), $routeXls, 'public', \Maatwebsite\Excel\Excel::XLSX);
 
-    $nameFile = $valueJsonInvoice['numFactura'] . '.json';
-    $routeJson = 'companies/company_' . $rip->company_id . '/rips/automatic/rip_' . $rip->numeration . '/invoices/' . $valueJsonInvoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
-    Storage::disk('public')->put($routeJson, json_encode($valueJsonInvoice)); //guardo el archivo
+//     $nameFile = $valueJsonInvoice['numFactura'] . '.json';
+//     $routeJson = 'companies/company_' . $rip->company_id . '/rips/automatic/rip_' . $rip->numeration . '/invoices/' . $valueJsonInvoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
+//     Storage::disk('public')->put($routeJson, json_encode($valueJsonInvoice)); //guardo el archivo
 
-    //se guarda el registro en la BD tabla invoice
-    $invoice = Invoice::where(function ($query) use ($ripId, $valueJsonInvoice) {
-        $query->where('rip_id', $ripId);
-        $query->where('num_invoice', $valueJsonInvoice['numFactura']);
-    })->first();
+//     //se guarda el registro en la BD tabla invoice
+//     $invoice = Invoice::where(function ($query) use ($ripId, $valueJsonInvoice) {
+//         $query->where('rip_id', $ripId);
+//         $query->where('num_invoice', $valueJsonInvoice['numFactura']);
+//     })->first();
 
-    //si la factura no existe la creo una instancia nueva
-    if (!$invoice) {
-        $invoice = Invoice::newModelInstance();
-        $invoice->status = StatusInvoiceEnum::INCOMPLETE;
-        $invoice->xml_status = StatusInvoiceEnum::NOT_VALIDATED;
-    }
+//     //si la factura no existe la creo una instancia nueva
+//     if (!$invoice) {
+//         $invoice = Invoice::newModelInstance();
+//         $invoice->status = StatusInvoiceEnum::INCOMPLETE;
+//         $invoice->xml_status = StatusInvoiceEnum::NOT_VALIDATED;
+//     }
 
-    if ($counErrorExcelInvoice > 0) {
-        $invoice->status = StatusInvoiceEnum::ERROR_EXCEL;
-    }
+//     if ($counErrorExcelInvoice > 0) {
+//         $invoice->status = StatusInvoiceEnum::ERROR_EXCEL;
+//     }
 
-    if ($counErrorExcelInvoice == 0) {
-        $invoice->status =  StatusInvoiceEnum::COMPLETED;
-    }
+//     if ($counErrorExcelInvoice == 0) {
+//         $invoice->status =  StatusInvoiceEnum::COMPLETED;
+//     }
 
-    if ($counErrorExcelInvoice == 'funciona') {
-        $invoice->status = StatusInvoiceEnum::INCOMPLETE;
-    }
+//     if ($counErrorExcelInvoice == 'funciona') {
+//         $invoice->status = StatusInvoiceEnum::INCOMPLETE;
+//     }
 
-    $rip = Rip::find($ripId);
+//     $rip = Rip::find($ripId);
 
-    $invoice->rip_id = $ripId;
-    $invoice->path_json = $routeJson;
-    $invoice->path_excel = $routeXls;
-    $invoice->num_invoice = $valueJsonInvoice['numFactura'];
-    $invoice->sumVr = sumVrServicio($valueJsonInvoice);
-    $invoice->company_id = $rip->company_id;
-    $invoice->save();
-}
+//     $invoice->rip_id = $ripId;
+//     $invoice->path_json = $routeJson;
+//     $invoice->path_excel = $routeXls;
+//     $invoice->num_invoice = $valueJsonInvoice['numFactura'];
+//     $invoice->sumVr = sumVrServicio($valueJsonInvoice);
+//     $invoice->company_id = $rip->company_id;
+//     $invoice->save();
+// }
 
 function deletefileZipData($data)
 {
@@ -1579,64 +1579,64 @@ function generateConsecutive(&$buildDataFinal)
     }
 }
 
-function validateNitsAndInvoice($invoices, $ripId, $company_id)
-{
-    $rip = Rip::find($ripId);
-    $company = Company::with('nits')->find($company_id);
+// function validateNitsAndInvoice($invoices, $ripId, $company_id)
+// {
+//     $rip = Rip::find($ripId);
+//     $company = Company::with('nits')->find($company_id);
 
-    // Verificar si se encontraron el RIP y la empresa
-    if (!$rip || !$company) {
-        return false;
-    }
+//     // Verificar si se encontraron el RIP y la empresa
+//     if (!$rip || !$company) {
+//         return false;
+//     }
 
-    // Obtener los NITs de la empresa
-    $nits = $company->nits->map(function ($value) {
-        if ($value->verification_digit) {
-            $nit = $value->nit . '-' . $value->verification_digit;
-        } else {
-            $nit = $value->nit;
-        }
+//     // Obtener los NITs de la empresa
+//     $nits = $company->nits->map(function ($value) {
+//         if ($value->verification_digit) {
+//             $nit = $value->nit . '-' . $value->verification_digit;
+//         } else {
+//             $nit = $value->nit;
+//         }
 
-        return $nit;
-    })->toArray();
+//         return $nit;
+//     })->toArray();
 
-    // Verificar si al menos una factura no coincide con los NITs de la empresa
-    $fail = false;
-    if (count($nits)) {
-        foreach ($invoices as $invoice) {
-            if (!in_array($invoice['numDocumentoIdObligado'], $nits)) {
-                $fail = true;
-                break; // No es necesario continuar verificando las facturas
-            }
-        }
-    }
+//     // Verificar si al menos una factura no coincide con los NITs de la empresa
+//     $fail = false;
+//     if (count($nits)) {
+//         foreach ($invoices as $invoice) {
+//             if (!in_array($invoice['numDocumentoIdObligado'], $nits)) {
+//                 $fail = true;
+//                 break; // No es necesario continuar verificando las facturas
+//             }
+//         }
+//     }
 
-    // Actualizar el estado de fail_nits si es necesario
-    if ($fail) {
-        $errorMessages[] = [
-            'validacion' => 'validateNitsAndInvoice',
-            'validacion_type_Y' => 'R',
-            'num_invoice' => null,
-            'file' => null,
-            'row' => null,
-            'column' => null,
-            'data' => null,
-            'error' => 'Usted está intentando validar un NIT que no está registrado en su suscripción. Por favor, verifique y asegúrese de que el NIT ingresado sea el correcto y esté asociado a su cuenta.',
-        ];
+//     // Actualizar el estado de fail_nits si es necesario
+//     if ($fail) {
+//         $errorMessages[] = [
+//             'validacion' => 'validateNitsAndInvoice',
+//             'validacion_type_Y' => 'R',
+//             'num_invoice' => null,
+//             'file' => null,
+//             'row' => null,
+//             'column' => null,
+//             'data' => null,
+//             'error' => 'Usted está intentando validar un NIT que no está registrado en su suscripción. Por favor, verifique y asegúrese de que el NIT ingresado sea el correcto y esté asociado a su cuenta.',
+//         ];
 
-        $infoValidation = [
-            'infoValidationZip' => false,
-            'errorMessages' => $errorMessages,
-        ];
+//         $infoValidation = [
+//             'infoValidationZip' => false,
+//             'errorMessages' => $errorMessages,
+//         ];
 
-        $rip->validationZip = json_encode($infoValidation);
-        $rip->status = StatusRipsEnum::ERROR_NIT;
-        $rip->fail_nits = true;
-        $rip->save();
-    }
+//         $rip->validationZip = json_encode($infoValidation);
+//         $rip->status = StatusRipsEnum::ERROR_NIT;
+//         $rip->fail_nits = true;
+//         $rip->save();
+//     }
 
-    return $fail;
-}
+//     return $fail;
+// }
 
 function deleteFolderRecursively($folderPath)
 {

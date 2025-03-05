@@ -16,4 +16,18 @@ class Role extends SpatieRole
     {
         return $this->hasMany(User::class, 'role_id');
     }
+
+    public function getTypesAttribute()
+    {
+        // Convertir la cadena en array y limpiar espacios
+        $types = array_map('trim', explode(',', $this->type));
+
+        // Verificar si hay IDs válidos
+        if (empty($types) || $types[0] === '') {
+            return collect(); // Devuelve colección vacía si no hay IDs
+        }
+
+        // Buscar los sujetos
+        return $types;
+    }
 }
