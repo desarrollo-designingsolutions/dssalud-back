@@ -13,7 +13,7 @@ class ThirdSeederXlsx extends Seeder
      */
     public function run()
     {
-        $filePath = storage_path('app/seeders/thirds.xlsx');
+        $filePath = public_path('seeders/thirds.xlsx');
 
         // Depuración: Verifica si el archivo existe
         if (!file_exists($filePath)) {
