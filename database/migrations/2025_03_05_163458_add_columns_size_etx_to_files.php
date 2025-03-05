@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('files', function (Blueprint $table) {
             $table->string('size')->nullable();
-            $table->string('etx')->nullable();
+            $table->string('ext')->nullable();
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('files', function (Blueprint $table) {
             $table->dropColumn('size');
-            $table->dropColumn('etx');
+            $table->dropColumn('ext');
         });
     }
 };
