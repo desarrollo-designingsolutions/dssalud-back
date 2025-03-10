@@ -10,13 +10,13 @@ use App\Http\Resources\Role\RoleListResource;
 use App\Models\Role;
 use App\Repositories\MenuRepository;
 use App\Repositories\RoleRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected RoleRepository $roleRepository,

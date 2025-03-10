@@ -6,13 +6,13 @@ use App\Http\Requests\Role\RoleStoreRequest;
 use App\Http\Resources\Role\MenuCheckBoxResource;
 use App\Models\Role;
 use App\Repositories\FileViewerRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class FileViewerController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected FileViewerRepository $fileViewerRepository,
@@ -132,7 +132,7 @@ class FileViewerController extends Controller
     {
         return $this->execute(function () use ($request) {
             $folderPath = $request->input('path');
-            $searchTerm = request()->query('search'); 
+            $searchTerm = request()->query('search');
 
             if (!$folderPath) {
                 return response()->json(['code' => 400, 'message' => 'Debe proporcionar una ruta'], 400);

@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\InvoiceAudit\InvoiceAuditListResource;
 use App\Repositories\InvoiceAuditRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
 class InvoiceAuditController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected InvoiceAuditRepository $invoiceAuditRepository,

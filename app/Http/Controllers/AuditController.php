@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\Audit\AuditResource;
 use App\Repositories\UserRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Throwable;
 
 
 class AuditController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected UserRepository $userRepository,

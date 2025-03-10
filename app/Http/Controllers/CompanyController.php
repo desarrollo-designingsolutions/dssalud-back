@@ -7,14 +7,14 @@ use App\Http\Resources\Company\CompanyFormResource;
 use App\Http\Resources\Company\CompanyListResource;
 use App\Http\Resources\Company\CompanyPaginateResource;
 use App\Repositories\CompanyRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CompanyController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected CompanyRepository $companyRepository,

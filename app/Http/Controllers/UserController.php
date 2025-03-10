@@ -8,12 +8,12 @@ use App\Http\Resources\User\UserListResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected QueryController $queryController,

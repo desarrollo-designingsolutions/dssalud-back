@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Repositories\MenuRepository;
 use App\Repositories\UserRepository;
 use App\Services\MailService;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Password;
 
 class PassportAuthController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected UserRepository $userRepository,

@@ -9,7 +9,7 @@ use App\Http\Resources\File\FileListResource;
 use App\Http\Resources\File\FileListTableV2Resource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Repositories\FileRepository;
-use App\Traits\HttpTrait;
+use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +17,7 @@ use Throwable;
 
 class FileController extends Controller
 {
-    use HttpTrait;
+    use HttpResponseTrait;
 
     public function __construct(
         protected FileRepository $fileRepository,
