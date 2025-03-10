@@ -82,4 +82,6 @@ class QueryFilters
         // Caso 3: Si no encaja en los formatos anteriores, buscar como texto
         $query->orWhere($field, 'like', "%$cleanValue%");
     }
+
+
 }

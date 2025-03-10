@@ -96,6 +96,31 @@ class QueryController extends Controller
             'statusFilingInvoiceEnum_countLinks' => 1,
         ];
     }
+
+    public function selectStatusFilingInvoiceTypeEnum(Request $request)
+    {
+        $status = StatusFilingInvoiceEnum::cases();
+
+
+        $status = array_filter($status, function ($case)  {
+            return in_array($case->value, ["FILINGINVOICE_EST_001", "FILINGINVOICE_EST_002"]);
+        });
+
+
+        $status = collect($status)->map(function ($item) {
+            return [
+                "value" => $item,
+                "title" => $item->description(),
+            ];
+        });
+
+        return [
+            'code' => 200,
+            'statusFilingInvoiceTypeEnum_arrayInfo' => $status->values(),
+            'statusFilingInvoiceTypeEnum_countLinks' => 1,
+        ];
+    }
+
     public function selectStatusXmlFilingInvoiceEnum(Request $request)
     {
         $status = StatusFilingInvoiceEnum::cases();

@@ -12,6 +12,7 @@ Route::get('/selectCities/country/{country_id}', [QueryController::class, 'selec
 
 
 Route::post('/selectStatusFilingInvoiceEnum', [QueryController::class, 'selectStatusFilingInvoiceEnum']);
+Route::post('/selectStatusFilingInvoiceTypeEnum', [QueryController::class, 'selectStatusFilingInvoiceTypeEnum']);
 Route::post('/selectStatusXmlFilingInvoiceEnum', [QueryController::class, 'selectStatusXmlFilingInvoiceEnum']);
 
 Route::post('/selectInfiniteContract', [QueryController::class, 'selectInfiniteContract']);

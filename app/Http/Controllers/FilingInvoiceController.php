@@ -6,6 +6,7 @@ use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Http\Resources\FilingInvoice\FilingInvoiceListResource;
+use App\Http\Resources\FilingInvoice\FilingInvoicePaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
@@ -25,8 +26,7 @@ class FilingInvoiceController extends Controller
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected CompanyRepository $companyRepository,
-    ) {
-    }
+    ) {}
 
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
@@ -44,20 +44,38 @@ class FilingInvoiceController extends Controller
         });
     }
 
+    public function paginate(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+             $data = $this->filingInvoiceRepository->paginate($request->all());
+            $tableData = FilingInvoicePaginateResource::collection($data);
+
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
+            ];
+        });
+    }
+
     public function list(Request $request)
     {
         return $this->execute(function () use ($request) {
 
-            $filings = $this->filingInvoiceRepository->list($request->all());
-            $listRips = FilingInvoiceListResource::collection($filings);
+            $data = $this->filingInvoiceRepository->list($request->all());
+            $tableData = FilingInvoiceListResource::collection($data);
 
             return [
                 'code' => 200,
-                'tableData' => $listRips,
-                'lastPage' => $filings->lastPage(),
-                'totalData' => $filings->total(),
-                'totalPage' => $filings->perPage(),
-                'currentPage' => $filings->currentPage(),
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
             ];
         });
     }

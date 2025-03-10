@@ -3,13 +3,83 @@
 namespace App\Repositories;
 
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Helpers\Constants;
 use App\Models\FilingInvoice;
+use App\QueryBuilder\Filters\DataSelectFilter;
+use App\QueryBuilder\Filters\DateRangeFilter;
+use App\QueryBuilder\Filters\QueryFilters;
+use App\Traits\FilterManager;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class FilingInvoiceRepository extends BaseRepository
 {
+    use FilterManager;
+
     public function __construct(FilingInvoice $modelo)
     {
         parent::__construct($modelo);
+    }
+
+    public function paginate($request = [])
+    {
+        $data = request();
+        $filter["files_count"] = isset($data["filter"]["files_count"]) ? $data["filter"]["files_count"] : null;
+
+        $this->removeInvalidFilters(["files_count"]);
+
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
+        return $this->cacheService->remember($cacheKey, function () use ($filter) {
+
+            $query = QueryBuilder::for($this->model->query())
+                ->select(['filing_invoices.id', "invoice_number", "users_count", "case_number", "sumVr", "status", "status_xml", "date"])
+                ->withCount(['files'])
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->orWhere('invoice_number', 'like', "%$value%");
+                        $query->orWhere('users_count', 'like', "%$value%");
+                        $query->orWhere('case_number', 'like', "%$value%");
+
+                        $query->orWhere(function ($subQuery) use ($value) {
+                            $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                            $subQuery->orWhere('sumVr', 'like', "%$normalizedValue%");
+                        });
+
+                        QueryFilters::filterByText($query, $value, 'status', [
+                            StatusFilingInvoiceEnum::FILINGINVOICE_EST_001->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                            StatusFilingInvoiceEnum::FILINGINVOICE_EST_002->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
+                        ]);
+                        QueryFilters::filterByText($query, $value, 'status_xml', [
+                            StatusFilingInvoiceEnum::FILINGINVOICE_EST_003->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_003,
+                            StatusFilingInvoiceEnum::FILINGINVOICE_EST_004->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
+                        ]);
+                    }),
+
+                    AllowedFilter::custom("status", new DataSelectFilter()),
+                    AllowedFilter::custom("status_xml", new DataSelectFilter()),
+                    AllowedFilter::custom("date", new DateRangeFilter()),
+
+
+                ])
+                ->allowedSorts([
+                    "invoice_number",
+                    "users_count",
+                    "case_number",
+                    "sumVr",
+                    "files_count",
+                    "date",
+                ]);
+
+            if (isset($filter["files_count"]) && is_numeric($filter["files_count"])) {
+                $query->having('files_count', '=', $filter["files_count"]);
+            }
+            $query =  $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $idsAllowed = [])

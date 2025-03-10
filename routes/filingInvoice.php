@@ -11,6 +11,8 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/filingInvoice/paginate', [FilingInvoiceController::class, 'paginate']);
+
     Route::get('/filingInvoice/list', [FilingInvoiceController::class, 'list']);
 
     Route::get('/filingInvoice/countAllDataFiling', [FilingInvoiceController::class, 'countAllDataFiling']);

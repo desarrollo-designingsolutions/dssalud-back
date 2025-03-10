@@ -13,11 +13,11 @@ class DataSelectFilter implements Filter
         $values = is_array($value) ? $value : explode(',', $value);
 
         // Extraemos solo la parte numérica de cada elemento
-        $countryIds = array_map(function ($val) {
+        $arrayIds = array_map(function ($val) {
             return explode('|', $val)[0]; // Ej: "239|venezuela" → "239"
         }, $values);
 
-        $query->whereIn($property, $countryIds);
+        $query->whereIn($property, $arrayIds);
 
     }
 }
