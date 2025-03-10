@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Resources\User\UserFormResource;
-use App\Http\Resources\User\UserListResource;
+use App\Http\Resources\User\UserPaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
@@ -23,11 +23,11 @@ class UserController extends Controller
     ) {
     }
 
-    public function list(Request $request)
+    public function paginate(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $data = $this->userRepository->list($request->all());
-            $tableData = UserListResource::collection($data);
+            $data = $this->userRepository->paginate($request->all());
+            $tableData = UserPaginateResource::collection($data);
 
             return [
                 'code' => 200,

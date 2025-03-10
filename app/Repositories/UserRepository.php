@@ -2,9 +2,17 @@
 
 namespace App\Repositories;
 
+use App\Helpers\Constants;
 use App\Models\User;
+use App\QueryBuilder\Filters\QueryFilters;
+use App\QueryBuilder\Sort\IsActiveSort;
+use App\QueryBuilder\Sort\RelatedTableSort;
+use App\QueryBuilder\Sort\UserFullNameSort;
 use App\Traits\AuditMap;
 use Illuminate\Support\Facades\Auth;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class UserRepository extends BaseRepository
 {
@@ -15,47 +23,39 @@ class UserRepository extends BaseRepository
         parent::__construct($modelo);
     }
 
-    public function list($request = [], $with = [], $select = ['*'], $order = [])
+    public function paginate($request = [])
     {
-        $data = $this->model->select($select)
-            ->with($with)
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-                if (!empty($request['name'])) {
-                    $query->where('name', 'like', '%' . $request['name'] . '%');
-                }
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
+            $query = QueryBuilder::for($this->model->query())
+                ->select(['users.id', 'users.name', 'users.email', 'users.is_active', 'users.role_id'])
+                ->allowedFilters([
+                    'is_active',
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
 
+                        $query->orWhere('users.email', 'like', "%$value%");
+                        QueryFilters::filterByText($query, $value, 'is_active', [
+                            'activo' => 1,
+                            'inactivo' => 0,
+                        ]);
+                    }),
+                ])
+                ->allowedSorts([
+                    AllowedSort::custom('full_name', new UserFullNameSort),
+                    'email',
+                    AllowedSort::custom('role_description', new RelatedTableSort('users', 'roles', 'description', 'role_id')),
+                    AllowedSort::custom('is_active', new IsActiveSort),
+                ])->where(function ($query) use ($request) {
+                    if (!empty($request['company_id'])) {
+                        $query->where("users.company_id", $request['company_id']);
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-                //idsAllowed
-                if (!empty($request['idsAllowed']) && count($request['idsAllowed']) > 0) {
-                    $query->whereIn('id', $request['idsAllowed']);
-                }
-
-                //idsNotAllowed
-                if (!empty($request['idsNotAllowed']) && count($request['idsNotAllowed']) > 0) {
-                    $query->whereNotIn('id', $request['idsNotAllowed']);
-                }
-
-                if (!empty($request['company_id'])) {
-                    $query->where("company_id", $request['company_id']);
-                }
-
-            });
-
-
-        if (count($order) > 0) {
-            foreach ($order as $key => $value) {
-                $data = $data->orderBy($value['field'], $value['type']);
-            }
-        }
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
-
-        return $data;
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function store($request, $id = null, $withCompany = true)

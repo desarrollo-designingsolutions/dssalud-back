@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
+use App\Traits\Cacheable;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +18,7 @@ class User extends Authenticatable implements Auditable
     use \OwenIt\Auditing\Auditable;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasUuids, HasRoles,HasPermissions,Searchable,Notifiable;
+    use HasFactory, Notifiable, HasApiTokens, HasUuids, HasRoles, HasPermissions, Searchable, Cacheable;
 
     /**
      * The attributes that are mass assignable.
@@ -58,11 +57,11 @@ class User extends Authenticatable implements Auditable
     // Sobrescribir el método para personalizar el texto de la acción
     public function getActionDescription($event)
     {
-       return match ($event) {
-             "created"=> 'Creación de un usuario',
-             "updated"=> 'Actualización de un usuario',
-             "deleted"=> 'Eliminación de un usuario',
-             default => ""
+        return match ($event) {
+            "created" => 'Creación de un usuario',
+            "updated" => 'Actualización de un usuario',
+            "deleted" => 'Eliminación de un usuario',
+            default => ""
         };
     }
 

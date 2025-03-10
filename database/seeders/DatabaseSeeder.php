@@ -27,28 +27,28 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
 
 
+            ThirdSeederXlsx::class,
 
+            //TO VALIDATIONS
 
-           //TO VALIDATIONS
+            Cie10Seeder::class,
+            CupsRipsSeeder::class,
+            GrupoServicioSeeder::class,
 
-           Cie10Seeder::class,
-           CupsRipsSeeder::class,
-           GrupoServicioSeeder::class,
+            IpsCodHabilitacionSeeder::class,
+            IpsCodHabilitacionSeeder2::class,
+            IpsCodHabilitacionSeeder3::class,
+            IpsCodHabilitacionSeeder4::class,
 
-           IpsCodHabilitacionSeeder::class,
-           IpsCodHabilitacionSeeder2::class,
-           IpsCodHabilitacionSeeder3::class,
-           IpsCodHabilitacionSeeder4::class,
+            IpsNoRepsSeeder::class,
+            LstSiNoSeeder::class,
 
-           IpsNoRepsSeeder::class,
-           LstSiNoSeeder::class,
+            MunicipioSeeder::class,
+            PaisSeeder::class,
+            ServicioSeeder::class,
+            TipoMedicamentoPosVersion2Seeder::class,
 
-           MunicipioSeeder::class,
-           PaisSeeder::class,
-           ServicioSeeder::class,
-           TipoMedicamentoPosVersion2Seeder::class,
-
-           ZonaVersion2Seeder::class,
+            ZonaVersion2Seeder::class,
 
         ]);
 
