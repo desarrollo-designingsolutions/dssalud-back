@@ -2,15 +2,89 @@
 
 namespace App\Repositories;
 
+use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Enums\Filing\TypeFilingEnum;
+use App\Helpers\Constants;
 use App\Models\Filing;
 use App\Models\FilingInvoice;
+use App\QueryBuilder\Filters\QueryFilters;
+use App\QueryBuilder\Sort\RelatedTableSort;
+use App\Traits\FilterManager;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class FilingRepository extends BaseRepository
 {
+    use FilterManager;
+
+
     public function __construct(Filing $modelo)
     {
         parent::__construct($modelo);
+    }
+
+    public function paginate($request = [])
+    {
+
+        $data = request();
+        $filter["filing_invoice_pre_radicated_count"] = isset($data["filter"]["filing_invoice_pre_radicated_count"]) ? $data["filter"]["filing_invoice_pre_radicated_count"] : null;
+
+        $this->removeInvalidFilters(["filing_invoice_pre_radicated_count"]);
+
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
+        return $this->cacheService->remember($cacheKey, function () use ($filter) {
+
+            $query = QueryBuilder::for($this->model->query())
+                ->with(['contract:id,name'])
+                ->select(['filings.id', "contract_id", "type", "status", "sumVr"])
+                ->withCount(['filingInvoicePreRadicated'])
+                ->allowedFilters([
+                    "status",
+
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->orWhereHas('contract', function ($subQuery) use ($value) {
+                            $subQuery->where('name', 'like', "%$value%");
+                        });
+
+                        QueryFilters::filterByText($query, $value, 'type', [
+                            TypeFilingEnum::FILING_TYPE_001->description() => TypeFilingEnum::FILING_TYPE_001,
+                            TypeFilingEnum::FILING_TYPE_002->description() => TypeFilingEnum::FILING_TYPE_002,
+                        ]);
+                        QueryFilters::filterByText($query, $value, 'status', [
+                            StatusFilingEnum::FILING_EST_008->description() => StatusFilingEnum::FILING_EST_008,
+                            StatusFilingEnum::FILING_EST_009->description() => StatusFilingEnum::FILING_EST_009,
+                        ]);
+
+                        $query->orWhere(function ($subQuery) use ($value) {
+                            $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                            $subQuery->orWhere('sumVr', 'like', "%$normalizedValue%");
+                        });
+                    }),
+                ])
+                ->allowedSorts([
+                    "type",
+                    "status",
+                    "sumVr",
+                    "filing_invoice_pre_radicated_count",
+                    AllowedSort::custom("contract_name", new RelatedTableSort(
+                        "filings",
+                        "contracts",
+                        "name",
+                        "contract_id",
+                    )),
+                ]);
+
+            if (isset($filter["filing_invoice_pre_radicated_count"]) && is_numeric($filter["filing_invoice_pre_radicated_count"])) {
+                $query->having('filing_invoice_pre_radicated_count', '=', $filter["filing_invoice_pre_radicated_count"]);
+            }
+            $query =  $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $withCount = [])

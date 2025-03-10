@@ -24,13 +24,15 @@ class CompanyRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () {
 
             $query = QueryBuilder::for($this->model->query())
-                ->select(['id', 'name', 'is_active'])
+                ->select(['id', 'name', 'nit', 'email', 'phone', 'is_active'])
                 ->allowedFilters([
                     'name',
-                    'slogan',
                     'is_active',
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->orWhere('name', 'like', "%$value%");
+                        $query->orWhere('nit', 'like', "%$value%");
+                        $query->orWhere('email', 'like', "%$value%");
+                        $query->orWhere('phone', 'like', "%$value%");
                         QueryFilters::filterByText($query, $value, 'is_active', [
                             'activo' => 1,
                             'inactivo' => 0,
@@ -39,7 +41,9 @@ class CompanyRepository extends BaseRepository
                 ])
                 ->allowedSorts([
                     'name',
-                    'slogan',
+                    'nit',
+                    'email',
+                    'phone',
                     AllowedSort::custom('is_active', new IsActiveSort),
                 ])
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);

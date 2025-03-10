@@ -12,6 +12,7 @@ use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Http\Resources\Filing\FilingListResource;
+use App\Http\Resources\Filing\FilingPaginateResource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
@@ -38,6 +39,23 @@ class FilingController extends Controller
         protected SupportTypeRepository $supportTypeRepository,
     ) {}
 
+    public function paginate(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+             $filings = $this->filingRepository->paginate($request->all());
+            $listRips = FilingPaginateResource::collection($filings);
+
+            return [
+                'code' => 200,
+                'tableData' => $listRips,
+                'lastPage' => $filings->lastPage(),
+                'totalData' => $filings->total(),
+                'totalPage' => $filings->perPage(),
+                'currentPage' => $filings->currentPage(),
+            ];
+        });
+    }
     public function list(Request $request)
     {
         return $this->execute(function () use ($request) {

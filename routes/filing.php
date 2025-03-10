@@ -12,6 +12,8 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/filing/paginate', [FilingController::class, 'paginate']);
+
     Route::get('/filing/list', [FilingController::class, 'list']);
 
     Route::get('/filing/showData/{id}', [FilingController::class, 'showData']);

@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
-use App\Enums\StatusInvoiceEnum;
+use App\Traits\Cacheable;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Filing extends Model
 {
-    use HasUuids, SoftDeletes,Searchable;
+    use HasUuids, SoftDeletes,Searchable,Cacheable;
 
     protected $casts = [
         'type' => TypeFilingEnum::class,
@@ -42,6 +42,7 @@ class Filing extends Model
     {
         return $this->hasMany(FilingInvoice::class, 'filing_id')->where("status", StatusFilingInvoiceEnum::FILINGINVOICE_EST_001);
     }
+
 
 
     //contar facturas con xml validados
