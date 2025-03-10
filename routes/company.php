@@ -12,6 +12,8 @@ Route::middleware(["check.permission:company.list"])->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/company/paginate', [CompanyController::class, 'paginate']);
+
     Route::get('/company/list', [CompanyController::class, 'list']);
 
     Route::get('/company/create', [CompanyController::class, 'create']);

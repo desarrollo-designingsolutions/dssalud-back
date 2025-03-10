@@ -17,4 +17,6 @@ class Constants
     public const ERROR_MESSAGE_VALIDATION_BACK = 'Se evidencia algunos errores.';
 
     public const ERROR_MESSAGE_TRYCATCH = 'Algo Ocurrio, Comunicate Con El Equipo De Desarrollo.';
+
+    public const REDIS_TTL = '315360000'; // 10 años en segundos
 }

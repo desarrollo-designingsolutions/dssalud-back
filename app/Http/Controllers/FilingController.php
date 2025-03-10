@@ -21,7 +21,6 @@ use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
 use App\Repositories\UserRepository;
-use App\Services\Redis\TemporaryFilingService;
 use App\Traits\HttpTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -35,7 +34,6 @@ class FilingController extends Controller
     public function __construct(
         protected UserRepository $userRepository,
         protected FilingRepository $filingRepository,
-        protected TemporaryFilingService $tempFilingService,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
     ) {}

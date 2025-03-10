@@ -17,6 +17,7 @@
         "predis/predis": "2.0",
         "saloonphp/xml-wrangler": "^1.4",
         "spatie/laravel-permission": "^6.9",
+        "spatie/laravel-query-builder": "^6.3",
         "stancl/tenancy": "^3.8"
     },
     "require-dev": {
