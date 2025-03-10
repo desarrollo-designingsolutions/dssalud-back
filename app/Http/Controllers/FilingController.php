@@ -56,23 +56,6 @@ class FilingController extends Controller
             ];
         });
     }
-    public function list(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-
-            $filings = $this->filingRepository->list($request->all(), withCount: ['filingInvoicePreRadicated']);
-            $listRips = FilingListResource::collection($filings);
-
-            return [
-                'code' => 200,
-                'tableData' => $listRips,
-                'lastPage' => $filings->lastPage(),
-                'totalData' => $filings->total(),
-                'totalPage' => $filings->perPage(),
-                'currentPage' => $filings->currentPage(),
-            ];
-        });
-    }
 
     public function showData($id)
     {

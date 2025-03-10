@@ -87,31 +87,6 @@ class FilingRepository extends BaseRepository
         }, Constants::REDIS_TTL);
     }
 
-    public function list($request = [], $with = [], $withCount = [])
-    {
-        $data = $this->model->with($with)->withCount($withCount)->where(function ($query) {})
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
-
-                if (!empty($request['type'])) {
-                    $query->where('type', $request['type']);
-                }
-
-                if (!empty($request['company_id'])) {
-                    $query->where("company_id", $request['company_id']);
-                }
-            });
-
-        $data = $data->orderBy('id', 'desc');
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
-
-        return $data;
-    }
-
     public function store($request)
     {
         $request = $this->clearNull($request);

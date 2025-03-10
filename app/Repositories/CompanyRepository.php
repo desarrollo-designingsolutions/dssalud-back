@@ -53,39 +53,6 @@ class CompanyRepository extends BaseRepository
     }
 
 
-    public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
-    {
-        $data = $this->model->select($select)
-            ->with($with)
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
-
-                if (! empty($request['name'])) {
-                    $query->where('name', 'like', '%' . $request['name'] . '%');
-                }
-            })
-            ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
-                }
-            });
-
-
-        if (isset($request['sortBy'])) {
-            $sortBy = json_decode($request['sortBy'], 1);
-            foreach ($sortBy as $key => $value) {
-                $data = $data->orderBy($value['key'], $value['order']);
-            }
-        }
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
-
-        return $data;
-    }
-
     public function store(array $request)
     {
         $request = $this->clearNull($request);

@@ -38,23 +38,6 @@ class CompanyController extends Controller
         });
     }
 
-    public function list(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-            $data = $this->companyRepository->list($request->all());
-            $tableData = CompanyListResource::collection($data);
-
-            return [
-                'code' => 200,
-                'tableData' => $tableData,
-                'lastPage' => $data->lastPage(),
-                'totalData' => $data->total(),
-                'totalPage' => $data->perPage(),
-                'currentPage' => $data->currentPage(),
-            ];
-        });
-    }
-
     public function create()
     {
         return $this->execute(function () {

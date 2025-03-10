@@ -82,31 +82,6 @@ class FilingInvoiceRepository extends BaseRepository
         }, Constants::REDIS_TTL);
     }
 
-    public function list($request = [], $with = [], $idsAllowed = [])
-    {
-        $data = $this->model->with($with)->where(function ($query) {})
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
-
-                if (!empty($request['company_id'])) {
-                    $query->whereHas("filing", function ($subQuery) use ($request) {
-                        $subQuery->where("company_id", $request['company_id']);
-                    });
-                }
-                if (!empty($request['filing_id'])) {
-                    $query->where("filing_id", $request['filing_id']);
-                }
-            });
-
-        $data = $data->orderBy('id', 'desc');
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
-
-        return $data;
-    }
 
     public function store($request)
     {

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
-use App\Http\Resources\FilingInvoice\FilingInvoiceListResource;
 use App\Http\Resources\FilingInvoice\FilingInvoicePaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
@@ -50,24 +49,6 @@ class FilingInvoiceController extends Controller
 
              $data = $this->filingInvoiceRepository->paginate($request->all());
             $tableData = FilingInvoicePaginateResource::collection($data);
-
-            return [
-                'code' => 200,
-                'tableData' => $tableData,
-                'lastPage' => $data->lastPage(),
-                'totalData' => $data->total(),
-                'totalPage' => $data->perPage(),
-                'currentPage' => $data->currentPage(),
-            ];
-        });
-    }
-
-    public function list(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-
-            $data = $this->filingInvoiceRepository->list($request->all());
-            $tableData = FilingInvoiceListResource::collection($data);
 
             return [
                 'code' => 200,
