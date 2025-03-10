@@ -2,13 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Role\RoleStoreRequest;
-use App\Http\Resources\Role\MenuCheckBoxResource;
-use App\Models\Role;
 use App\Repositories\FileViewerRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class FileViewerController extends Controller
 {
@@ -17,116 +13,6 @@ class FileViewerController extends Controller
     public function __construct(
         protected FileViewerRepository $fileViewerRepository,
     ) {}
-
-    public function list(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-            $data = $this->fileViewerRepository->list($request->all());
-            $tableData = UserListResource::collection($data);
-
-            return [
-                'code' => 200,
-                'tableData' => $tableData,
-                'lastPage' => $data->lastPage(),
-                'totalData' => $data->total(),
-                'totalPage' => $data->perPage(),
-                'currentPage' => $data->currentPage(),
-            ];
-        });
-    }
-
-    public function create()
-    {
-        return $this->execute(function () {
-            $menus = $this->menuRepository->list([
-                'father_null' => true,
-                'withPermissions' => true,
-            ], ['children']);
-
-            $menus = MenuCheckBoxResource::collection($menus);
-
-            return [
-                'menus' => $menus,
-            ];
-        });
-    }
-
-    public function edit($id)
-    {
-        return $this->execute(function () use ($id) {
-            $role = $this->roleRepository->find($id);
-
-            $menus = $this->menuRepository->list([
-                'typeData' => "all",
-                'father_null' => true,
-                'withPermissions' => true,
-            ], ['children']);
-
-            $menus = MenuCheckBoxResource::collection($menus);
-
-            return [
-                'code' => 200,
-                'role' => new RoleFormResource($role),
-                'menus' => $menus,
-            ];
-        });
-    }
-
-    public function store(RoleStoreRequest $request)
-    {
-        $transaction = $this->runTransaction(function () use ($request) {
-
-            $post = $request->except(['permissions']);
-
-            do {
-                $nameRole = Str::random(10); // Genera un string aleatorio de 10 caracteres
-            } while (Role::where('name', $nameRole)->exists()); // Verifica si ya existe en la base de datos
-
-            $post["name"] = $nameRole;
-
-            $data = $this->roleRepository->store($post);
-
-            $permissions = [
-                ...$request['permissions'],
-                ...[1],
-            ];
-
-            $data->permissions()->sync($permissions);
-
-            $msg = 'agregado';
-            if (!empty($request['id'])) {
-                $msg = 'modificado';
-            }
-
-            return [
-                'code' => 200,
-                'message' => 'Registro ' . $msg . ' correctamente',
-                'data' => $data
-            ];
-        });
-
-        clearCacheLaravel();
-
-        return $transaction;
-    }
-
-    public function destroy($id)
-    {
-        return $this->runTransaction(function () use ($id) {
-            $data = $this->roleRepository->find($id);
-            if ($data) {
-                $data->delete();
-                $msg = 'Registro eliminado correctamente';
-            } else {
-                $msg = 'El registro no existe';
-            }
-
-            return [
-                'code' => 200,
-                'message' => $msg
-            ];
-        });
-    }
 
     public function listfolders(Request $request)
     {

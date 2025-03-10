@@ -5,7 +5,7 @@ namespace App\Http\Resources\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserListResource extends JsonResource
+class UserPaginateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,7 +18,7 @@ class UserListResource extends JsonResource
             'id' => $this->id,
             'full_name' => $this->full_name,
             'email' => $this->email,
-            'role_name' => $this->role?->description,
+            'role_description' => $this->role?->description,
             'is_active' => $this->is_active,
         ];
     }
