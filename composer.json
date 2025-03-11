@@ -39,6 +39,11 @@
         "files": [
             "app/Helpers/Global.php",
             "app/Helpers/Filing/GenerateValues.php",
+            "app/Helpers/Common/ErrorCollector.php",
+            "app/Helpers/FilingOld/InternalFileValidator.php",
+            "app/Helpers/FilingOld/ValidationOrchestrator.php",
+            "app/Helpers/FilingOld/ZipContentValidator.php",
+            "app/Helpers/FilingOld/ZipValidator.php",
             "app/Helpers/Rips/FileRequired.php",
             "app/Helpers/Rips/Validations.php",
             "app/Helpers/Rips/ValidationsTxt.php",

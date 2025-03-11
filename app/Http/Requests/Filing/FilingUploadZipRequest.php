@@ -28,6 +28,7 @@ class FilingUploadZipRequest extends FormRequest
         $rules = [
             'company_id' => 'required',
             'user_id' => 'required',
+            // 'archiveZip' => 'required|file|mimes:zip',
         ];
 
         return $rules;
@@ -38,6 +39,7 @@ class FilingUploadZipRequest extends FormRequest
         return [
             'company_id.required' => 'El campo es obligatorio',
             'user_id.required' => 'El campo es obligatorio',
+            'archiveZip.mimes' => 'El campo es archvio solo permite archivo de tipo zip',
         ];
     }
 

@@ -5,6 +5,7 @@ namespace App\Jobs\Filing;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Events\FilingFinishProcessJob;
 use App\Events\FilingProgressEvent;
+use App\Helpers\Radicaciones\Antiguas\ValidationOrchestrator;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Models\Filing;
 use Illuminate\Bus\Queueable;
@@ -38,68 +39,74 @@ class ProcessFilingValidationZip implements ShouldQueue
      */
     public function handle(): void
     {
-        //busco el registro
+
         $filing = Filing::find($this->filing_id);
+        $errors = ValidationOrchestrator::validate($filing->path_zip);
 
-        $errorMessages = [];
+        logMessage("validaciones");
+        logMessage($errors);
 
-        //validamos los archivos del zip
-        $infoValidationZip = validationFileZip($filing, $errorMessages);
+        // //busco el registro
 
-        $infoValidation = [
-            'infoValidationZip' => $infoValidationZip,
-            'errorMessages' => $errorMessages,
-        ];
+        // $errorMessages = [];
 
-        //si el archivo zip de los txt no cumple con las condiciones necesarias
-        if (count($errorMessages) > 0) {
+        // //validamos los archivos del zip
+        // $infoValidationZip = filingOld_validationFileZip($filing, $errorMessages);
 
-            //actualizo la informacion de la validacion zip en el registro
-            $filing->validationZip = json_encode($infoValidation);
-            $filing->status = StatusFilingEnum::FILING_EST_006;
-            $filing->save();
+        // $infoValidation = [
+        //     'infoValidationZip' => $infoValidationZip,
+        //     'errorMessages' => $errorMessages,
+        // ];
 
-            //eliminamos el archivo zip subido
-            deletefileZipData($filing);
+        // //si el archivo zip de los txt no cumple con las condiciones necesarias
+        // if (count($errorMessages) > 0) {
 
-            // Emitimos un evento con el progreso actual
-            FilingProgressEvent::dispatch($filing->id, 100);
+        //     //actualizo la informacion de la validacion zip en el registro
+        //     $filing->validationZip = json_encode($infoValidation);
+        //     $filing->status = StatusFilingEnum::FILING_EST_006;
+        //     $filing->save();
 
-            FilingFinishProcessJob::dispatch($filing->id);
-        } else {
-            if (is_bool($infoValidationZip) && $infoValidationZip == true) {
+        //     //eliminamos el archivo zip subido
+        //     filingOld_deletefileZipData($filing);
 
-                //abrimos el zip y extraigos sus archivos
-                $files = openFileZip($filing->path_zip, $this->company_id);
+        //     // Emitimos un evento con el progreso actual
+        //     FilingProgressEvent::dispatch($filing->id, 100);
 
-                //se contruye un array con toda la data de los txt unida
-                $build = buildAllDataTogether($files);
+        //     FilingFinishProcessJob::dispatch($filing->id);
+        // } else {
+        //     if (is_bool($infoValidationZip) && $infoValidationZip == true) {
 
-                //genero los consecutivos para usuarios y servicios tomando encuenta que deben ser consecutivos e iniciar en uno en los servicios y en usuarios
-                generateConsecutive($build['data']);
+        //         //abrimos el zip y extraigos sus archivos
+        //         $files = filingOld_openFileZip($filing->path_zip, $this->company_id);
 
-                $partitions = array_chunk($build['data'], env('CHUNKSIZE', 10));
+        //         //se contruye un array con toda la data de los txt unida
+        //         $build = filingOld_buildAllDataTogether($files);
 
-                $lastIndex = count($partitions) - 1; // Índice del último elemento
+        //         //genero los consecutivos para usuarios y servicios tomando encuenta que deben ser consecutivos e iniciar en uno en los servicios y en usuarios
+        //         generateConsecutive($build['data']);
 
-                $totalPartitions = count($partitions);
-                $currentProgress = 0;
+        //         $partitions = array_chunk($build['data'], env('CHUNKSIZE', 10));
 
-                foreach ($partitions as $key => $value) {
+        //         $lastIndex = count($partitions) - 1; // Índice del último elemento
 
-                    // Determina si es el último elemento
-                    $isLast = $key === $lastIndex;
+        //         $totalPartitions = count($partitions);
+        //         $currentProgress = 0;
 
-                    // Envía true si es el último elemento, de lo contrario, envía false
-                    ProcessFilingValidationTxt::dispatch($filing->id, $value, $this->userData, $isLast);
+        //         foreach ($partitions as $key => $value) {
 
-                    // Calculamos el progreso
-                    $currentProgress = (($key + 1) / $totalPartitions) * 100;
+        //             // Determina si es el último elemento
+        //             $isLast = $key === $lastIndex;
 
-                    // Emitimos un evento con el progreso actual
-                    FilingProgressEvent::dispatch($filing->id, $currentProgress);
-                }
-            }
-        }
+        //             // Envía true si es el último elemento, de lo contrario, envía false
+        //             ProcessFilingValidationTxt::dispatch($filing->id, $value, $this->userData, $isLast);
+
+        //             // Calculamos el progreso
+        //             $currentProgress = (($key + 1) / $totalPartitions) * 100;
+
+        //             // Emitimos un evento con el progreso actual
+        //             FilingProgressEvent::dispatch($filing->id, $currentProgress);
+        //         }
+        //     }
+        // }
     }
 }

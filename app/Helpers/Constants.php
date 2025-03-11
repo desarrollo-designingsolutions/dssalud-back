@@ -19,4 +19,6 @@ class Constants
     public const ERROR_MESSAGE_TRYCATCH = 'Algo Ocurrio, Comunicate Con El Equipo De Desarrollo.';
 
     public const REDIS_TTL = '315360000'; // 10 años en segundos
+
+    public const DISK_FILES = 'public'; // 10 años en segundos
 }

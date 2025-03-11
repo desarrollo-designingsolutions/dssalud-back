@@ -172,3 +172,182 @@ function validateFilingStatus($filing_id)
 
     $filing->save();
 }
+
+
+function filingOld_deletefileZipData($data)
+{
+    //eliminamos el archivo zip subido
+    $fileDelete = env("SYSTEM_URL_BACK") . $data->path_zip;
+
+    $fileDelete = public_path($fileDelete);
+
+    if (file_exists($fileDelete)) {
+        unlink($fileDelete);
+    }
+
+    $data->path_zip = null;
+    $data->save();
+}
+
+function filingOld_openFileZip($fileZip)
+{
+    $fileZip = public_path('storage/' . $fileZip);
+
+    $zip = new ZipArchive;
+    if ($zip->open($fileZip) === true) {
+
+        // Directorio temporal para extraer los archivos del ZIP
+        $tempDirectory = storage_path('app/temp_zip');
+        if (!is_dir($tempDirectory)) {
+            mkdir($tempDirectory, 0777, true);
+        }
+
+        $archivos = [];
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            $contenido = $zip->getFromName($filename);
+
+            $rutaTemporal = $tempDirectory . '/' . $filename;
+            // Extraer el archivo del ZIP
+            $zip->extractTo($tempDirectory, $filename);
+
+            if ($extension == 'txt') {
+                // Verificar y convertir la codificación a UTF-8 si es necesario
+                if (!mb_check_encoding($contenido, 'UTF-8')) {
+                    // Proporciona la codificación de caracteres de origen si la conoces (por ejemplo, ISO-8859-1).
+                    $contenido = mb_convert_encoding($contenido, 'UTF-8', 'ISO-8859-1');
+                }
+            }
+
+            $archivos[] = [
+                'name' => $filename,
+                'extension' => $extension,
+                'content' => $contenido,
+                'rutaTemporal' => $rutaTemporal,
+            ];
+        }
+        $zip->close();
+
+        return $archivos;
+    } else {
+        return false; // O manejar el error de apertura del archivo ZIP de la forma que desees.
+    }
+}
+
+
+function filingOld_buildAllDataTogether($files)
+{
+    $dataArrayAF = [];
+    $dataArrayAC = [];
+    $dataArrayUS = [];
+    $dataArrayAP = [];
+    $dataArrayAM = [];
+    $dataArrayAU = [];
+    $dataArrayAH = [];
+    $dataArrayAN = [];
+    $dataArrayAT = [];
+    $dataArrayCT = [];
+
+    // Define an array to map substrings to format functions
+    $mapping = [
+        'AF' => 'formatValueAF',
+        'AC' => 'formatValueAC',
+        'US' => 'formatValueUS',
+        'AP' => 'formatValueAP',
+        'AM' => 'formatValueAM',
+        'AU' => 'formatValueAU',
+        'AH' => 'formatValueAH',
+        'AN' => 'formatValueAN',
+        'AT' => 'formatValueAT',
+        'CT' => 'formatValueCT',
+    ];
+
+    // Loop through the files
+    foreach ($files as $key => $value) {
+        // Check if the name contains one of the specified substrings
+        foreach ($mapping as $substring => $formatFunction) {
+            if (stripos($value['name'], $substring) !== false) {
+                // Format the data and add numeration
+                $dataArray = formatDataTxt($value['content'], $formatFunction);
+                agregarNumeracion($dataArray, $value['name']);
+            }
+        }
+    }
+
+    $dataArrayAF = collect($dataArrayAF);
+    $dataArrayAC = collect($dataArrayAC);
+    $dataArrayUS = collect($dataArrayUS);
+    $dataArrayAP = collect($dataArrayAP);
+    $dataArrayAM = collect($dataArrayAM);
+    $dataArrayAU = collect($dataArrayAU);
+    $dataArrayAH = collect($dataArrayAH);
+    $dataArrayAN = collect($dataArrayAN);
+    $dataArrayAT = collect($dataArrayAT);
+    $dataArrayCT = collect($dataArrayCT);
+
+
+
+    $dataArrayAF = $dataArrayAF->map(function ($item) use ($dataArrayAC, $dataArrayUS, $dataArrayAP, $dataArrayAM, $dataArrayAU, $dataArrayAH, $dataArrayAN, $dataArrayAT) {
+
+
+        filingOld_invoiceUserServices($dataArrayAC, $dataArrayUS, $item, 'consultas');
+
+        filingOld_invoiceUserServices($dataArrayAP, $dataArrayUS, $item, 'procedimientos');
+
+        filingOld_invoiceUserServices($dataArrayAM, $dataArrayUS, $item, 'medicamentos');
+
+        filingOld_invoiceUserServices($dataArrayAU, $dataArrayUS, $item, 'urgencias');
+
+        filingOld_invoiceUserServices($dataArrayAH, $dataArrayUS, $item, 'hospitalizacion');
+
+        filingOld_invoiceUserServices($dataArrayAN, $dataArrayUS, $item, 'recienNacidos');
+
+        filingOld_invoiceUserServices($dataArrayAT, $dataArrayUS, $item, 'otrosServicios');
+
+        return $item;
+    })->toArray();
+
+    return [
+        'data' => $dataArrayAF,
+    ];
+}
+
+function filingOld_invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
+{
+    $registers = $dataArray->filter(function ($atItem) use ($invoice) {
+        return $atItem['numFEVPagoModerador'] == $invoice['numFactura'];
+    })->values();
+
+    $i = 0;
+    foreach ($registers as $key => $value) {
+        // Agregar los elementos encontrados a la subcolección 'usuarios'
+
+        $usuario = $dataArrayUS->filter(function ($acItem) use ($value) {
+            return $acItem['numDocumentoIdentificacion'] == $value['numDocumentoIdentificacion'];
+        })->first();
+
+        $user = collect($invoice['usuarios'])->filter(function ($value) use ($usuario) {
+            return $value['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
+        })->values();
+
+        if (count($user) == 0) {
+            $invoice['usuarios'][$i] = $usuario;
+            $invoice['usuarios'][$i]['servicios'] = [];
+        }
+
+        if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
+            $invoice['usuarios'][$i]['servicios'][$keyService] = [];
+        }
+
+        $dataService = $dataArray->filter(function ($atItem) use ($invoice, $usuario) {
+            return $atItem['numFEVPagoModerador'] == $invoice['numFactura'] && $atItem['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
+        })->values();
+
+        if (isset($invoice['usuarios'][$i]['servicios'][$keyService]) && count($invoice['usuarios'][$i]['servicios'][$keyService]) == 0) {
+            $invoice['usuarios'][$i]['servicios'][$keyService] = $dataService;
+        }
+
+        $i++;
+    }
+}

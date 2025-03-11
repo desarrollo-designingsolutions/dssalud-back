@@ -1458,20 +1458,7 @@ function sumVrServicioRips($invoices)
 //     $invoice->save();
 // }
 
-function deletefileZipData($data)
-{
-    //eliminamos el archivo zip subido
-    $fileDelete = env("SYSTEM_URL_BACK") . $data->path_zip;
 
-    $fileDelete = public_path($fileDelete);
-
-    if (file_exists($fileDelete)) {
-        unlink($fileDelete);
-    }
-
-    $data->path_zip = null;
-    $data->save();
-}
 
 function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
 {

@@ -9,6 +9,8 @@ use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
+use App\Helpers\Constants;
+use App\Helpers\Radicaciones\Antiguas\ValidationOrchestrator;
 use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Http\Resources\Filing\FilingListResource;
@@ -43,7 +45,7 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-             $filings = $this->filingRepository->paginate($request->all());
+            $filings = $this->filingRepository->paginate($request->all());
             $listRips = FilingPaginateResource::collection($filings);
 
             return [
@@ -88,18 +90,23 @@ class FilingController extends Controller
                 $file = $request->file('archiveZip');
                 $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
-                $path_zip = $file->storeAs($ruta, $nombreArchivo, 'public'); // Guarda el archivo con el nombre original
+                $path_zip = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
                 $filing->path_zip = $path_zip;
                 $filing->save();
             }
 
             $auth = $this->userRepository->find($user_id);
 
+
+
+            // Ejecutar la validación
+            // return $errors = ValidationOrchestrator::validate($filing->path_zip);
+
             //VALIDACION ZIP
             ProcessFilingValidationZip::dispatch($filing->id, $auth, $company_id);
 
             return $filing;
-        });
+        }, debug: true);
     }
 
     public function showErrorsValidation(Request $request)
