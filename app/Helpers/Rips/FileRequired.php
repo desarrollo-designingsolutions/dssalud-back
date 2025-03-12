@@ -370,15 +370,54 @@ function formatDataTxt($contenido, $function = null)
 
     return $dataArray;
 }
-
-function deleteFile($files)
+function agregarNumeracion(&$array, $file_name)
 {
-    if (count($files) > 0) {
-        foreach ($files as $key => $value) {
-            unlink($value);
-        }
+    foreach ($array as $key => &$elemento) {
+        $elemento['row'] = $key + 1;
+        $elemento['file_name'] = $file_name;
     }
 }
+
+function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
+{
+    $registers = $dataArray->filter(function ($atItem) use ($invoice) {
+        return $atItem['numFEVPagoModerador'] == $invoice['numFactura'];
+    })->values();
+
+    $i = 0;
+    foreach ($registers as $key => $value) {
+        // Agregar los elementos encontrados a la subcolección 'usuarios'
+
+        $usuario = $dataArrayUS->filter(function ($acItem) use ($value) {
+            return $acItem['numDocumentoIdentificacion'] == $value['numDocumentoIdentificacion'];
+        })->first();
+
+        $user = collect($invoice['usuarios'])->filter(function ($value) use ($usuario) {
+            return $value['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
+        })->values();
+
+        if (count($user) == 0) {
+            $invoice['usuarios'][$i] = $usuario;
+            $invoice['usuarios'][$i]['servicios'] = [];
+        }
+
+        if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
+            $invoice['usuarios'][$i]['servicios'][$keyService] = [];
+        }
+
+        $dataService = $dataArray->filter(function ($atItem) use ($invoice, $usuario) {
+            return $atItem['numFEVPagoModerador'] == $invoice['numFactura'] && $atItem['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
+        })->values();
+
+        if (isset($invoice['usuarios'][$i]['servicios'][$keyService]) && count($invoice['usuarios'][$i]['servicios'][$keyService]) == 0) {
+            $invoice['usuarios'][$i]['servicios'][$keyService] = $dataService;
+        }
+
+        $i++;
+    }
+}
+
+
 
 function formatValueAT($datos)
 {
@@ -569,6 +608,15 @@ function formatValueAF($datos)
     ];
 }
 
+function deleteFile($files)
+{
+    if (count($files) > 0) {
+        foreach ($files as $key => $value) {
+            unlink($value);
+        }
+    }
+}
+
 function verificarPalabraEnCadena($cadena, $palabra)
 {
     // Convierte tanto la cadena como la palabra a minúsculas para hacer la comparación insensible a mayúsculas/minúsculas
@@ -634,13 +682,7 @@ function validarLongitudElementos(&$array, $file_name, $cantidadEsperada, &$erro
     }
 }
 
-function agregarNumeracion(&$array, $file_name)
-{
-    foreach ($array as $key => &$elemento) {
-        $elemento['row'] = $key + 1;
-        $elemento['file_name'] = $file_name;
-    }
-}
+
 
 function minimFilesRequired($path, $errors)
 {
@@ -1460,44 +1502,7 @@ function sumVrServicioRips($invoices)
 
 
 
-function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
-{
-    $registers = $dataArray->filter(function ($atItem) use ($invoice) {
-        return $atItem['numFEVPagoModerador'] == $invoice['numFactura'];
-    })->values();
 
-    $i = 0;
-    foreach ($registers as $key => $value) {
-        // Agregar los elementos encontrados a la subcolección 'usuarios'
-
-        $usuario = $dataArrayUS->filter(function ($acItem) use ($value) {
-            return $acItem['numDocumentoIdentificacion'] == $value['numDocumentoIdentificacion'];
-        })->first();
-
-        $user = collect($invoice['usuarios'])->filter(function ($value) use ($usuario) {
-            return $value['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
-        })->values();
-
-        if (count($user) == 0) {
-            $invoice['usuarios'][$i] = $usuario;
-            $invoice['usuarios'][$i]['servicios'] = [];
-        }
-
-        if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
-            $invoice['usuarios'][$i]['servicios'][$keyService] = [];
-        }
-
-        $dataService = $dataArray->filter(function ($atItem) use ($invoice, $usuario) {
-            return $atItem['numFEVPagoModerador'] == $invoice['numFactura'] && $atItem['numDocumentoIdentificacion'] == $usuario['numDocumentoIdentificacion'];
-        })->values();
-
-        if (isset($invoice['usuarios'][$i]['servicios'][$keyService]) && count($invoice['usuarios'][$i]['servicios'][$keyService]) == 0) {
-            $invoice['usuarios'][$i]['servicios'][$keyService] = $dataService;
-        }
-
-        $i++;
-    }
-}
 
 function sumVrServicio($valueJsonInvoice)
 {

@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Helpers\Radicaciones\Common;
+namespace App\Helpers\Common;
+
+use Illuminate\Support\Facades\Redis;
 
 class ErrorCollector
 {
@@ -19,6 +21,7 @@ class ErrorCollector
      * @param string $message Mensaje con descripción y solución
      */
     public static function addError(
+        string $keyRedis,
         string $validation,
         string $validationType,
         ?string $numInvoice,
@@ -28,7 +31,22 @@ class ErrorCollector
         $data,
         string $message
     ): void {
-        self::$errors[] = [
+
+
+
+        // self::$errors[] = [
+        //     'validacion' => $validation,
+        //     'validacion_type_Y' => $validationType,
+        //     'num_invoice' => $numInvoice,
+        //     'file' => $file,
+        //     'row' => $row,
+        //     'column' => $column,
+        //     'data' => $data,
+        //     'error' => $message,
+        // ];
+
+        $errors = json_decode(Redis::get($keyRedis), 1);
+        $errors[] = [
             'validacion' => $validation,
             'validacion_type_Y' => $validationType,
             'num_invoice' => $numInvoice,
@@ -38,6 +56,8 @@ class ErrorCollector
             'data' => $data,
             'error' => $message,
         ];
+
+        Redis::set($keyRedis, json_encode($errors));
     }
 
     /**
@@ -45,16 +65,21 @@ class ErrorCollector
      *
      * @return array
      */
-    public static function getErrors(): array
+    public static function getErrors($keyRedis): array
     {
-        return self::$errors;
+        // return self::$errors;
+
+        $errors = json_decode(Redis::get($keyRedis), 1);
+        return  $errors;
     }
 
     /**
      * Limpia el array de errores.
      */
-    public static function clear(): void
+    public static function clear($keyRedis): void
     {
-        self::$errors = [];
+        // self::$errors = [];
+
+        Redis::set($keyRedis, json_encode([]));
     }
 }

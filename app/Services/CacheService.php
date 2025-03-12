@@ -53,7 +53,7 @@ class CacheService
         ];
         Redis::rpush('list:cache_metrics', json_encode($metric)); // Cambiado a list:cache_metrics
 
-        Log::debug("Datos obtenidos de {$source}", ['key' => $key, 'time' => $time.'ms']);
+        // Log::debug("Datos obtenidos de {$source}", ['key' => $key, 'time' => $time.'ms']);
 
         return $data;
     }
@@ -64,7 +64,7 @@ class CacheService
     public function forget(string $key): void
     {
         Redis::del($key);
-        Log::debug('Caché eliminado', ['key' => $key]);
+        // Log::debug('Caché eliminado', ['key' => $key]);
     }
 
     /**
@@ -87,12 +87,12 @@ class CacheService
                     $array[] = $newK;
                 }
                 $keysToDelete = array_merge($keysToDelete, $array);
-                Log::debug('Claves encontradas en esta iteración', ['keys' => $keys]);
+                // Log::debug('Claves encontradas en esta iteración', ['keys' => $keys]);
             }
 
             if (count($keysToDelete) > 0) {
                 Redis::del($keysToDelete);
-                Log::debug('Lote de cachés eliminado', ['count' => count($keysToDelete)]);
+                // Log::debug('Lote de cachés eliminado', ['count' => count($keysToDelete)]);
             }
             $keysToDelete = [];
         } while ($cursor !== '0');

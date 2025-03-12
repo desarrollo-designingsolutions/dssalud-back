@@ -15,7 +15,6 @@ class FilingProgressEvent implements ShouldBroadcast
     public $filing_id;
     public $progress;
 
-
     /**
      * Create a new event instance.
      */

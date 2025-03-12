@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Helpers\Radicaciones\Antiguas;
+namespace App\Helpers\FilingOld;
 
 use App\Helpers\Constants;
-use App\Helpers\Radicaciones\Common\ErrorCollector;
+use App\Helpers\Common\ErrorCollector;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -17,17 +17,19 @@ class ValidationOrchestrator
      */
     public static function validate(string $zipPath)
     {
+        $keyRedis = 'filingOld:{$filing->id}:errors';
+
         // Obtener la ruta completa del archivo en el servidor
         $fullFilePath = Storage::disk(Constants::DISK_FILES)->path($zipPath);
 
-        ErrorCollector::clear();
+        ErrorCollector::clear($keyRedis);
 
         if (!ZipValidator::validate($fullFilePath)) {
-            return ErrorCollector::getErrors();
+            return ErrorCollector::getErrors($keyRedis);
         }
 
         if (!ZipContentValidator::validate($fullFilePath)) {
-            return ErrorCollector::getErrors();
+            return ErrorCollector::getErrors($keyRedis);
         }
 
         $zip = new ZipArchive();
@@ -46,6 +48,10 @@ class ValidationOrchestrator
 
         $zip->close();
 
-        return ErrorCollector::getErrors();
+        // Limpiar el directorio temporal
+        array_map('unlink', glob("$tempDir/*"));
+        rmdir($tempDir);
+
+        return ErrorCollector::getErrors($keyRedis);
     }
 }

@@ -10,7 +10,7 @@ use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Helpers\Constants;
-use App\Helpers\Radicaciones\Antiguas\ValidationOrchestrator;
+use App\Helpers\FilingOld\ValidationOrchestrator;
 use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
 use App\Http\Resources\Filing\FilingListResource;
@@ -97,16 +97,11 @@ class FilingController extends Controller
 
             $auth = $this->userRepository->find($user_id);
 
-
-
-            // Ejecutar la validación
-            // return $errors = ValidationOrchestrator::validate($filing->path_zip);
-
             //VALIDACION ZIP
             ProcessFilingValidationZip::dispatch($filing->id, $auth, $company_id);
 
             return $filing;
-        }, debug: true);
+        }, debug: false);
     }
 
     public function showErrorsValidation(Request $request)

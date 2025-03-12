@@ -68,11 +68,11 @@ trait Cacheable
                 }
             }
 
-            Log::debug('Caché invalidado', [
-                'prefix' => $cacheKeyPrefix,
-                'legacy_prefix' => $legacyPrefix,
-                'pattern' => $usePattern,
-            ]);
+            // Log::debug('Caché invalidado', [
+            //     'prefix' => $cacheKeyPrefix,
+            //     'legacy_prefix' => $legacyPrefix,
+            //     'pattern' => $usePattern,
+            // ]);
         }
     }
 

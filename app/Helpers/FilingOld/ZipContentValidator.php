@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Helpers\Radicaciones\Antiguas;
+namespace App\Helpers\FilingOld;
 
-use App\Helpers\Radicaciones\Common\ErrorCollector;
+use App\Helpers\Common\ErrorCollector;
 use ZipArchive;
 
 class ZipContentValidator
