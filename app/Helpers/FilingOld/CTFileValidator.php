@@ -10,13 +10,14 @@ class CTFileValidator
     /**
      * Valida el archivo CT y sus columnas.
      *
-     * @param string $filePath Ruta del archivo CT
-     * @param string $tempDir Directorio temporal donde están los archivos extraídos del ZIP
-     * @return bool Verdadero si pasa todas las validaciones, falso si hay errores
+     * @param string $fileName Nombre del archivo
+     * @param string $rowData datos de la fila del txt a validar
+     * @param string $rowNumber numero de la fila del txt a validar
+     * @param string $filing_id numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id)
     {
-        $keyErrorRedis = 'filingOld:{$filing->id}:errors';
+        $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
         $rowData = explode(",", $rowData);
 

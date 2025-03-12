@@ -15,14 +15,14 @@ class ZipValidator
      */
     public static function validate(string $filePath): bool
     {
-        $keyRedis = 'filingOld:{$filing->id}:errors';
+        $keyErrorRedis = "'filingOld:{$filing->id}:errors";
 
-        ErrorCollector::clear($keyRedis);
+        ErrorCollector::clear($keyErrorRedis);
 
         // 1. Verificar que sea un archivo y tenga extensión .zip
         if (!file_exists($filePath) || pathinfo($filePath, PATHINFO_EXTENSION) !== 'zip') {
             ErrorCollector::addError(
-                $keyRedis,
+                $keyErrorRedis,
                 'ZIP_ERROR_001', // Código de validación (ajústalo según tu sistema)
                 'R',      // Tipo de validación (R = rechaza si falla, ajusta según necesidad)
                 null,     // No hay num_invoice en esta etapa
@@ -39,7 +39,7 @@ class ZipValidator
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== true) {
             ErrorCollector::addError(
-                $keyRedis,
+                $keyErrorRedis,
                 'ZIP_ERROR_002',
                 'R',
                 null,

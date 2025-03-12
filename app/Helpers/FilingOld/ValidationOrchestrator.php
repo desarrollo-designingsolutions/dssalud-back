@@ -15,21 +15,22 @@ class ValidationOrchestrator
      * @param string $zipPath Ruta del archivo ZIP
      * @return array Errores encontrados
      */
-    public static function validate(string $zipPath)
+    public static function validate($uniqid, string $zipPath)
     {
-        $keyRedis = 'filingOld:{$filing->id}:errors';
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
+
 
         // Obtener la ruta completa del archivo en el servidor
         $fullFilePath = Storage::disk(Constants::DISK_FILES)->path($zipPath);
 
-        ErrorCollector::clear($keyRedis);
+        ErrorCollector::clear($keyErrorRedis);
 
         if (!ZipValidator::validate($fullFilePath)) {
-            return ErrorCollector::getErrors($keyRedis);
+            return ErrorCollector::getErrors($keyErrorRedis);
         }
 
         if (!ZipContentValidator::validate($fullFilePath)) {
-            return ErrorCollector::getErrors($keyRedis);
+            return ErrorCollector::getErrors($keyErrorRedis);
         }
 
         $zip = new ZipArchive();
@@ -52,6 +53,6 @@ class ValidationOrchestrator
         array_map('unlink', glob("$tempDir/*"));
         rmdir($tempDir);
 
-        return ErrorCollector::getErrors($keyRedis);
+        return ErrorCollector::getErrors($keyErrorRedis);
     }
 }

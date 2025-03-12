@@ -42,7 +42,7 @@ class ProcessFilingValidationZip implements ShouldQueue
         $filing = Filing::find($this->filing_id);
 
         // //validamos los archivos del zip
-        $errorMessages = ValidationOrchestrator::validate($filing->path_zip);
+        $errorMessages = ValidationOrchestrator::validate($this->filing_id,$filing->path_zip);
 
         $infoValidation = [
             'infoValidationZip' => count($errorMessages) > 0 ? true : false,

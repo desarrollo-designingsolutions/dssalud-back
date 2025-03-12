@@ -47,6 +47,12 @@ class ProcessChunkJob implements ShouldQueue
             if (strpos($this->file_name, 'CT') !== false) {
                 CTFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
             }
+            if (strpos($this->file_name, 'US') !== false) {
+                USFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
+            }
+            if (strpos($this->file_name, 'AF') !== false) {
+                AFFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
+            }
             //  elseif (strpos($this->file_name, 'AF') !== false) {
 
             //     AFFileValidator::validate($this->file_name, [$row], $rowNumber);
