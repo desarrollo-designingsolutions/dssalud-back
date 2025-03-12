@@ -25,11 +25,11 @@ class ValidationOrchestrator
 
         ErrorCollector::clear($keyErrorRedis);
 
-        if (!ZipValidator::validate($fullFilePath)) {
+        if (!ZipValidator::validate($fullFilePath, $uniqid)) {
             return ErrorCollector::getErrors($keyErrorRedis);
         }
 
-        if (!ZipContentValidator::validate($fullFilePath)) {
+        if (!ZipContentValidator::validate($fullFilePath, $uniqid)) {
             return ErrorCollector::getErrors($keyErrorRedis);
         }
 

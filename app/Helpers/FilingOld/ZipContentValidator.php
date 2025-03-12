@@ -13,8 +13,10 @@ class ZipContentValidator
      * @param string $filePath Ruta del archivo ZIP
      * @return bool Verdadero si pasa las validaciones, falso si hay errores
      */
-    public static function validate(string $filePath)
+    public static function validate(string $filePath, string $uniqid)
     {
+        $keyErrorRedis = "'filingOld:{$uniqid}:errors";
+
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== true) {
             return false;
@@ -33,6 +35,7 @@ class ZipContentValidator
         // 4. Máximo 10 archivos
         if (count($fileNames) > 10) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_003',
                 'R',
                 null,
@@ -49,6 +52,7 @@ class ZipContentValidator
         // 5. Mínimo 4 archivos
         if (count($fileNames) < 4) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_004',
                 'R',
                 null,
@@ -79,6 +83,7 @@ class ZipContentValidator
 
         if (!$hasAF) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_005',
                 'R',
                 null,
@@ -91,6 +96,7 @@ class ZipContentValidator
         }
         if (!$hasUS) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_006',
                 'R',
                 null,
@@ -103,6 +109,7 @@ class ZipContentValidator
         }
         if (!$hasCT) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_007',
                 'R',
                 null,
@@ -115,6 +122,7 @@ class ZipContentValidator
         }
         if (!$hasACorSimilar) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_008',
                 'R',
                 null,

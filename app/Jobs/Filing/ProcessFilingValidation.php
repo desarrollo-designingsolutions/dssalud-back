@@ -57,8 +57,9 @@ class ProcessFilingValidation implements ShouldQueue
         // Procesar cada archivo y despachar sub-jobs por chunk
         foreach ($files as $file) {
 
+            $prefix_name = strtoupper(substr(basename($file['name']), 0, 2));
 
-            // Redis::set("filingOld:{$this->filing_id}:{$file['name']}", json_encode($file['contentDataArray']));
+            Redis::set("filingOld:{$this->filing_id}:{$prefix_name}", json_encode($file['contentDataArray']));
 
             $chunkSize = env('CHUNKSIZE', 100);
 

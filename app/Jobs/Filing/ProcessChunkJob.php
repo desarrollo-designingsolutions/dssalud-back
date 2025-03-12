@@ -43,12 +43,13 @@ class ProcessChunkJob implements ShouldQueue
         foreach ($this->chunk as $offset => $row) {
             $rowNumber = $this->start_row + $offset; // Número de fila en el archivo original
 
+
             // Validar según el tipo de archivo
             if (strpos($this->file_name, 'CT') !== false) {
-                CTFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
+                // CTFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
             }
             if (strpos($this->file_name, 'US') !== false) {
-                USFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
+                // USFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
             }
             if (strpos($this->file_name, 'AF') !== false) {
                 AFFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
