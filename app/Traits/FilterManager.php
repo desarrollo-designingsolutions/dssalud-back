@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use Illuminate\Support\Facades\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Request;
 
 /**
  * Trait FilterManager
@@ -19,8 +19,8 @@ trait FilterManager
      * Este método toma un array de filtros no válidos y los elimina de los filtros presentes en la
      * solicitud HTTP global. Si no se especifican filtros no válidos, no realiza ninguna acción.
      *
-     * @param array $invalidFilters Filtros no válidos a eliminar. Por ejemplo: ['nit', 'otro'].
-     *                              Si está vacío, el método termina sin modificar la solicitud.
+     * @param  array  $invalidFilters  Filtros no válidos a eliminar. Por ejemplo: ['nit', 'otro'].
+     *                                 Si está vacío, el método termina sin modificar la solicitud.
      * @return void
      *
      * @example
@@ -52,9 +52,9 @@ trait FilterManager
      * filtros de la solicitud (ya sea un array pasado o la solicitud HTTP global). Si encuentra
      * alguna, devuelve una paginación vacía. Si no, permite que el flujo continúe.
      *
-     * @param array $request Solicitud como array (opcional). Si no se proporciona, se usa la solicitud HTTP.
-     * @param array $invalidKeys Claves que, si están presentes, deben resultar en una respuesta vacía.
-     *                           Por ejemplo: ['nit']. Si está vacío, no realiza ninguna acción.
+     * @param  array  $request  Solicitud como array (opcional). Si no se proporciona, se usa la solicitud HTTP.
+     * @param  array  $invalidKeys  Claves que, si están presentes, deben resultar en una respuesta vacía.
+     *                              Por ejemplo: ['nit']. Si está vacío, no realiza ninguna acción.
      * @return LengthAwarePaginator|null Retorna una paginación vacía si hay claves inválidas, null si no.
      *
      * @example

@@ -2,11 +2,6 @@
 
 namespace App\Jobs\Filing;
 
-use App\Enums\Filing\StatusFilingEnum;
-use App\Events\FilingFinishProcessJob;
-use App\Events\FilingProgressEvent;
-use App\Helpers\Constants;
-use App\Helpers\FilingOld\CTFileValidator;
 use App\Helpers\Common\ErrorCollector;
 use App\Helpers\FilingOld\ZipHelper;
 use App\Models\Filing;
@@ -41,7 +36,6 @@ class ProcessFilingValidation implements ShouldQueue
 
         $keyErrorRedis = "filingOld:{$this->filing_id}:errors";
 
-
         $files = ZipHelper::openFileZip($filing->id, $filing->path_zip);
         $errorMessages = ErrorCollector::getErrors($keyErrorRedis);
 
@@ -53,12 +47,12 @@ class ProcessFilingValidation implements ShouldQueue
         Redis::set("filingOld:{$this->filing_id}:processed_rows", 0);
         Redis::set("filingOld:{$this->filing_id}:validationCt_codigoArchivos", json_encode([]));
 
-
         // Procesar cada archivo y despachar sub-jobs por chunk
         foreach ($files as $file) {
 
+            $prefix_name = strtoupper(substr(basename($file['name']), 0, 2));
 
-            // Redis::set("filingOld:{$this->filing_id}:{$file['name']}", json_encode($file['contentDataArray']));
+            Redis::set("filingOld:{$this->filing_id}:{$prefix_name}", json_encode($file['contentDataArray']));
 
             $chunkSize = env('CHUNKSIZE', 100);
 

@@ -3,7 +3,7 @@
 use App\Http\Controllers\FilingInvoiceController;
 use Illuminate\Support\Facades\Route;
 
-//Rutas protegidas
+// Rutas protegidas
 Route::middleware(['check.permission:filing.new.index'])->group(function () {
     /*
     |--------------------------------------------------------------------------

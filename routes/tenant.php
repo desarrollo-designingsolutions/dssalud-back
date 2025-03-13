@@ -28,7 +28,6 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 //     });
 // });
 
-
 Route::get('/tenant', function () {
-    return 'TENANT This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
+    return 'TENANT This is your multi-tenant application. The id of the current tenant is '.tenant('id');
 });

@@ -5,12 +5,11 @@ namespace App\Exports\Filing;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class FilingExcelErrorsValidationExport implements FromView, WithEvents, ShouldAutoSize
+class FilingExcelErrorsValidationExport implements FromView, ShouldAutoSize, WithEvents
 {
     use Exportable;
 
@@ -23,17 +22,15 @@ class FilingExcelErrorsValidationExport implements FromView, WithEvents, ShouldA
 
     public function view(): View
     {
-        if (!empty($this->data['validationTxt']['errorMessages'] ?? [])) {
+        if (! empty($this->data['validationTxt']['errorMessages'] ?? [])) {
             return view('Exports.Filing.FilingExcelErrorsValidationTxtExport', ['data' => $this->data['errorMessages']]);
         }
 
-        if (!empty($this->data['validationZip']['errorMessages'] ?? [])) {
+        if (! empty($this->data['validationZip']['errorMessages'] ?? [])) {
             return view('Exports.Filing.FilingExcelErrorsValidationZipExport', ['data' => $this->data['errorMessages']]);
         }
 
-
     }
-
 
     public function registerEvents(): array
     {
@@ -45,7 +42,7 @@ class FilingExcelErrorsValidationExport implements FromView, WithEvents, ShouldA
                 // Obtener el rango de celdas con datos
                 $highestColumn = $sheet->getHighestColumn();
                 $highestRow = $sheet->getHighestRow();
-                $range = 'A1:' . $highestColumn . $highestRow;
+                $range = 'A1:'.$highestColumn.$highestRow;
 
                 // Establecer el filtro automático en el rango de celdas
                 $sheet->setAutoFilter($range);

@@ -10,7 +10,7 @@ enum StatusFilingEnum: string
 {
     use AttributableEnum;
 
-    //OTROS
+    // OTROS
     #[Description('En proceso')]
     #[BackgroundColor('warning')]
     case FILING_EST_001 = 'FILING_EST_001';
@@ -38,7 +38,6 @@ enum StatusFilingEnum: string
     #[Description('Error Txt')]
     #[BackgroundColor('error')]
     case FILING_EST_007 = 'FILING_EST_007';
-
 
     #[Description('Abierto')]
     #[BackgroundColor('success')]

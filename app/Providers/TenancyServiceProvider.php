@@ -15,6 +15,7 @@ use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+
 class TenancyServiceProvider extends ServiceProvider
 {
     // By default, no namespace is used to support the callable array syntax.
@@ -133,12 +134,11 @@ class TenancyServiceProvider extends ServiceProvider
             // esto es para las apis que no requieran auth
             $routesApi = RoutesApi::ROUTES_API;
 
-
             foreach ($routesApi as $route) {
                 if (file_exists(base_path($route))) {
                     Route::prefix('api')
                         ->namespace(static::$controllerNamespace)
-                        ->middleware(['api', "universal", InitializeTenancyByDomain::class])
+                        ->middleware(['api', 'universal', InitializeTenancyByDomain::class])
                         ->group(base_path($route));
                 }
             }
@@ -150,7 +150,7 @@ class TenancyServiceProvider extends ServiceProvider
                 if (file_exists(base_path($route))) {
                     Route::prefix('api')
                         ->namespace(static::$controllerNamespace)
-                        ->middleware(['auth:api', "universal", InitializeTenancyByDomain::class])
+                        ->middleware(['auth:api', 'universal', InitializeTenancyByDomain::class])
                         ->group(base_path($route));
                 }
             }

@@ -5,16 +5,15 @@ namespace App\Events;
 use App\Models\FilingInvoice;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class FilingInvoiceRowUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $filingInvoice;
-
 
     /**
      * Create a new event instance.
@@ -55,5 +54,4 @@ class FilingInvoiceRowUpdated implements ShouldBroadcast
             'path_xml' => $this->filingInvoice->path_xml,
         ];
     }
-
 }

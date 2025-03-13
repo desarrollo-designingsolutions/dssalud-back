@@ -3,15 +3,15 @@
 namespace App\Jobs\Filing;
 
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Events\FileUploadProgress;
 use App\Events\FilingInvoiceRowUpdatedNow;
+use App\Events\ProgressCircular;
 use App\Repositories\FilingInvoiceRepository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Storage;
-use App\Events\FileUploadProgress;
-use App\Events\ProgressCircular;
 
 class ProcessMassXmlUpload implements ShouldQueue
 {
@@ -28,8 +28,7 @@ class ProcessMassXmlUpload implements ShouldQueue
     {
         // Construcción dinámica del finalPath con el nombre del archivo
         $separatedName = explode('_', $this->data['originalName']);
-        list($nit, $numFac, $name) = $separatedName;
-
+        [$nit, $numFac, $name] = $separatedName;
 
         $filing_invoice = $filingInvoiceRepository->searchOne([
             'invoice_number' => $numFac,
@@ -78,8 +77,8 @@ class ProcessMassXmlUpload implements ShouldQueue
             $finalPath
         );
 
-        if (isset($this->data["channel"])) {
-            ProgressCircular::dispatch($this->data["channel"], $progress);
+        if (isset($this->data['channel'])) {
+            ProgressCircular::dispatch($this->data['channel'], $progress);
         }
         sleep(3);
     }

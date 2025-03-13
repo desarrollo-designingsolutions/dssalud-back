@@ -34,20 +34,20 @@ class AuditResource extends JsonResource
     {
         return match ($event) {
             'created' => [
-                "icon" => "tabler-device-floppy",
-                "color" => "success",
+                'icon' => 'tabler-device-floppy',
+                'color' => 'success',
             ],
             'updated' => [
-                "icon" => "tabler-pencil",
-                "color" => "info",
+                'icon' => 'tabler-pencil',
+                'color' => 'info',
             ],
             'deleted' => [
-                "icon" => "tabler-trash",
-                "color" => "error",
+                'icon' => 'tabler-trash',
+                'color' => 'error',
             ],
             default => [
-                "icon" => "tabler-question",
-                "color" => "secondary",
+                'icon' => 'tabler-question',
+                'color' => 'secondary',
             ], // Añade un valor por defecto en caso de que el evento no coincida
         };
     }

@@ -9,10 +9,10 @@ class USFileValidator
     /**
      * Valida el archivo CT y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData Datos de la fila del txt a validar (como cadena CSV)
-     * @param int $rowNumber Número de la fila del txt a validar
-     * @param string $filing_id ID del proceso
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  Datos de la fila del txt a validar (como cadena CSV)
+     * @param  int  $rowNumber  Número de la fila del txt a validar
+     * @param  string  $filing_id  ID del proceso
      * @return bool
      */
     public static function validate(string $fileName, string $rowData, int $rowNumber, string $filing_id): void
@@ -20,23 +20,23 @@ class USFileValidator
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
         // Dividir la fila en columnas
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "Columna 1: Tipo de identificación del usuario.",
-            "Columna 2: Número de identificación del usuario del sistema.",
-            "Columna 3: Código entidad administradora.",
-            "Columna 4: Tipo de usuario.",
-            "Columna 5: Primer apellido del usuario.",
-            "Columna 6: Segundo apellido del usuario.",
-            "Columna 7: Primer nombre del usuario.",
-            "Columna 8: Segundo nombre del usuario.",
-            "Columna 9: Edad.",
-            "Columna 10: Unidad de medida de la edad.",
-            "Columna 11: Sexo.",
-            "Columna 12: Código del departamento de residencia habitual.",
-            "Columna 13: Código del municipio de residencia habitual.",
-            "Columna 14: Zona de residencia habitual.",
+            'Columna 1: Tipo de identificación del usuario.',
+            'Columna 2: Número de identificación del usuario del sistema.',
+            'Columna 3: Código entidad administradora.',
+            'Columna 4: Tipo de usuario.',
+            'Columna 5: Primer apellido del usuario.',
+            'Columna 6: Segundo apellido del usuario.',
+            'Columna 7: Primer nombre del usuario.',
+            'Columna 8: Segundo nombre del usuario.',
+            'Columna 9: Edad.',
+            'Columna 10: Unidad de medida de la edad.',
+            'Columna 11: Sexo.',
+            'Columna 12: Código del departamento de residencia habitual.',
+            'Columna 13: Código del municipio de residencia habitual.',
+            'Columna 14: Zona de residencia habitual.',
         ];
 
         // Validar columna 0: Tipo de identificación del usuario
@@ -46,7 +46,7 @@ class USFileValidator
         $ageUnit = trim($rowData[9] ?? ''); // Columna 10: Unidad de medida
 
         // Verificar si el tipo de identificación es válido
-        if (!in_array($typeId, $allowedTypes)) {
+        if (! in_array($typeId, $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_001',
@@ -62,7 +62,7 @@ class USFileValidator
             switch ($typeId) {
                 case 'CC':
                     // 1. Validar que el número de identificación sea numérico
-                    if (!empty($idNumber) && !ctype_digit($idNumber)) {
+                    if (! empty($idNumber) && ! ctype_digit($idNumber)) {
                         ErrorCollector::addError(
                             $keyErrorRedis,
                             'FILE_US_ERROR_002',
@@ -109,7 +109,7 @@ class USFileValidator
                     break;
                 case 'TI':
                     // 1. Validar que el número de identificación sea numérico
-                    if (!empty($idNumber) && !ctype_digit($idNumber)) {
+                    if (! empty($idNumber) && ! ctype_digit($idNumber)) {
                         ErrorCollector::addError(
                             $keyErrorRedis,
                             'FILE_US_ERROR_005',
@@ -173,9 +173,8 @@ class USFileValidator
             }
         }
 
-
         // Validar Número de identificación del usuario del sistema
-        if ($rowData[0] == 'CC' && !ctype_digit($rowData[1])) {
+        if ($rowData[0] == 'CC' && ! ctype_digit($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_008',
@@ -296,7 +295,7 @@ class USFileValidator
             );
         }
 
-        if ($rowData[0] == 'TI' && !ctype_digit($rowData[1])) {
+        if ($rowData[0] == 'TI' && ! ctype_digit($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_017',
@@ -364,9 +363,9 @@ class USFileValidator
             );
         }
 
-        //validar Tipo de usuario
+        // validar Tipo de usuario
         $allowedTypes = [1, 2, 3, 4, 5, 6, 7, 8];
-        if (!in_array($rowData[3], $allowedTypes)) {
+        if (! in_array($rowData[3], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_023',
@@ -395,7 +394,7 @@ class USFileValidator
             );
         }
 
-        //validar Primer nombre del usuario
+        // validar Primer nombre del usuario
         if (empty($rowData[6])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -410,7 +409,7 @@ class USFileValidator
             );
         }
 
-        //validar Edad
+        // validar Edad
         if (empty($rowData[8])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -425,10 +424,9 @@ class USFileValidator
             );
         }
 
-
-        //validar Unidad de medida de la edad
+        // validar Unidad de medida de la edad
         $allowedTypes = [1, 2, 3];
-        if (!in_array($rowData[9], $allowedTypes)) {
+        if (! in_array($rowData[9], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_028',
@@ -442,7 +440,7 @@ class USFileValidator
             );
         }
 
-        //validar Unidad de medida de la edad
+        // validar Unidad de medida de la edad
         if (empty($rowData[9])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -457,7 +455,7 @@ class USFileValidator
             );
         }
 
-        //validar Sexo
+        // validar Sexo
         if (empty($rowData[10])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -471,8 +469,8 @@ class USFileValidator
                 'El registro del dato es obligatorio.'
             );
         }
-        $allowedTypes = ["M", "F"];
-        if (!in_array($rowData[10], $allowedTypes)) {
+        $allowedTypes = ['M', 'F'];
+        if (! in_array($rowData[10], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_034',
@@ -486,9 +484,7 @@ class USFileValidator
             );
         }
 
-
-
-        //validar Código del departamento de residencia habitual
+        // validar Código del departamento de residencia habitual
         if (empty($rowData[11])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -502,7 +498,7 @@ class USFileValidator
                 'El registro del dato es obligatorio.'
             );
         }
-        //validar Código del municipio de residencia habitual
+        // validar Código del municipio de residencia habitual
         if (empty($rowData[12])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -516,9 +512,9 @@ class USFileValidator
                 'El registro del dato es obligatorio.'
             );
         }
-        //validar Zona de residencia habitual
-        $allowedTypes = ["U", "R"];
-        if (!in_array($rowData[13], $allowedTypes)) {
+        // validar Zona de residencia habitual
+        $allowedTypes = ['U', 'R'];
+        if (! in_array($rowData[13], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_US_ERROR_033',
@@ -532,7 +528,7 @@ class USFileValidator
             );
         }
 
-        //validar Código del municipio de residencia habitual
+        // validar Código del municipio de residencia habitual
         if (empty($rowData[13])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -546,7 +542,6 @@ class USFileValidator
                 'El registro del dato es obligatorio.'
             );
         }
-
 
         logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }

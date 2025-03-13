@@ -10,11 +10,6 @@ trait Searchable
 {
     /**
      * Aplicar una búsqueda global en todos los campos del modelo y sus relaciones.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string $term
-     * @param array $relations
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSearch(Builder $query, string $term, array $relations = []): Builder
     {
@@ -38,17 +33,16 @@ trait Searchable
             unset($relations['all']);
         }
 
-
         // Si se especifican relaciones para buscar, aplicar condiciones
-        if (!empty($relations)) {
+        if (! empty($relations)) {
             foreach ($relations as $relation => $relationColumns) {
-                $findRelation = $relation; //relaciona  buscar
+                $findRelation = $relation; // relaciona  buscar
                 if ((strpos($relation, '.') !== false)) { // si la relacion o palabra tiene "."
-                    $findRelation = explode(".", $relation);
+                    $findRelation = explode('.', $relation);
                     $findRelation = $findRelation[0]; // debo obtener el primer valor y solo este se busca en la class o modelo
                 }
 
-                if ((method_exists($this, $findRelation))) { //busco la relacion en mi modelo
+                if ((method_exists($this, $findRelation))) { // busco la relacion en mi modelo
                     $this->queryPerzonalized($query, $relation, $relationColumns, $term);
                 }
             }
@@ -59,8 +53,8 @@ trait Searchable
 
     protected function queryPerzonalized(&$query, $relation, $relationColumns, $term): void
     {
-        $query->orWhereHas($relation, function ($query) use ($relationColumns, $term, $relation) {
-            $query->where(function ($query) use ($relationColumns, $term, $relation) {
+        $query->orWhereHas($relation, function ($query) use ($relationColumns, $term) {
+            $query->where(function ($query) use ($relationColumns, $term) {
                 foreach ($relationColumns as $column) {
                     $query->orWhere(strval($column), 'LIKE', "%{$term}%");
                 }
@@ -68,11 +62,8 @@ trait Searchable
         });
     }
 
-
     /**
      * Obtener los atributos registrados en el modelo.
-     *
-     * @return array
      */
     protected function getModelAttributes(): array
     {

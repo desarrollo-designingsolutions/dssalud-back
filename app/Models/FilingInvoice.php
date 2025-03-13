@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class FilingInvoice extends Model
 {
-    use HasUuids, SoftDeletes, Searchable;
+    use HasUuids, Searchable, SoftDeletes;
 
     protected $casts = [
         'status' => StatusFilingInvoiceEnum::class,
@@ -27,13 +27,13 @@ class FilingInvoice extends Model
         // Asigna un número de caso automáticamente antes de crear un nuevo registro
         static::creating(function ($model) {
             DB::transaction(function () use ($model) {
-                $numberCaseInitial = env("NUMBER_CASE_INITIAL", 0); // Número inicial de caso si no hay registros previos
+                $numberCaseInitial = env('NUMBER_CASE_INITIAL', 0); // Número inicial de caso si no hay registros previos
 
                 // Obtener el último registro ordenado por el número de caso de manera descendente
                 $lastFiling = static::orderBy('case_number', 'desc')->lockForUpdate()->first();
 
                 // Generar el siguiente número de caso al nuevo registro
-                $case_number = $lastFiling ? (int)$lastFiling->case_number + 1 : $numberCaseInitial;
+                $case_number = $lastFiling ? (int) $lastFiling->case_number + 1 : $numberCaseInitial;
 
                 // Asignar el siguiente número de caso al nuevo registro
                 $model->case_number = $case_number;
@@ -60,7 +60,6 @@ class FilingInvoice extends Model
     {
         return $this->filing->company();
     }
-
 
     public function files()
     {

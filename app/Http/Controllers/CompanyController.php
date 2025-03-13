@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Company\CompanyStoreRequest;
 use App\Http\Resources\Company\CompanyFormResource;
-use App\Http\Resources\Company\CompanyListResource;
 use App\Http\Resources\Company\CompanyPaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Traits\HttpResponseTrait;
@@ -61,7 +60,7 @@ class CompanyController extends Controller
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_' . $company->id . $request->input('logo');
+                $ruta = 'companies/company_'.$company->id.$request->input('logo');
 
                 $logo = $file->store($ruta, 'public');
                 $company->logo = $logo;
@@ -70,7 +69,7 @@ class CompanyController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'Compañia agregada correctamente'
+                'message' => 'Compañia agregada correctamente',
             ];
         });
     }
@@ -100,7 +99,7 @@ class CompanyController extends Controller
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_' . $company->id . $request->input('logo');
+                $ruta = 'companies/company_'.$company->id.$request->input('logo');
                 $logo = $file->store($ruta, 'public');
                 $company->logo = $logo;
                 $company->save();
@@ -108,7 +107,7 @@ class CompanyController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'Compañia modificada correctamente'
+                'message' => 'Compañia modificada correctamente',
             ];
         });
     }
@@ -121,7 +120,7 @@ class CompanyController extends Controller
                 // Verificar si hay registros relacionados
                 if ($company->users()->exists()) {
                     throw new \Exception(json_encode([
-                        "message" => "No se puede eliminar la compañía, porque tiene relación de datos en otros módulos",
+                        'message' => 'No se puede eliminar la compañía, porque tiene relación de datos en otros módulos',
                     ]));
                 }
 
@@ -134,7 +133,7 @@ class CompanyController extends Controller
 
             return [
                 'code' => 200,
-                'message' => $msg
+                'message' => $msg,
             ];
         }, 200);
     }
@@ -150,7 +149,7 @@ class CompanyController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'Compañia ' . $msg . ' con éxito'
+                'message' => 'Compañia '.$msg.' con éxito',
             ];
         });
     }

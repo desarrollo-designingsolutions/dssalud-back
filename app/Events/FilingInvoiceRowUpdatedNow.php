@@ -15,7 +15,6 @@ class FilingInvoiceRowUpdatedNow implements ShouldBroadcastNow
 
     public $filingInvoice;
 
-
     /**
      * Create a new event instance.
      */
@@ -55,5 +54,4 @@ class FilingInvoiceRowUpdatedNow implements ShouldBroadcastNow
             'path_xml' => $this->filingInvoice->path_xml,
         ];
     }
-
 }

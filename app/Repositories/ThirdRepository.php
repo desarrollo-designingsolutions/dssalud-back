@@ -17,13 +17,13 @@ class ThirdRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (!empty($request['company_id'])) {
-                    $query->where("company_id", $request['company_id']);
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
                 }
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 
@@ -58,11 +58,11 @@ class ThirdRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
-                $query->where("company_id", $request['company_id']);
+            if (! empty($request['company_id'])) {
+                $query->where('company_id', $request['company_id']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
             $data = [

@@ -87,8 +87,8 @@ class MenuSeeder extends Seeder
 
         foreach ($arrayData as $key => $value) {
             $data = Menu::find($value['id']);
-            if (!$data) {
-                $data = new Menu();
+            if (! $data) {
+                $data = new Menu;
             }
             $data->id = $value['id'];
             $data->order = $value['order'];

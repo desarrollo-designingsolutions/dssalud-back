@@ -49,7 +49,7 @@ class WhatsappService
                     ['type' => 'body',
                         'parameters' => [
                             ['type' => 'text',
-                                'text' => $request['name'], ], //Nombre del propietario
+                                'text' => $request['name'], ], // Nombre del propietario
                         ], ],
                 ],
             ];
@@ -63,7 +63,7 @@ class WhatsappService
                     ['type' => 'body',
                         'parameters' => [
                             ['type' => 'text',
-                                'text' => $request['messaje'], ], //Nombre del aspirante
+                                'text' => $request['messaje'], ], // Nombre del aspirante
                         ], ],
                 ],
             ];

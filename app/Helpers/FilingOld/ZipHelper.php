@@ -13,7 +13,7 @@ class ZipHelper
     /**
      * Abre un archivo ZIP y devuelve un array con las rutas y contenidos de los archivos .txt extraídos.
      *
-     * @param string $fileZip Ruta relativa del ZIP (relativa a storage/app/)
+     * @param  string  $fileZip  Ruta relativa del ZIP (relativa a storage/app/)
      * @return array Lista de archivos extraídos con nombre, ruta y contenido, o vacío si falla
      */
     public static function openFileZip($uniqid, $fileZip): array
@@ -24,7 +24,7 @@ class ZipHelper
         // Obtener la ruta completa del archivo en el servidor
         $fullZipPath = Storage::disk(Constants::DISK_FILES)->path($fileZip);
 
-        if (!file_exists($fullZipPath)) {
+        if (! file_exists($fullZipPath)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIPERROR001',
@@ -36,10 +36,11 @@ class ZipHelper
                 null,
                 'El archivo ZIP no se encuentra en la ruta especificada. Verifique la ruta y vuelva a intentarlo.'
             );
+
             return [];
         }
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($fullZipPath) !== true) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -52,11 +53,12 @@ class ZipHelper
                 null,
                 'No se pudo abrir el archivo ZIP. Asegúrese de que no esté corrupto o protegido.'
             );
+
             return [];
         }
 
-        $tempDirectory = storage_path('app/temp_zip_' . $uniqid);
-        if (!mkdir($tempDirectory, 0755, true)) {
+        $tempDirectory = storage_path('app/temp_zip_'.$uniqid);
+        if (! mkdir($tempDirectory, 0755, true)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIPERROR003',
@@ -69,6 +71,7 @@ class ZipHelper
                 'No se pudo crear el directorio temporal para extraer el ZIP. Verifique los permisos del sistema.'
             );
             $zip->close();
+
             return [];
         }
 
@@ -82,7 +85,7 @@ class ZipHelper
             }
 
             $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            $rutaTemporal = $tempDirectory . '/' . $filename;
+            $rutaTemporal = $tempDirectory.'/'.$filename;
 
             if ($extension === 'txt') {
                 // Obtener el contenido directamente desde el ZIP
@@ -97,13 +100,14 @@ class ZipHelper
                         null,
                         null,
                         null,
-                        'No se pudo leer el contenido del archivo ' . $filename . ' dentro del ZIP.'
+                        'No se pudo leer el contenido del archivo '.$filename.' dentro del ZIP.'
                     );
+
                     continue;
                 }
 
                 // Verificar y convertir a UTF-8 si es necesario
-                if (!mb_check_encoding($contenido, 'UTF-8')) {
+                if (! mb_check_encoding($contenido, 'UTF-8')) {
                     $contenido = mb_convert_encoding($contenido, 'UTF-8', 'ISO-8859-1');
                 }
 
@@ -128,7 +132,6 @@ class ZipHelper
 
         Redis::set("filingOld:{$uniqid}:tempZip", $tempDirectory);
 
-
         if (empty($archivos)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -149,12 +152,12 @@ class ZipHelper
     /**
      * Construye un array con todos los datos combinados de los archivos del ZIP.
      *
-     * @param array $files Lista de archivos extraídos con name y content
+     * @param  array  $files  Lista de archivos extraídos con name y content
      * @return array Datos combinados con AF como base
      */
     public static function buildAllDataTogether($files): array
     {
-        $instance = new self(); // Crear instancia para acceder a métodos protegidos
+        $instance = new self; // Crear instancia para acceder a métodos protegidos
 
         // Mapeo de tipos de archivos y sus respectivos métodos de formato
         $fileTypes = [
@@ -211,6 +214,7 @@ class ZipHelper
                     $instance->invoiceUserServices($dataArrays[$type], $dataArrays['US'], $item, $service);
                 }
             }
+
             return $item;
         })->toArray();
 
@@ -222,8 +226,8 @@ class ZipHelper
     /**
      * Formatea el contenido de un archivo de texto en un array.
      *
-     * @param string $contenido Contenido del archivo
-     * @param callable|null $function Función para formatear cada línea
+     * @param  string  $contenido  Contenido del archivo
+     * @param  callable|null  $function  Función para formatear cada línea
      * @return array Datos formateados
      */
     protected function formatDataTxt($contenido, $function = null): array
@@ -246,8 +250,8 @@ class ZipHelper
     /**
      * Agrega numeración y nombre del archivo a los elementos del array.
      *
-     * @param array &$array Array de datos a modificar
-     * @param string $file_name Nombre del archivo
+     * @param  array  &$array  Array de datos a modificar
+     * @param  string  $file_name  Nombre del archivo
      */
     protected function agregarNumeracion(&$array, $file_name): void
     {
@@ -260,10 +264,10 @@ class ZipHelper
     /**
      * Asocia servicios a usuarios en una factura.
      *
-     * @param \Illuminate\Support\Collection $dataArray Colección de datos del servicio
-     * @param \Illuminate\Support\Collection $dataArrayUS Colección de usuarios
-     * @param array &$invoice Factura a modificar
-     * @param string $keyService Clave del servicio
+     * @param  \Illuminate\Support\Collection  $dataArray  Colección de datos del servicio
+     * @param  \Illuminate\Support\Collection  $dataArrayUS  Colección de usuarios
+     * @param  array  &$invoice  Factura a modificar
+     * @param  string  $keyService  Clave del servicio
      */
     protected function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService): void
     {
@@ -286,7 +290,7 @@ class ZipHelper
                 $invoice['usuarios'][$i]['servicios'] = [];
             }
 
-            if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
+            if (isset($invoice['usuarios'][$i]['servicios']) && ! isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
                 $invoice['usuarios'][$i]['servicios'][$keyService] = [];
             }
 
@@ -408,7 +412,7 @@ class ZipHelper
             'codDiagnosticoRelacionadoE1' => trim($datos[9]),
             'codDiagnosticoRelacionadoE2' => trim($datos[10]),
             'codDiagnosticoRelacionadoE3' => trim($datos[11]),
-            'condicionDestinoUsuarioEgreso' => trim($datos[12]) . ' ' . trim($datos[13]),
+            'condicionDestinoUsuarioEgreso' => trim($datos[12]).' '.trim($datos[13]),
             'codDiagnosticoCausaMuerte' => trim($datos[14]),
             'fechaEgreso' => null,
             'consecutivo' => null,
@@ -505,30 +509,29 @@ class ZipHelper
 
             'consecutivo' => null,
 
-
         ];
     }
 
     protected function formatValueAF($datos): array
     {
         return [
-            "Código del prestador de servicios de salud" => trim($datos[0]),
-            "Razón social o apellidos y nombre del prestador de servicios de salud" => trim($datos[1]),
-            "Tipo de identificación del prestador de servicios de salud" => trim($datos[2]),
-            "Número de identificación del prestador" => trim($datos[3]),
-            "Número de la factura" => trim($datos[4]),
-            "Fecha de expedición de la factura" => trim($datos[5]),
-            "Fecha de inicio" => trim($datos[6]),
-            "Fecha final" => trim($datos[7]),
-            "Código entidad administradora" => trim($datos[8]),
-            "Nombre entidad administradora" => trim($datos[9]),
-            "Número del contrato" => trim($datos[10]),
-            "Plan de beneficios" => trim($datos[11]),
-            "Número de la póliza" => trim($datos[12]),
-            "Valor total del pago compartido (copago)" => trim($datos[13]),
-            "Valor de la comisión" => trim($datos[14]),
-            "Valor total de descuentos" => trim($datos[15]),
-            "Valor neto a pagar por la entidad contratante" => trim($datos[16]),
+            'Código del prestador de servicios de salud' => trim($datos[0]),
+            'Razón social o apellidos y nombre del prestador de servicios de salud' => trim($datos[1]),
+            'Tipo de identificación del prestador de servicios de salud' => trim($datos[2]),
+            'Número de identificación del prestador' => trim($datos[3]),
+            'Número de la factura' => trim($datos[4]),
+            'Fecha de expedición de la factura' => trim($datos[5]),
+            'Fecha de inicio' => trim($datos[6]),
+            'Fecha final' => trim($datos[7]),
+            'Código entidad administradora' => trim($datos[8]),
+            'Nombre entidad administradora' => trim($datos[9]),
+            'Número del contrato' => trim($datos[10]),
+            'Plan de beneficios' => trim($datos[11]),
+            'Número de la póliza' => trim($datos[12]),
+            'Valor total del pago compartido (copago)' => trim($datos[13]),
+            'Valor de la comisión' => trim($datos[14]),
+            'Valor total de descuentos' => trim($datos[15]),
+            'Valor neto a pagar por la entidad contratante' => trim($datos[16]),
             'usuarios' => [],
         ];
     }

@@ -15,9 +15,10 @@ class CompanyListResource extends JsonResource
     public function toArray(Request $request): array
     {
 
-        $start_date = $this->created_at ? $this->created_at->format("Y-m-d") : null;
-        $final_date = $this->final_date ? $this->final_date->format("Y-m-d") : null;
-        $diffInDays =  $this->start_date &&  $this->final_date ?   $this->final_date->diffInDays($this->start_date) : 0;
+        $start_date = $this->created_at ? $this->created_at->format('Y-m-d') : null;
+        $final_date = $this->final_date ? $this->final_date->format('Y-m-d') : null;
+        $diffInDays = $this->start_date && $this->final_date ? $this->final_date->diffInDays($this->start_date) : 0;
+
         return [
             'id' => $this->id,
             'logo' => $this->logo,

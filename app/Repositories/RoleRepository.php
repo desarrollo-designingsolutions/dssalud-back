@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Helpers\Constants;
 use App\Models\Role;
 
 class RoleRepository extends BaseRepository
@@ -18,13 +17,13 @@ class RoleRepository extends BaseRepository
             ->with($with)
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
-                if (!empty($request['name'])) {
-                    $query->where('name', 'like', '%' . $request['name'] . '%');
+                if (! empty($request['name'])) {
+                    $query->where('name', 'like', '%'.$request['name'].'%');
                 }
                 $query->where('viewable', '1');
 
-                if (!empty($request['company_id'])) {
-                    $query->where("company_id", $request['company_id']);
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
                 }
             });
 
@@ -41,7 +40,7 @@ class RoleRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -60,10 +59,10 @@ class RoleRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description', $fieldType = 'type')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
+            if (! empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
             $query->where('viewable', '1');
@@ -94,10 +93,10 @@ class RoleRepository extends BaseRepository
     public function searchOne($request = [], $with = [])
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['name'])) {
+            if (! empty($request['name'])) {
                 $query->where('name', $request['name']);
             }
-            if (!empty($request['module'])) {
+            if (! empty($request['module'])) {
                 $query->where('module', $request['module']);
             }
         });

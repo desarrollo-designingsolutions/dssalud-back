@@ -33,22 +33,6 @@ class AMFileValidator
 
 
 
-        // 1. Validar codigo_prestador (columna 1)
-        if ( rowData[0]) == 'CC' &&!ctype_digit($rowData[0])) {
-            ErrorCollector::addError(
-                $keyErrorRedis,
-                'FILE_CT_ERROR_001',
-                'R',
-                null,
-                $fileName,
-                $rowNumber,
-                $titleColumn[0],
-                $rowData[0],
-                'El valor registrado no es numerico.'
-            );
-            $isValid = false;
-        }
-
 
         return $isValid;
     }

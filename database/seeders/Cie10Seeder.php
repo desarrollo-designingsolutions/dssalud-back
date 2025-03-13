@@ -12651,7 +12651,7 @@ class Cie10Seeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new Cie10();
+            $data = new Cie10;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

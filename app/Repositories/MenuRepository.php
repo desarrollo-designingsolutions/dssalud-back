@@ -34,7 +34,7 @@ class MenuRepository extends BaseRepository
                 $query->whereHas('permissions');
             }
 
-            //idsAllowed
+            // idsAllowed
             if (count($idsAllowed) > 0) {
                 $query->whereIn('id', $idsAllowed);
             }

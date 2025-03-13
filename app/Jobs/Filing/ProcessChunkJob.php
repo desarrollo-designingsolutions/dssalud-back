@@ -2,26 +2,28 @@
 
 namespace App\Jobs\Filing;
 
+use App\Events\ProgressCircular;
+use App\Helpers\FilingOld\ACFileValidator;
+use App\Helpers\FilingOld\AFFileValidator;
+use App\Helpers\FilingOld\CTFileValidator;
+use App\Helpers\FilingOld\USFileValidator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
-use App\Events\ProgressCircular;
-use App\Helpers\FilingOld\ACFileValidator;
-use App\Helpers\FilingOld\AFFileValidator;
-use App\Helpers\FilingOld\APFileValidator;
-use App\Helpers\FilingOld\CTFileValidator;
-use App\Helpers\FilingOld\USFileValidator;
 
 class ProcessChunkJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $filing_id;
+
     protected $file_name;
+
     protected $chunk;
+
     protected $start_row;
 
     public function __construct($filing_id, $file_name, $chunk, $start_row)
@@ -37,7 +39,6 @@ class ProcessChunkJob implements ShouldQueue
         // sleep(3);
 
         // $dataExtra = json_decode(Redis::get("filingOld:{$this->filing_id}:{$this->file_name}"), 1);
-
 
         // Procesar cada registro en el chunk y determinar su número de fila
         foreach ($this->chunk as $offset => $row) {

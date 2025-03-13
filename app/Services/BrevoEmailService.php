@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use GuzzleHttp\Client;
@@ -8,21 +9,31 @@ use Illuminate\Support\Facades\Log;
 class BrevoEmailService
 {
     protected $client;
+
     protected $url;
+
     protected $apiKey;
+
     protected $templateId = '';
+
     protected $subject = '';
+
     protected $senderName = '';
+
     protected $senderEmail = '';
+
     protected $to = [];
+
     protected $cc = [];
+
     protected $cco = [];
+
     protected $params = [];
 
     public function __construct()
     {
-        $this->client = new Client();
-        $this->url = "https://api.brevo.com/v3/smtp/email";
+        $this->client = new Client;
+        $this->url = 'https://api.brevo.com/v3/smtp/email';
         $this->apiKey = env('BREVO_API_KEY');
         $this->senderEmail = env('MAIL_FROM_ADDRESS_BREVO');
         $this->senderName = env('MAIL_FROM_NAME_BREVO');
@@ -62,6 +73,7 @@ class BrevoEmailService
     {
         $this->subject = $subject;
     }
+
     public function setParams(array $params)
     {
         $this->params = $params;
@@ -82,14 +94,14 @@ class BrevoEmailService
             'templateId' => $this->templateId,
         ];
 
-        if($this->cc && is_array($this->cc)){
-            $data["cc"] = $this->cc;
+        if ($this->cc && is_array($this->cc)) {
+            $data['cc'] = $this->cc;
         }
-        if($this->cco && is_array($this->cco)){
-            $data["bcc"] = $this->cco;
+        if ($this->cco && is_array($this->cco)) {
+            $data['bcc'] = $this->cco;
         }
-        if($this->params && is_array($this->params)){
-            $data["params"] = $this->params;
+        if ($this->params && is_array($this->params)) {
+            $data['params'] = $this->params;
         }
 
         try {
@@ -109,7 +121,7 @@ class BrevoEmailService
         } catch (RequestException $e) {
 
             // Registrar el error en el log
-            Log::error('Error al enviar el correo a ' . json_encode($this->to), [
+            Log::error('Error al enviar el correo a '.json_encode($this->to), [
                 'error_message' => $e->getMessage(),
                 'request_data' => $data,
             ]);

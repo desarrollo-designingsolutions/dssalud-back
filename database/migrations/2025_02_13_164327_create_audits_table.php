@@ -21,18 +21,18 @@ class CreateAuditsTable extends Migration
             $morphPrefix = config('audit.user.morph_prefix', 'user');
 
             $table->bigIncrements('id');
-            $table->string($morphPrefix . '_type')->nullable();
+            $table->string($morphPrefix.'_type')->nullable();
 
-            //Se comenta para usar los uuids
+            // Se comenta para usar los uuids
             // $table->unsignedBigInteger($morphPrefix . '_id')->nullable();
             // $table->morphs('auditable');
 
-            $table->uuid($morphPrefix . '_id')->nullable(); //lo agrego para usar los uuids
+            $table->uuid($morphPrefix.'_id')->nullable(); // lo agrego para usar los uuids
 
             $table->string('event');
 
-            $table->string('auditable_type');//lo agrego para usar los uuids
-            $table->uuid('auditable_id');//lo agrego para usar los uuids
+            $table->string('auditable_type'); // lo agrego para usar los uuids
+            $table->uuid('auditable_id'); // lo agrego para usar los uuids
 
             $table->text('old_values')->nullable();
             $table->text('new_values')->nullable();
@@ -42,11 +42,11 @@ class CreateAuditsTable extends Migration
             $table->string('tags')->nullable();
             $table->timestamps();
 
-            $table->index([$morphPrefix . '_id', $morphPrefix . '_type']);
+            $table->index([$morphPrefix.'_id', $morphPrefix.'_type']);
             $table->index([
                 'auditable_type',
                 'auditable_id',
-            ]); //lo agrego para usar los uuids
+            ]); // lo agrego para usar los uuids
         });
     }
 

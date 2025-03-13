@@ -73,17 +73,16 @@ class PermissionSeeder extends Seeder
 
         foreach ($arrayData as $key => $value) {
             $data = Permission::find($value['id']);
-            if (!$data) {
-                $data = new Permission();
+            if (! $data) {
+                $data = new Permission;
             }
             $data->id = $value['id'];
             $data->name = $value['name'];
             $data->description = $value['description'];
             $data->menu_id = $value['menu_id'];
-            $data->guard_name = "api";
+            $data->guard_name = 'api';
             $data->save();
         }
-
 
         // Obtener permisos
         $permissions = Permission::whereIn('id', collect($arrayData)->pluck('id'))->get();

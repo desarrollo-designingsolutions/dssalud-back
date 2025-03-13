@@ -18,12 +18,12 @@ class CompanySeeder extends Seeder
                 'id' => Constants::COMPANY_UUID,
                 'name' => 'Company Central',
                 'nit' => '123',
-                'email' => "companyCenter@gmail.com",
+                'email' => 'companyCenter@gmail.com',
                 'phone' => '0000',
-                'address' => "xxx",
+                'address' => 'xxx',
                 'country_id' => Constants::COUNTRY_ID,
                 // 'logo' => 1,
-                'final_date' => "2080-01-01",
+                'final_date' => '2080-01-01',
             ],
         ];
 
@@ -32,7 +32,7 @@ class CompanySeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $value) {
-            $data = new Company();
+            $data = new Company;
             $data->id = $value['id'];
             $data->name = $value['name'];
             $data->nit = $value['nit'];

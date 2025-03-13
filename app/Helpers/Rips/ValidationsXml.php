@@ -77,7 +77,7 @@ function validationFileXml($archiveXml, $data, &$errorMessages)
             'row' => null,
             'column' => 'validationFileXML',
             'data' => null,
-            'error' => 'No se pudo leer el archivo XML.'
+            'error' => 'No se pudo leer el archivo XML.',
         ];
 
         $validation = false;

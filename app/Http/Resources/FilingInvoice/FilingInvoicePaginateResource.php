@@ -21,7 +21,7 @@ class FilingInvoicePaginateResource extends JsonResource
             'users_count' => $this->users_count,
             'files_count' => $this->files_count,
             'case_number' => $this->case_number,
-            'date' => Carbon::parse($this->date)->format("d-m-Y H:s"),
+            'date' => Carbon::parse($this->date)->format('d-m-Y H:s'),
             'sumVr' => formatNumber($this->sumVr),
 
             'status' => $this->status,

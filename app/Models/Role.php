@@ -10,6 +10,7 @@ class Role extends SpatieRole
 {
     use HasFactory;
     use HasUuids;
+
     protected $primaryKey = 'id';
 
     public function allUsers()

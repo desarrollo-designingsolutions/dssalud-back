@@ -10,16 +10,13 @@ use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Helpers\Constants;
-use App\Helpers\FilingOld\ValidationOrchestrator;
 use App\Http\Requests\Filing\FilingUploadJsonRequest;
 use App\Http\Requests\Filing\FilingUploadZipRequest;
-use App\Http\Resources\Filing\FilingListResource;
 use App\Http\Resources\Filing\FilingPaginateResource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Jobs\Filing\ProcessMassXmlUpload;
-use App\Models\FilingInvoice;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -62,9 +59,9 @@ class FilingController extends Controller
     public function showData($id)
     {
         return $this->execute(function () use ($id) {
-            $data = $this->filingRepository->find($id, select: ["id", "type", "contract_id", "validationTxt"]);
+            $data = $this->filingRepository->find($id, select: ['id', 'type', 'contract_id', 'validationTxt']);
 
-            return  $data;
+            return $data;
         });
     }
 
@@ -72,14 +69,14 @@ class FilingController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
-            $id = $request->input("id", null);
-            $company_id = $request->input("company_id");
-            $user_id = $request->input("user_id");
+            $id = $request->input('id', null);
+            $company_id = $request->input('company_id');
+            $user_id = $request->input('user_id');
             $type = TypeFilingEnum::FILING_TYPE_001;
 
-            //guardo el registro en la bd
+            // guardo el registro en la bd
             $filing = $this->filingRepository->store([
-                'id' =>  $id,
+                'id' => $id,
                 'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => $type,
@@ -88,7 +85,7 @@ class FilingController extends Controller
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
-                $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
+                $ruta = '/companies/company_'.$company_id.'/filings/'.$type->value.'/filing_'.$filing->id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
                 $path_zip = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
                 $filing->path_zip = $path_zip;
@@ -97,7 +94,7 @@ class FilingController extends Controller
 
             $auth = $this->userRepository->find($user_id);
 
-            //VALIDACION ZIP
+            // VALIDACION ZIP
             ProcessFilingValidationZip::dispatch($filing->id, $auth, $company_id);
 
             return $filing;
@@ -129,13 +126,13 @@ class FilingController extends Controller
 
             $excelBase64 = base64_encode($excel);
 
-
             return [
                 'code' => 200,
                 'excel' => $excelBase64,
             ];
         });
     }
+
     public function delete($id)
     {
         return $this->runTransaction(function () use ($id) {
@@ -146,10 +143,9 @@ class FilingController extends Controller
                 $data->delete();
             }
 
-
             return [
                 'code' => 200,
-                'message' => "Registro eliminado con éxito.",
+                'message' => 'Registro eliminado con éxito.',
             ];
         });
     }
@@ -158,11 +154,11 @@ class FilingController extends Controller
     {
         return $this->runTransaction(function () use ($id) {
 
-            $this->filingRepository->changeState($id, null, "validationTxt");
+            $this->filingRepository->changeState($id, null, 'validationTxt');
 
             return [
                 'code' => 200,
-                'message' => "Registro actualizado con éxito.",
+                'message' => 'Registro actualizado con éxito.',
             ];
         });
     }
@@ -171,59 +167,59 @@ class FilingController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
-            $filing_id = $request->input("filing_id");
-            $contract_id = $request->input("contract_id");
+            $filing_id = $request->input('filing_id');
+            $contract_id = $request->input('contract_id');
 
             $filing = $this->filingRepository->find($filing_id);
 
             $validationTxt = json_decode($filing->validationTxt, 1);
-            $jsonSuccessfullInvoices = $validationTxt["jsonSuccessfullInvoices"];
-            $errorMessages = collect($validationTxt["errorMessages"]);
+            $jsonSuccessfullInvoices = $validationTxt['jsonSuccessfullInvoices'];
+            $errorMessages = collect($validationTxt['errorMessages']);
 
             $sumVr = sumVrServicioRips($jsonSuccessfullInvoices);
 
             $filing = $this->filingRepository->store([
-                "id" => $filing_id,
-                "sumVr" => $sumVr,
-                "contract_id" => $contract_id,
-                "validationTxt" => null,
+                'id' => $filing_id,
+                'sumVr' => $sumVr,
+                'contract_id' => $contract_id,
+                'validationTxt' => null,
             ]);
 
-            //tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
+            // tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
             $buildDataFinal = json_decode(collect($jsonSuccessfullInvoices), 1);
-            //le quitamos al array  general las key que no se deben guardar en json
+            // le quitamos al array  general las key que no se deben guardar en json
             eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
-            //quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
+            // quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
             deleteFieldsPerzonalizedJson($buildDataFinal);
 
-            //Recorremos las facturas
+            // Recorremos las facturas
             foreach ($buildDataFinal as $invoice) {
 
                 // Buscar los mensajes de error de la factura
-                $errorMessagesInvoice = $errorMessages->where("num_invoice", $invoice["numFactura"])->values();
+                $errorMessagesInvoice = $errorMessages->where('num_invoice', $invoice['numFactura'])->values();
 
-                //genero y guardo el archivo JSON de la factura
-                $nameFile = $invoice['numFactura'] . '.json';
-                $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
-                Storage::disk('public')->put($routeJson, json_encode($invoice)); //guardo el archivo
+                // genero y guardo el archivo JSON de la factura
+                $nameFile = $invoice['numFactura'].'.json';
+                $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice['numFactura'].'/'.$nameFile; // Ruta donde se guardará la carpeta
+                Storage::disk('public')->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                 // Guardamos la factura y obtenemos el modelo creado
                 $filingInvoice = $this->filingInvoiceRepository->store([
-                    "filing_id" => $filing_id,
-                    "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
-                    "status_xml" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
-                    "sumVr" => sumVrServicio($invoice),
-                    "date" => Carbon::now(),
-                    "invoice_number" => $invoice["numFactura"],
-                    "users_count" => count($invoice["usuarios"]),
-                    "path_json" => $routeJson,
-                    "validationTxt" => json_encode($errorMessagesInvoice->all()),
+                    'filing_id' => $filing_id,
+                    'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                    'status_xml' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
+                    'sumVr' => sumVrServicio($invoice),
+                    'date' => Carbon::now(),
+                    'invoice_number' => $invoice['numFactura'],
+                    'users_count' => count($invoice['usuarios']),
+                    'path_json' => $routeJson,
+                    'validationTxt' => json_encode($errorMessagesInvoice->all()),
                 ]);
             }
 
             return [
                 'code' => 200,
-                'message' => "Radicación actualizada con éxito.",
+                'message' => 'Radicación actualizada con éxito.',
             ];
         });
     }
@@ -246,7 +242,7 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-            if (!$request->hasFile('files')) {
+            if (! $request->hasFile('files')) {
                 return ['code' => 400, 'message' => 'No se encontraron archivos'];
             }
 
@@ -255,10 +251,9 @@ class FilingController extends Controller
             $modelId = $request->input('fileable_id');
 
             // Validar parámetros requeridos
-            if (!$company_id || !$modelType || !$modelId) {
+            if (! $company_id || ! $modelType || ! $modelId) {
                 return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
             }
-
 
             $files = $request->file('files');
             $files = is_array($files) ? $files : [$files];
@@ -266,19 +261,17 @@ class FilingController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\' . $modelType;
-            if (!class_exists($modelClass)) {
+            $modelClass = 'App\\Models\\'.$modelType;
+            if (! class_exists($modelClass)) {
                 return ['code' => 400, 'message' => 'Modelo no válido'];
             }
             $modelInstance = $modelClass::find($modelId);
-            $modelInstance->load(["filingInvoice"]);
-            if (!$modelInstance) {
+            $modelInstance->load(['filingInvoice']);
+            if (! $modelInstance) {
                 return ['code' => 404, 'message' => 'Instancia no encontrada'];
             }
 
-
             $supportTypes = $this->supportTypeRepository->all();
-
 
             foreach ($files as $index => $file) {
                 $tempPath = $file->store('temp', 'public');
@@ -286,10 +279,10 @@ class FilingController extends Controller
 
                 // Construcción dinámica del finalPath con el nombre del archivo
                 $separatedName = explode('_', $originalName);
-                list($nit, $numFac, $codeSupport, $consecutive) = $separatedName;
+                [$nit, $numFac, $codeSupport, $consecutive] = $separatedName;
 
-                $invoice = $modelInstance->filingInvoice()->where("invoice_number", $numFac)->first();
-                $supportType = $supportTypes->where("code", $codeSupport)->first();
+                $invoice = $modelInstance->filingInvoice()->where('invoice_number', $numFac)->first();
+                $supportType = $supportTypes->where('code', $codeSupport)->first();
 
                 $supportName = str_replace(' ', '_', strtoupper($codeSupport));
                 $finalName = "{$nit}_{$numFac}_{$supportName}_{$consecutive}";
@@ -320,7 +313,7 @@ class FilingController extends Controller
                 'code' => 200,
                 'message' => "Se enviaron {$fileCount} archivos a la cola",
                 'upload_id' => $uploadId,
-                'count' => $fileCount
+                'count' => $fileCount,
             ];
         }, 202);
     }
@@ -330,9 +323,9 @@ class FilingController extends Controller
         return $this->runTransaction(function () use ($request) {
 
             // Preparar datos iniciales
-            $id = $request->input("id", null);
-            $company_id = $request->input("company_id");
-            $user_id = $request->input("user_id");
+            $id = $request->input('id', null);
+            $company_id = $request->input('company_id');
+            $user_id = $request->input('user_id');
 
             $files = $request->file('files');
             $files = is_array($files) ? $files : [$files];
@@ -342,7 +335,7 @@ class FilingController extends Controller
 
             // Guardar registro inicial
             $filing = $this->filingRepository->store([
-                'id' =>  $id,
+                'id' => $id,
                 'company_id' => $company_id,
                 'user_id' => $user_id,
                 'type' => TypeFilingEnum::FILING_TYPE_002,
@@ -361,7 +354,6 @@ class FilingController extends Controller
                     // Leer JSON
                     $jsonData = openFileJson($tempPath);
                     $jsonData = normalizeJsonData($jsonData);
-
 
                     if (empty($jsonData)) {
                         continue; // Saltar si el archivo está vacío
@@ -392,11 +384,11 @@ class FilingController extends Controller
                     FilingProgressEvent::dispatch($filing->id, $progress);
                 } catch (\Exception $e) {
                     // Registrar error y continuar
-                    \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
+                    \Log::error("Error procesando archivo {$originalName}: ".$e->getMessage());
+
                     continue;
                 }
             }
-
 
             return $filing;
         });
@@ -418,16 +410,16 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-            if (!$request->hasFile('files')) {
+            if (! $request->hasFile('files')) {
                 return ['code' => 400, 'message' => 'No se encontraron archivos'];
             }
 
-            $company_id = $request->input("company_id");
-            $third_nit = $request->input("third_nit");
+            $company_id = $request->input('company_id');
+            $third_nit = $request->input('third_nit');
             $filing_id = $request->input('filing_id');
 
             // Validar parámetros requeridos
-            if (!$company_id || !$third_nit || !$filing_id) {
+            if (! $company_id || ! $third_nit || ! $filing_id) {
                 return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
             }
 
@@ -459,7 +451,7 @@ class FilingController extends Controller
                 'code' => 200,
                 'message' => "Se enviaron {$fileCount} archivos a la cola",
                 'upload_id' => $uploadId,
-                'count' => $fileCount
+                'count' => $fileCount,
             ];
         }, 202);
     }
@@ -472,7 +464,7 @@ class FilingController extends Controller
 
             return [
                 'code' => 200,
-                'errorMessages' => $errorMessages
+                'errorMessages' => $errorMessages,
             ];
         });
     }
@@ -503,7 +495,7 @@ class FilingController extends Controller
 
             return [
                 'code' => 200,
-                'countData' => $countData
+                'countData' => $countData,
             ];
         });
     }
@@ -516,7 +508,7 @@ class FilingController extends Controller
 
             return [
                 'code' => 200,
-                'data' => $data
+                'data' => $data,
             ];
         });
     }

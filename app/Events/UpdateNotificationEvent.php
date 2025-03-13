@@ -16,8 +16,8 @@ class UpdateNotificationEvent implements ShouldBroadcastNow
     /**
      * Create a new event instance.
      */
-
     public $user;
+
     public $notification_ids;
 
     public function __construct($user, $notification_ids)
@@ -33,15 +33,14 @@ class UpdateNotificationEvent implements ShouldBroadcastNow
      */
     public function broadcastOn(): Channel
     {
-        return  new Channel("user.{$this->user->id}");
+        return new Channel("user.{$this->user->id}");
     }
 
     public function broadcastWith()
     {
         $user = User::find($this->user->id);
-        $activeNotificationsCount = $user->notificaciones->whereNull("read_at")->where("is_removed", 0)->count();
+        $activeNotificationsCount = $user->notificaciones->whereNull('read_at')->where('is_removed', 0)->count();
         // $notifications = $user->notificaciones;
-
 
         $notifications = $user->notifications->whereIn('id', $this->notification_ids);
 

@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class File extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes, Searchable;
-
+    use HasFactory, HasUuids, Searchable, SoftDeletes;
 
     public function fileable()
     {

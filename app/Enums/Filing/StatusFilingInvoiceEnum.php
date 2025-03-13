@@ -11,7 +11,7 @@ enum StatusFilingInvoiceEnum: string
     use AttributableEnum;
     // FILINGINVOICE_EST_001
 
-    //OTROS
+    // OTROS
     #[Description('Pre radicado')]
     #[BackgroundColor('#F4511E')]
     case FILINGINVOICE_EST_001 = 'FILINGINVOICE_EST_001';
@@ -19,7 +19,6 @@ enum StatusFilingInvoiceEnum: string
     #[Description('Radicado')]
     #[BackgroundColor('success')]
     case FILINGINVOICE_EST_002 = 'FILINGINVOICE_EST_002';
-
 
     #[Description('Validado')]
     #[BackgroundColor('success')]
@@ -29,7 +28,7 @@ enum StatusFilingInvoiceEnum: string
     #[BackgroundColor('')]
     case FILINGINVOICE_EST_004 = 'FILINGINVOICE_EST_004';
 
-    //ERROR
+    // ERROR
     #[Description('Error XML')]
     #[BackgroundColor('error')]
     case FILINGINVOICE_EST_005 = 'ERROR_XML';

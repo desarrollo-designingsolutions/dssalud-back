@@ -10,7 +10,6 @@ Route::get('/selectCities/{state_id}', [QueryController::class, 'selectCities'])
 Route::get('/selectCities/country/{country_id}', [QueryController::class, 'selectCitiesCountry']);
 // Lista de Pais, Departamentos y Ciudades
 
-
 Route::post('/selectStatusFilingInvoiceEnum', [QueryController::class, 'selectStatusFilingInvoiceEnum']);
 Route::post('/selectStatusFilingInvoiceTypeEnum', [QueryController::class, 'selectStatusFilingInvoiceTypeEnum']);
 Route::post('/selectStatusXmlFilingInvoiceEnum', [QueryController::class, 'selectStatusXmlFilingInvoiceEnum']);

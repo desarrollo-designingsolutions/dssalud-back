@@ -5,16 +5,15 @@ namespace App\Events;
 use App\Models\Filing;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class FilingFinishProcessJob implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $filing;
-
 
     /**
      * Create a new event instance.
@@ -50,5 +49,4 @@ class FilingFinishProcessJob implements ShouldBroadcast
             'status' => $this->filing->status,
         ];
     }
-
 }

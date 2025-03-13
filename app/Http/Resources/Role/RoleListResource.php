@@ -30,9 +30,9 @@ class RoleListResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            'users' => $allUsers->select(["name", "surname"])->take($quantity_users),
+            'users' => $allUsers->select(['name', 'surname'])->take($quantity_users),
             'count_users_extras' => $count_users,
-            'count_users' => $allUsers->count()
+            'count_users' => $allUsers->count(),
         ];
     }
 }

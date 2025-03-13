@@ -13,10 +13,15 @@ class FileUploadProgress implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets,SerializesModels;
 
     public $uploadId;
+
     public $fileName;
+
     public $fileNumber;
+
     public $totalFiles;
+
     public $progress;
+
     public $filePath;
 
     public function __construct($uploadId, $fileName, $fileNumber, $totalFiles, $progress, $filePath)
@@ -31,7 +36,7 @@ class FileUploadProgress implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return new Channel('upload-progress.' . $this->uploadId);
+        return new Channel('upload-progress.'.$this->uploadId);
     }
 
     public function broadcastAs()

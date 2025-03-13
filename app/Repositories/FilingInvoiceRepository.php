@@ -24,17 +24,16 @@ class FilingInvoiceRepository extends BaseRepository
     public function paginate($request = [])
     {
         $data = request();
-        $filter["files_count"] = isset($data["filter"]["files_count"]) ? $data["filter"]["files_count"] : null;
+        $filter['files_count'] = isset($data['filter']['files_count']) ? $data['filter']['files_count'] : null;
 
-        $this->removeInvalidFilters(["files_count"]);
-
+        $this->removeInvalidFilters(['files_count']);
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
         return $this->cacheService->remember($cacheKey, function () use ($filter) {
 
             $query = QueryBuilder::for($this->model->query())
-                ->select(['filing_invoices.id', "invoice_number", "users_count", "case_number", "sumVr", "status", "status_xml", "date"])
+                ->select(['filing_invoices.id', 'invoice_number', 'users_count', 'case_number', 'sumVr', 'status', 'status_xml', 'date'])
                 ->withCount(['files'])
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
@@ -57,37 +56,34 @@ class FilingInvoiceRepository extends BaseRepository
                         ]);
                     }),
 
-                    AllowedFilter::custom("status", new DataSelectFilter()),
-                    AllowedFilter::custom("status_xml", new DataSelectFilter()),
-                    AllowedFilter::custom("date", new DateRangeFilter()),
-
+                    AllowedFilter::custom('status', new DataSelectFilter),
+                    AllowedFilter::custom('status_xml', new DataSelectFilter),
+                    AllowedFilter::custom('date', new DateRangeFilter),
 
                 ])
                 ->allowedSorts([
-                    "invoice_number",
-                    "users_count",
-                    "case_number",
-                    "sumVr",
-                    "files_count",
-                    "date",
+                    'invoice_number',
+                    'users_count',
+                    'case_number',
+                    'sumVr',
+                    'files_count',
+                    'date',
                 ]);
 
-            if (isset($filter["files_count"]) && is_numeric($filter["files_count"])) {
-                $query->having('files_count', '=', $filter["files_count"]);
+            if (isset($filter['files_count']) && is_numeric($filter['files_count'])) {
+                $query->having('files_count', '=', $filter['files_count']);
             }
-            $query =  $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
         }, Constants::REDIS_TTL);
     }
 
-
     public function store($request)
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -102,15 +98,14 @@ class FilingInvoiceRepository extends BaseRepository
         return $data;
     }
 
-
     public function searchOne($request = [], $with = [], $idsAllowed = [])
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['id'])) {
+            if (! empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
-            if (!empty($request['invoice_number'])) {
+            if (! empty($request['invoice_number'])) {
                 $query->where('invoice_number', $request['invoice_number']);
             }
         });
@@ -124,12 +119,12 @@ class FilingInvoiceRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
-                $query->whereHas("filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
+            if (! empty($request['company_id'])) {
+                $query->whereHas('filing', function ($subQuery) use ($request) {
+                    $subQuery->where('company_id', $request['company_id']);
                 });
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
@@ -155,20 +150,19 @@ class FilingInvoiceRepository extends BaseRepository
         return $data;
     }
 
-
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['company_id'])) {
-                $query->whereHas("filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
+            if (! empty($request['company_id'])) {
+                $query->whereHas('filing', function ($subQuery) use ($request) {
+                    $subQuery->where('company_id', $request['company_id']);
                 });
             }
-            if (!empty($request['status'])) {
-                $query->where("status", $request['status']);
+            if (! empty($request['status'])) {
+                $query->where('status', $request['status']);
             }
-            if (!empty($request['filing_id'])) {
-                $query->where("filing_id", $request['filing_id']);
+            if (! empty($request['filing_id'])) {
+                $query->where('filing_id', $request['filing_id']);
             }
         });
 
@@ -179,10 +173,10 @@ class FilingInvoiceRepository extends BaseRepository
 
     public function validInvoiceNumbers($filing_id)
     {
-        return $this->model->where("filing_id", $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->pluck("invoice_number")->toArray();
+        return $this->model->where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->pluck('invoice_number')->toArray();
     }
 
-    function getValidationsErrorMessages($id)
+    public function getValidationsErrorMessages($id)
     {
         $data = $this->model::find($id);
 

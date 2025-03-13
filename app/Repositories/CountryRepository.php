@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Country;
-use App\Repositories\BaseRepository;
 
 class CountryRepository extends BaseRepository
 {

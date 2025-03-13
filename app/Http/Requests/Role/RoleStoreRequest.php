@@ -26,7 +26,7 @@ class RoleStoreRequest extends FormRequest
     {
 
         $rules = [
-            'description' => 'required|unique:roles,description,' . $this->id . ',id,company_id,' . $this->company_id,
+            'description' => 'required|unique:roles,description,'.$this->id.',id,company_id,'.$this->company_id,
         ];
 
         return $rules;

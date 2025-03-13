@@ -174,7 +174,7 @@ class ServicioSeeder extends Seeder
         ];
 
         foreach ($dataArray as $key => $value) {
-            $data = new Servicio();
+            $data = new Servicio;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

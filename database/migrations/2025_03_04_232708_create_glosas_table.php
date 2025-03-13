@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('glosas', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained();
             $table->foreignUuid('service_id')->constrained();
             $table->string('code_glosa_id')->nullable();

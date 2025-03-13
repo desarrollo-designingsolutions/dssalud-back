@@ -12,7 +12,6 @@ trait AttributableEnum
 {
     /**
      * Call the given method on the enum case
-     *
      */
     public function __call(string $method, array $arguments): mixed
     {
@@ -21,7 +20,7 @@ trait AttributableEnum
         $attributes = $reflection->getCase($this->name)->getAttributes();
 
         // Check if attribute exists in our attributes list
-        $filtered_attributes = array_filter($attributes, fn (ReflectionAttribute $attribute) => $attribute->getName() === AttributeProperty::ATTRIBUTE_PATH . Str::ucfirst($method));
+        $filtered_attributes = array_filter($attributes, fn (ReflectionAttribute $attribute) => $attribute->getName() === AttributeProperty::ATTRIBUTE_PATH.Str::ucfirst($method));
 
         // If not, throw an exception
         if (empty($filtered_attributes)) {

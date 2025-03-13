@@ -8,22 +8,22 @@ class InternalFileValidator
 {
     // Cantidad esperada de columnas por tipo de archivo (ajústalas según tus necesidades)
     private static $expectedColumns = [
-        "AC" => 17,
-        "AF" => 17,
-        "AH" => 19,
-        "AM" => 14,
-        "AN" => 14,
-        "AP" => 15,
-        "AT" => 11,
-        "AU" => 17,
-        "US" => 14,
-        "CT" => 4,
+        'AC' => 17,
+        'AF' => 17,
+        'AH' => 19,
+        'AM' => 14,
+        'AN' => 14,
+        'AP' => 15,
+        'AT' => 11,
+        'AU' => 17,
+        'US' => 14,
+        'CT' => 4,
     ];
 
     /**
      * Valida las columnas de un archivo extraído del ZIP.
      *
-     * @param string $filePath Ruta del archivo extraído
+     * @param  string  $filePath  Ruta del archivo extraído
      * @return bool Verdadero si pasa las validaciones, falso si hay errores
      */
     public static function validate(string $filePath): bool
@@ -43,11 +43,12 @@ class InternalFileValidator
                 null,
                 'Tipo de archivo no reconocido. Verifique que el nombre del archivo inicie con AF, US, AC,CT, AP, AM , AH, AN, AT, AU.'
             );
+
             return false;
         }
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             ErrorCollector::addError(
                 'ZIP_ERROR_010',
                 'R',
@@ -58,6 +59,7 @@ class InternalFileValidator
                 null,
                 'No se pudo abrir el archivo. Asegúrese de que el archivo sea legible.'
             );
+
             return false;
         }
 
@@ -85,6 +87,7 @@ class InternalFileValidator
         }
 
         fclose($handle);
+
         return $isValid;
     }
 }

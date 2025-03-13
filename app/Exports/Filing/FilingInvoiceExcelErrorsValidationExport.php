@@ -5,12 +5,11 @@ namespace App\Exports\Filing;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class FilingInvoiceExcelErrorsValidationExport implements FromView, WithEvents, ShouldAutoSize
+class FilingInvoiceExcelErrorsValidationExport implements FromView, ShouldAutoSize, WithEvents
 {
     use Exportable;
 
@@ -26,7 +25,6 @@ class FilingInvoiceExcelErrorsValidationExport implements FromView, WithEvents, 
         return view('Exports.Filing.FilingExcelErrorsValidationZipExport', ['data' => $this->data]);
     }
 
-
     public function registerEvents(): array
     {
         return [
@@ -37,7 +35,7 @@ class FilingInvoiceExcelErrorsValidationExport implements FromView, WithEvents, 
                 // Obtener el rango de celdas con datos
                 $highestColumn = $sheet->getHighestColumn();
                 $highestRow = $sheet->getHighestRow();
-                $range = 'A1:' . $highestColumn . $highestRow;
+                $range = 'A1:'.$highestColumn.$highestRow;
 
                 // Establecer el filtro automático en el rango de celdas
                 $sheet->setAutoFilter($range);

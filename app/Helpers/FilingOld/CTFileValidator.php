@@ -10,22 +10,22 @@ class CTFileValidator
     /**
      * Valida el archivo CT y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Código del prestador de servicios de salud",
-            "columna 2: Fecha de remisión",
-            "columna 3: Código del archivo",
-            "columna 4: Total de registros",
+            'columna 1: Código del prestador de servicios de salud',
+            'columna 2: Fecha de remisión',
+            'columna 3: Código del archivo',
+            'columna 4: Total de registros',
         ];
 
         $isValid = true;
@@ -35,7 +35,7 @@ class CTFileValidator
         $tempDir = Redis::get("filingOld:{$filing_id}:tempZip");
 
         // 1. Validar codigo_prestador (columna 1)
-        if (!ctype_digit($rowData[0])) {
+        if (! ctype_digit($rowData[0])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_CT_ERROR_001',
@@ -63,7 +63,7 @@ class CTFileValidator
         }
 
         // 2. Validar fecha (columna 2)
-        if (!preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rowData[1]) || !self::isValidDate($rowData[1])) {
+        if (! preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rowData[1]) || ! self::isValidDate($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_CT_ERROR_003',
@@ -91,8 +91,8 @@ class CTFileValidator
 
         // 3. Validar codigo_archivo (columna 3)
         $prefix = strtoupper(substr($rowData[2], 0, 2));
-        $allowedPrefixes = ["AC", "AF", "AH", "AM", "AN", "AP", "AT", "AU", "US", "CT"];
-        if (!in_array($prefix, $allowedPrefixes)) {
+        $allowedPrefixes = ['AC', 'AF', 'AH', 'AM', 'AN', 'AP', 'AT', 'AU', 'US', 'CT'];
+        if (! in_array($prefix, $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_CT_ERROR_005',
@@ -123,9 +123,8 @@ class CTFileValidator
             Redis::set("filingOld:{$filing_id}:validationCt_codigoArchivos", json_encode($codigoArchivos));
         }
 
-
         // 4. Validar total_registros (columna 4)
-        if (!ctype_digit($rowData[3])) {
+        if (! ctype_digit($rowData[3])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_CT_ERROR_007',
@@ -138,7 +137,7 @@ class CTFileValidator
                 'El valor registrado no es numerico.'
             );
         } else {
-            $fileToFind = $rowData[2] . ".txt";
+            $fileToFind = $rowData[2].'.txt';
             $expectedCount = (int) $rowData[3];
             $actualCount = self::countFileRows($tempDir, $fileToFind);
             if ($actualCount === null) {
@@ -151,7 +150,7 @@ class CTFileValidator
                     $rowNumber,
                     3,
                     $rowData[2],
-                    'No se encontró el archivo correspondiente al código ' . $fileToFind . '. Verifique que exista en el ZIP.'
+                    'No se encontró el archivo correspondiente al código '.$fileToFind.'. Verifique que exista en el ZIP.'
                 );
             } elseif ($actualCount !== $expectedCount) {
                 ErrorCollector::addError(
@@ -163,7 +162,7 @@ class CTFileValidator
                     $rowNumber,
                     3,
                     $rowData[3],
-                    "El total de registros ($expectedCount) no coincide con las filas encontradas ($actualCount) en el archivo " . $fileToFind . '. Ajuste el valor o el archivo.'
+                    "El total de registros ($expectedCount) no coincide con las filas encontradas ($actualCount) en el archivo ".$fileToFind.'. Ajuste el valor o el archivo.'
                 );
             }
         }
@@ -175,7 +174,10 @@ class CTFileValidator
     private static function isValidDate(string $date): bool
     {
         $parts = explode('/', $date);
-        if (count($parts) !== 3) return false;
+        if (count($parts) !== 3) {
+            return false;
+        }
+
         return checkdate((int) $parts[1], (int) $parts[0], (int) $parts[2]);
     }
 
@@ -185,6 +187,7 @@ class CTFileValidator
     private static function isDateAfterToday(string $date): bool
     {
         $dateTime = \DateTime::createFromFormat('d/m/Y', $date);
+
         return $dateTime > new \DateTime('today');
     }
 
@@ -194,10 +197,14 @@ class CTFileValidator
     private static function countFileRows(string $tempDir, string $codigoArchivo): ?int
     {
         $filePath = "$tempDir/$codigoArchivo"; // Busca archivo con ese código (ej. AF123.txt)
-        if (empty($filePath)) return null;
+        if (empty($filePath)) {
+            return null;
+        }
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) return null;
+        if (! $handle) {
+            return null;
+        }
 
         $count = 0;
         while (fgetcsv($handle, 0, ',') !== false) {
@@ -205,6 +212,7 @@ class CTFileValidator
         }
 
         fclose($handle);
+
         return $count;
     }
 }

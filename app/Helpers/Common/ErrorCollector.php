@@ -11,14 +11,14 @@ class ErrorCollector
     /**
      * Agrega un error al array de errores con la nueva estructura.
      *
-     * @param string $validation Código de la validación (ej. RVC001)
-     * @param string $validationType Tipo de validación (ej. R)
-     * @param string|null $numInvoice Número de factura o identificador padre
-     * @param string|null $file Nombre del archivo
-     * @param int|null $row Fila donde ocurrió el error
-     * @param string|null $column Columna específica (si aplica)
-     * @param mixed $data Datos que causaron el error
-     * @param string $message Mensaje con descripción y solución
+     * @param  string  $validation  Código de la validación (ej. RVC001)
+     * @param  string  $validationType  Tipo de validación (ej. R)
+     * @param  string|null  $numInvoice  Número de factura o identificador padre
+     * @param  string|null  $file  Nombre del archivo
+     * @param  int|null  $row  Fila donde ocurrió el error
+     * @param  string|null  $column  Columna específica (si aplica)
+     * @param  mixed  $data  Datos que causaron el error
+     * @param  string  $message  Mensaje con descripción y solución
      */
     public static function addError(
         string $keyRedis,
@@ -31,8 +31,6 @@ class ErrorCollector
         $data,
         string $message
     ): void {
-
-
 
         // self::$errors[] = [
         //     'validacion' => $validation,
@@ -62,15 +60,14 @@ class ErrorCollector
 
     /**
      * Devuelve todos los errores recolectados.
-     *
-     * @return array
      */
     public static function getErrors($keyRedis): array
     {
         // return self::$errors;
 
         $errors = json_decode(Redis::get($keyRedis), 1);
-        return  $errors;
+
+        return $errors;
     }
 
     /**

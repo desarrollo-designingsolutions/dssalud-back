@@ -266,7 +266,7 @@ class PaisSeeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new Pais();
+            $data = new Pais;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

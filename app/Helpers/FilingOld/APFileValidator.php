@@ -9,8 +9,8 @@ class APFileValidator
     /**
      * Valida el archivo CT y sus columnas.
      *
-     * @param string $filePath Ruta del archivo CT
-     * @param string $tempDir Directorio temporal donde están los archivos extraídos del ZIP
+     * @param  string  $filePath  Ruta del archivo CT
+     * @param  string  $tempDir  Directorio temporal donde están los archivos extraídos del ZIP
      * @return bool Verdadero si pasa todas las validaciones, falso si hay errores
      */
     public static function validate(string $fileName, array $chunk, $rowNumber)
@@ -165,7 +165,10 @@ class APFileValidator
     private static function isValidDate(string $date): bool
     {
         $parts = explode('/', $date);
-        if (count($parts) !== 3) return false;
+        if (count($parts) !== 3) {
+            return false;
+        }
+
         return checkdate((int) $parts[1], (int) $parts[0], (int) $parts[2]);
     }
 
@@ -175,6 +178,7 @@ class APFileValidator
     private static function isDateAfterToday(string $date): bool
     {
         $dateTime = \DateTime::createFromFormat('d/m/Y', $date);
+
         return $dateTime > new \DateTime('today');
     }
 
@@ -184,16 +188,21 @@ class APFileValidator
     private static function countFileRows(string $tempDir, string $codigoArchivo): ?int
     {
         $filePath = glob("$tempDir/$codigoArchivo*"); // Busca archivo con ese código (ej. AF123.txt)
-        if (empty($filePath)) return null;
+        if (empty($filePath)) {
+            return null;
+        }
 
         $handle = fopen($filePath[0], 'r');
-        if (!$handle) return null;
+        if (! $handle) {
+            return null;
+        }
 
         $count = 0;
         while (fgetcsv($handle, 0, ',') !== false) {
             $count++;
         }
         fclose($handle);
+
         return $count;
     }
 }

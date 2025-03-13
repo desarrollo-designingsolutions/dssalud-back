@@ -19,7 +19,6 @@ class FilingRepository extends BaseRepository
 {
     use FilterManager;
 
-
     public function __construct(Filing $modelo)
     {
         parent::__construct($modelo);
@@ -29,10 +28,9 @@ class FilingRepository extends BaseRepository
     {
 
         $data = request();
-        $filter["filing_invoice_pre_radicated_count"] = isset($data["filter"]["filing_invoice_pre_radicated_count"]) ? $data["filter"]["filing_invoice_pre_radicated_count"] : null;
+        $filter['filing_invoice_pre_radicated_count'] = isset($data['filter']['filing_invoice_pre_radicated_count']) ? $data['filter']['filing_invoice_pre_radicated_count'] : null;
 
-        $this->removeInvalidFilters(["filing_invoice_pre_radicated_count"]);
-
+        $this->removeInvalidFilters(['filing_invoice_pre_radicated_count']);
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
@@ -40,10 +38,10 @@ class FilingRepository extends BaseRepository
 
             $query = QueryBuilder::for($this->model->query())
                 ->with(['contract:id,name'])
-                ->select(['filings.id', "contract_id", "type", "status", "sumVr"])
+                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr'])
                 ->withCount(['filingInvoicePreRadicated'])
                 ->allowedFilters([
-                    "status",
+                    'status',
 
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->orWhereHas('contract', function ($subQuery) use ($value) {
@@ -66,22 +64,22 @@ class FilingRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
-                    "type",
-                    "status",
-                    "sumVr",
-                    "filing_invoice_pre_radicated_count",
-                    AllowedSort::custom("contract_name", new RelatedTableSort(
-                        "filings",
-                        "contracts",
-                        "name",
-                        "contract_id",
+                    'type',
+                    'status',
+                    'sumVr',
+                    'filing_invoice_pre_radicated_count',
+                    AllowedSort::custom('contract_name', new RelatedTableSort(
+                        'filings',
+                        'contracts',
+                        'name',
+                        'contract_id',
                     )),
                 ]);
 
-            if (isset($filter["filing_invoice_pre_radicated_count"]) && is_numeric($filter["filing_invoice_pre_radicated_count"])) {
-                $query->having('filing_invoice_pre_radicated_count', '=', $filter["filing_invoice_pre_radicated_count"]);
+            if (isset($filter['filing_invoice_pre_radicated_count']) && is_numeric($filter['filing_invoice_pre_radicated_count'])) {
+                $query->having('filing_invoice_pre_radicated_count', '=', $filter['filing_invoice_pre_radicated_count']);
             }
-            $query =  $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
         }, Constants::REDIS_TTL);
@@ -91,7 +89,7 @@ class FilingRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -110,7 +108,7 @@ class FilingRepository extends BaseRepository
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['id'])) {
+            if (! empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
         });
@@ -121,8 +119,7 @@ class FilingRepository extends BaseRepository
         return $data;
     }
 
-
-    function getValidationsErrorMessages($id)
+    public function getValidationsErrorMessages($id)
     {
         $data = $this->model::find($id);
 
@@ -150,13 +147,13 @@ class FilingRepository extends BaseRepository
         }
 
         return [
-            "errorMessages" => $errorMessages,
-            "validationTxt" => json_decode($data->validationTxt, 1),
-            "validationZip" => json_decode($data->validationZip, 1),
+            'errorMessages' => $errorMessages,
+            'validationTxt' => json_decode($data->validationTxt, 1),
+            'validationZip' => json_decode($data->validationZip, 1),
         ];
     }
 
-    function getAllValidation($filing_id)
+    public function getAllValidation($filing_id)
     {
         $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->select(['validationXml', 'validationTxt'])->get();
 
@@ -189,13 +186,14 @@ class FilingRepository extends BaseRepository
     public function getCountFilingInvoicePreRadicated($filing_id)
     {
         $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->count();
+
         return $fileInvoices;
     }
 
     public function changeStatusFilingInvoicePreRadicated($filing_id)
     {
         $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->update([
-            'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002
+            'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
         ]);
 
         return $fileInvoices;

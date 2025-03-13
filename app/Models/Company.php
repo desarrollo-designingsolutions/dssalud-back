@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes,Searchable, Cacheable;
+    use Cacheable, HasFactory, HasUuids,Searchable, SoftDeletes;
 
     protected $casts = [
         'is_active' => 'boolean',

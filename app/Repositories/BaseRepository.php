@@ -300,16 +300,16 @@ class BaseRepository
      * @return array Array limpio
      */
     public function clearNull($array)
-{
-    return array_map(function ($value) {
-        // Solo reemplazar 'null' y 'undefined' como strings por null, no los valores booleanos o otros tipos
-        if ($value === 'null' || $value === 'undefined') {
-            return null;
-        }
-        return $value;
-    }, $array);
-}
+    {
+        return array_map(function ($value) {
+            // Solo reemplazar 'null' y 'undefined' como strings por null, no los valores booleanos o otros tipos
+            if ($value === 'null' || $value === 'undefined') {
+                return null;
+            }
 
+            return $value;
+        }, $array);
+    }
 
     // ---- Configuración ----
 

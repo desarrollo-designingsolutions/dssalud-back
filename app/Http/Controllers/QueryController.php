@@ -85,8 +85,8 @@ class QueryController extends Controller
 
         $status = collect($status)->map(function ($item) {
             return [
-                "value" => $item,
-                "title" => $item->description(),
+                'value' => $item,
+                'title' => $item->description(),
             ];
         });
 
@@ -101,16 +101,14 @@ class QueryController extends Controller
     {
         $status = StatusFilingInvoiceEnum::cases();
 
-
-        $status = array_filter($status, function ($case)  {
-            return in_array($case->value, ["FILINGINVOICE_EST_001", "FILINGINVOICE_EST_002"]);
+        $status = array_filter($status, function ($case) {
+            return in_array($case->value, ['FILINGINVOICE_EST_001', 'FILINGINVOICE_EST_002']);
         });
-
 
         $status = collect($status)->map(function ($item) {
             return [
-                "value" => $item,
-                "title" => $item->description(),
+                'value' => $item,
+                'title' => $item->description(),
             ];
         });
 
@@ -125,17 +123,14 @@ class QueryController extends Controller
     {
         $status = StatusFilingInvoiceEnum::cases();
 
-
-        $status = array_filter($status, function ($case)  {
-            return in_array($case->value, ["FILINGINVOICE_EST_003", "FILINGINVOICE_EST_004"]);
+        $status = array_filter($status, function ($case) {
+            return in_array($case->value, ['FILINGINVOICE_EST_003', 'FILINGINVOICE_EST_004']);
         });
-
-
 
         $status = collect($status)->map(function ($item) {
             return [
-                "value" => $item,
-                "title" => $item->description(),
+                'value' => $item,
+                'title' => $item->description(),
             ];
         });
 
@@ -145,7 +140,6 @@ class QueryController extends Controller
             'statusXmlFilingInvoiceEnum_countLinks' => 1,
         ];
     }
-
 
     public function selectInfiniteContract(Request $request)
     {
@@ -177,14 +171,14 @@ class QueryController extends Controller
     {
         $status = StatusFilingEnum::cases();
 
-        $status = array_filter($status, function ($case)  {
-            return in_array($case->value, ["FILING_EST_008", "FILING_EST_009"]);
+        $status = array_filter($status, function ($case) {
+            return in_array($case->value, ['FILING_EST_008', 'FILING_EST_009']);
         });
 
         $status = collect($status)->map(function ($item) {
             return [
-                "value" => $item,
-                "title" => $item->description(),
+                'value' => $item,
+                'title' => $item->description(),
             ];
         });
 
@@ -201,8 +195,8 @@ class QueryController extends Controller
 
         $types = collect($types)->map(function ($item) {
             return [
-                "value" => $item,
-                "title" => $item->description(),
+                'value' => $item,
+                'title' => $item->description(),
             ];
         });
 

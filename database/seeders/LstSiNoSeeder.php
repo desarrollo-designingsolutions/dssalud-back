@@ -18,7 +18,7 @@ class LstSiNoSeeder extends Seeder
             ['id' => '2', 'codigo' => 'SI', 'nombre' => 'SI', 'descripcion' => null, 'habilitado' => 'SI', 'aplicacion' => null, 'isStandardGEL' => 'False', 'isStandardMSPS' => 'False', 'extra_I' => '1', 'extra_II' => 'S', 'extra_III' => '1', 'extra_IV' => '01', 'extra_V' => null, 'extra_VI' => null, 'extra_VII' => null, 'extra_VIII' => null, 'extra_IX' => null, 'extra_X' => null, 'valorRegistro' => null, 'usuarioResponsable' => null, 'fecha_actualizacion' => '2021-07-21 12:14:06 PM', 'isPublicPrivate' => 'False'],
         ];
         foreach ($dataArray as $value) {
-            $data = new LstSiNo();
+            $data = new LstSiNo;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];
