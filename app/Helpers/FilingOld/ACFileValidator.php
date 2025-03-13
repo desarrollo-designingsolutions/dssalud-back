@@ -137,7 +137,7 @@ class ACFileValidator
             );
         }
 
-        // validar Causa externas
+        // validar Causa externa
         $allowedTypes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15"];
         if (! in_array($rowData[8], $allowedTypes)) {
             ErrorCollector::addError(
@@ -178,24 +178,10 @@ class ACFileValidator
                 $rowNumber,
                 $titleColumn[9],
                 $rowData[9],
-                'El codigo de causa externa es un valor obligatorio.'
+                'El código de diagnostico principal es un dato obligatorio.'
             );
         }
 
-        //validar Código del diagnóstico relacionado No. 1
-        if (empty($rowData[10])) {
-            ErrorCollector::addError(
-                $keyErrorRedis,
-                'FILE_AC_ERROR_010',
-                'R',
-                null,
-                $fileName,
-                $rowNumber,
-                $titleColumn[10],
-                $rowData[10],
-                'El codigo de causa externa es un valor obligatorio.'
-            );
-        }
 
         //validar Tipo de diagnóstico principal
         if (empty($rowData[13])) {
