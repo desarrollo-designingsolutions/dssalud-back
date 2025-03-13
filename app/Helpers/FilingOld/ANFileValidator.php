@@ -23,31 +23,25 @@ class ANFileValidator
         $titleColumn = [
             "columna 1: Número de la factura",
             "columna 2: Código del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del usuario",
-            "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Via de ingreso a la institucion",
-            "columna 6: Fecha de ingreso del usuario a la institución",
-            "columna 7: Hora de ingreso del usuario a la Institución",
-            "columna 8: Numero de autorizacion",
-            "columna 9: Causa externa",
-            "columna 10: Diagnostico principal de ingreso",
-            "columna 11: Diagnóstico principal de egreso",
-            "columna 12: Diagnóstico relacionado Nro. 1 de egreso",
-            "columna 13: Diagnóstico relacionado Nro. 2 de egreso",
-            "columna 14: Diagnóstico relacionado Nro. 3 de egreso",
-            "columna 15: Diagnóstico de la complicacion",
-            "columna 16: Estado a la salida",
-            "columna 17: Diagnóstico de la causa básica de muerte",
-            "columna 18: Fecha de egreso del usuario a la institución",
-            "columna 19: Hora de egreso del usuario de la institución"
+            "columna 3: Tipo de identificación de la madre",
+            "columna 4: Numero de identificacion de la madre en el Sistema",
+            "columna 5: Fecha de nacimiento del recién nacido",
+            "columna 6: Hora de nacimiento",
+            "columna 7: Edad gestacional",
+            "columna 8: Control prenatal",
+            "columna 9: Sexo",
+            "columna 10: Peso",
+            "columna 11: Diagnóstico del recién nacido",
+            "columna 12: Causa básica de muerte",
+            "columna 13: Fecha de muerte del recién nacido",
+            "columna 14: Hora de muerte del recién nacido",
         ];
 
-        // 1. Número de la factura (columna 0)
-        // Valor obligatorio
+        // validar  Número de la factura
         if (empty($rowData[0])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_001',
+                'FILE_AN_ERROR_001',
                 'R',
                 null,
                 $fileName,
@@ -57,13 +51,11 @@ class ANFileValidator
                 'El dato registrado es obligatorio.'
             );
         }
-
-        // 2. Código del prestador de servicios de salud (columna 1)
-        // Valor obligatorio
+        // validar  Código del prestador de servicios de salud
         if (empty($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_002',
+                'FILE_AN_ERROR_002',
                 'R',
                 null,
                 $fileName,
@@ -74,12 +66,27 @@ class ANFileValidator
             );
         }
 
-        // 3. Via de ingreso a la institucion (columna 4)
-        // Valor obligatorio
+        // validar Tipo de identificación de la madre
+        $allowedTypes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS'];
+        if (! in_array($rowData[2], $allowedTypes)) {
+            ErrorCollector::addError(
+                $keyErrorRedis,
+                'FILE_AC_ERROR_003',
+                'R',
+                null,
+                $fileName,
+                $rowNumber,
+                $titleColumn[2],
+                $rowData[2],
+                'El dato registrado no es un valor permitido.'
+            );
+        }
+
+        // validar Fecha de nacimiento del recién nacido
         if (empty($rowData[4])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_003',
+                'FILE_AC_ERROR_004',
                 'R',
                 null,
                 $fileName,
@@ -90,117 +97,110 @@ class ANFileValidator
             );
         }
 
-        // Unicamente los valores permitidos
-        $allowedPrefixes = ["1", "2", "3", "4"];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
-            ErrorCollector::addError(
-                $keyErrorRedis,
-                'FILE_AP_ERROR_004',
-                'R',
-                null,
-                $fileName,
-                $rowNumber,
-                $titleColumn[2],
-                $rowData[2],
-                'El dato ingresado no es permitido'
-            );
-        }
-
-        // 4. Fecha de ingreso del usuario a la institución (columna 5)
-        // Valor obligatorio
+        // validar Hora de nacimiento
         if (empty($rowData[5])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_005',
+                'FILE_AC_ERROR_005',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
                 $titleColumn[5],
                 $rowData[5],
-                'La Fecha de ingreso del usuario a la institución es un dato obligatorio.'
+                'El dato registrado es obligatorio.'
             );
         }
-
-        // 5. Hora de ingreso del usuario a la Institución (columna 6)
-        // Valor obligatorio
+        // validar Edad gestacional
         if (empty($rowData[6])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_006',
+                'FILE_AC_ERROR_006',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
                 $titleColumn[6],
                 $rowData[6],
-                'La Hora de ingreso del usuario a observacion es un dato obligatorio.'
+                'El dato registrado es obligatorio.'
             );
         }
-
-        // 6. Causa externa (columna 7)
-        // Valor obligatorio
+        // validar Control prenatal
         if (empty($rowData[7])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_007',
+                'FILE_AC_ERROR_007',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
                 $titleColumn[7],
                 $rowData[7],
-                'El campo causa externa es un dato de registro obligatorio.'
+                'El dato registrado es obligatorio.'
             );
         }
-
-        // Unicamente los valores permitidos
-        $allowedPrefixes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15"];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        $allowedTypes = ['1', '2'];
+        if (! in_array($rowData[7], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_008',
+                'FILE_AC_ERROR_008',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[2],
-                $rowData[2],
-                'El dato registrado no es una opción permitida.'
+                $titleColumn[7],
+                $rowData[7],
+                'El dato registrado no es un valor permitido.'
             );
         }
 
-        // 7. Fecha de egreso del usuario a la institución (columna 16)
-        // Valor obligatorio
-        if (empty($rowData[16])) {
+        // validar Sexo
+        if (empty($rowData[8])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_009',
+                'FILE_AC_ERROR_009',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[16],
-                $rowData[16],
+                $titleColumn[8],
+                $rowData[8],
                 'El dato registrado es obligatorio.'
             );
         }
 
-        // 8. Hora de egreso del usuario de la institución (columna 17)
-        // Valor obligatorio
-        if (empty($rowData[17])) {
+        $allowedTypes = ['1', '2'];
+        if (! in_array($rowData[8], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_010',
+                'FILE_AC_ERROR_010',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[17],
-                $rowData[17],
+                $titleColumn[8],
+                $rowData[8],
+                'El dato registrado no es un valor permitido.'
+            );
+        }
+
+         // validar Peso
+         if (empty($rowData[9])) {
+            ErrorCollector::addError(
+                $keyErrorRedis,
+                'FILE_AC_ERROR_011',
+                'R',
+                null,
+                $fileName,
+                $rowNumber,
+                $titleColumn[9],
+                $rowData[9],
                 'El dato registrado es obligatorio.'
             );
         }
+
+
+
 
         logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
