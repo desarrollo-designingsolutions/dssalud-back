@@ -27,7 +27,7 @@ class ContractSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $key => $value) {
-            $data = new Contract();
+            $data = new Contract;
             $data->name = $value['name'];
             $data->company_id = Constants::COMPANY_UUID;
             $data->save();

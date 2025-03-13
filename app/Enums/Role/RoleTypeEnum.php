@@ -2,7 +2,6 @@
 
 namespace App\Enums\Role;
 
-use App\Attributes\BackgroundColor;
 use App\Attributes\Description;
 use App\Traits\AttributableEnum;
 

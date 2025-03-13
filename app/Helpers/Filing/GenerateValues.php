@@ -23,7 +23,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
     // Regenerar si no hay datos en Redis
     if ($total === 0) {
         $invoice = $model->find($invoiceId);
-        if (!$invoice) {
+        if (! $invoice) {
             return [
                 'data' => [],
                 'pagination' => [
@@ -33,18 +33,17 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
                     'total' => 0,
                     'from' => 0,
                     'to' => 0,
-                ]
+                ],
             ];
         }
-        logMessage("no deberia entrar aqui");
+        logMessage('no deberia entrar aqui');
 
         // Guardar el elemnto de la factura en Redis
         $redisKeyInvoice = "filingInvoice:{$invoice->id}:dataBd";
         Redis::set($redisKeyInvoice, json_encode($invoice));
         Redis::expire($redisKeyInvoice, 2592000); // 30 días en segundos (60 * 60 * 24 * 30)
 
-
-        $jsonPath = storage_path('app/public/' . $invoice->path_json);
+        $jsonPath = storage_path('app/public/'.$invoice->path_json);
         if (file_exists($jsonPath)) {
             $jsonContent = file_get_contents($jsonPath);
             $data = json_decode($jsonContent, true);
@@ -66,7 +65,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
                     'total' => 0,
                     'from' => 0,
                     'to' => 0,
-                ]
+                ],
             ];
         }
     }
@@ -81,7 +80,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
                 'total' => 0,
                 'from' => 0,
                 'to' => 0,
-            ]
+            ],
         ];
     }
 
@@ -99,6 +98,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
             $valueA = $a[$sortBy] ?? '';
             $valueB = $b[$sortBy] ?? '';
             $comparison = strcmp($valueA, $valueB);
+
             return $sortDesc ? -$comparison : $comparison;
         });
     }
@@ -120,7 +120,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
             'total' => $paginator->total(),
             'from' => $paginator->firstItem(),
             'to' => $paginator->lastItem(),
-        ]
+        ],
     ];
 }
 
@@ -128,7 +128,7 @@ function validateFilingStatus($filing_id)
 {
     $filing = Filing::find($filing_id);
 
-    if (!$filing) {
+    if (! $filing) {
         // Manejar el caso en que no se encuentra el filing
         return;
     }
@@ -173,11 +173,10 @@ function validateFilingStatus($filing_id)
     $filing->save();
 }
 
-
 function filingOld_deletefileZipData($data)
 {
-    //eliminamos el archivo zip subido
-    $fileDelete = env("SYSTEM_URL_BACK") . $data->path_zip;
+    // eliminamos el archivo zip subido
+    $fileDelete = env('SYSTEM_URL_BACK').$data->path_zip;
 
     $fileDelete = public_path($fileDelete);
 
@@ -191,14 +190,14 @@ function filingOld_deletefileZipData($data)
 
 function filingOld_openFileZip($fileZip)
 {
-    $fileZip = public_path('storage/' . $fileZip);
+    $fileZip = public_path('storage/'.$fileZip);
 
     $zip = new ZipArchive;
     if ($zip->open($fileZip) === true) {
 
         // Directorio temporal para extraer los archivos del ZIP
         $tempDirectory = storage_path('app/temp_zip');
-        if (!is_dir($tempDirectory)) {
+        if (! is_dir($tempDirectory)) {
             mkdir($tempDirectory, 0777, true);
         }
 
@@ -208,13 +207,13 @@ function filingOld_openFileZip($fileZip)
             $extension = pathinfo($filename, PATHINFO_EXTENSION);
             $contenido = $zip->getFromName($filename);
 
-            $rutaTemporal = $tempDirectory . '/' . $filename;
+            $rutaTemporal = $tempDirectory.'/'.$filename;
             // Extraer el archivo del ZIP
             $zip->extractTo($tempDirectory, $filename);
 
             if ($extension == 'txt') {
                 // Verificar y convertir la codificación a UTF-8 si es necesario
-                if (!mb_check_encoding($contenido, 'UTF-8')) {
+                if (! mb_check_encoding($contenido, 'UTF-8')) {
                     // Proporciona la codificación de caracteres de origen si la conoces (por ejemplo, ISO-8859-1).
                     $contenido = mb_convert_encoding($contenido, 'UTF-8', 'ISO-8859-1');
                 }
@@ -234,7 +233,6 @@ function filingOld_openFileZip($fileZip)
         return false; // O manejar el error de apertura del archivo ZIP de la forma que desees.
     }
 }
-
 
 function filingOld_buildAllDataTogether($files)
 {
@@ -286,10 +284,7 @@ function filingOld_buildAllDataTogether($files)
     $dataArrayAT = collect($dataArrayAT);
     $dataArrayCT = collect($dataArrayCT);
 
-
-
     $dataArrayAF = $dataArrayAF->map(function ($item) use ($dataArrayAC, $dataArrayUS, $dataArrayAP, $dataArrayAM, $dataArrayAU, $dataArrayAH, $dataArrayAN, $dataArrayAT) {
-
 
         filingOld_invoiceUserServices($dataArrayAC, $dataArrayUS, $item, 'consultas');
 
@@ -336,7 +331,7 @@ function filingOld_invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $key
             $invoice['usuarios'][$i]['servicios'] = [];
         }
 
-        if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
+        if (isset($invoice['usuarios'][$i]['servicios']) && ! isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
             $invoice['usuarios'][$i]['servicios'][$keyService] = [];
         }
 

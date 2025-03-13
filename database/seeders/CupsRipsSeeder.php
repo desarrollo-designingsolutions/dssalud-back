@@ -12967,7 +12967,7 @@ class CupsRipsSeeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new CupsRips();
+            $data = new CupsRips;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

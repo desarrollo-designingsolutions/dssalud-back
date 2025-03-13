@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Role\RoleTypeEnum;
 use App\Http\Requests\Role\RoleStoreRequest;
 use App\Http\Resources\Role\MenuCheckBoxResource;
 use App\Http\Resources\Role\RoleFormResource;
@@ -28,7 +27,7 @@ class RoleController extends Controller
     {
         return $this->execute(function () use ($request) {
             $data = $this->roleRepository->list([
-                ...["typeData" => "all"],
+                ...['typeData' => 'all'],
                 ...$request->all(),
             ]);
 
@@ -66,7 +65,7 @@ class RoleController extends Controller
             $role = $this->roleRepository->find($id);
 
             $menus = $this->menuRepository->list([
-                'typeData' => "all",
+                'typeData' => 'all',
                 'father_null' => true,
                 'withPermissions' => true,
             ], ['children']);
@@ -92,13 +91,13 @@ class RoleController extends Controller
 
             $types = $request->input('type');
 
-             $post['type'] = implode(',', $types);
+            $post['type'] = implode(',', $types);
 
             do {
                 $nameRole = Str::random(10); // Genera un string aleatorio de 10 caracteres
             } while (Role::where('name', $nameRole)->exists()); // Verifica si ya existe en la base de datos
 
-            $post["name"] = $nameRole;
+            $post['name'] = $nameRole;
 
             $data = $this->roleRepository->store($post);
 
@@ -110,14 +109,14 @@ class RoleController extends Controller
             $data->permissions()->sync($permissions);
 
             $msg = 'agregado';
-            if (!empty($request['id'])) {
+            if (! empty($request['id'])) {
                 $msg = 'modificado';
             }
 
             return [
                 'code' => 200,
-                'message' => 'Registro ' . $msg . ' correctamente',
-                'data' => $data
+                'message' => 'Registro '.$msg.' correctamente',
+                'data' => $data,
             ];
         });
 
@@ -139,7 +138,7 @@ class RoleController extends Controller
 
             return [
                 'code' => 200,
-                'message' => $msg
+                'message' => $msg,
             ];
         });
     }

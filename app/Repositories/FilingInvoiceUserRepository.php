@@ -17,13 +17,13 @@ class FilingInvoiceUserUserRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (!empty($request['company_id'])) {
-                    $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                        $subQuery->where("company_id", $request['company_id']);
+                if (! empty($request['company_id'])) {
+                    $query->whereHas('filing_invoice.filing', function ($subQuery) use ($request) {
+                        $subQuery->where('company_id', $request['company_id']);
                     });
                 }
-                if (!empty($request['filing_id'])) {
-                    $query->where("filing_id", $request['filing_id']);
+                if (! empty($request['filing_id'])) {
+                    $query->where('filing_id', $request['filing_id']);
                 }
 
             });
@@ -42,7 +42,7 @@ class FilingInvoiceUserUserRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -57,12 +57,11 @@ class FilingInvoiceUserUserRepository extends BaseRepository
         return $data;
     }
 
-
     public function searchOne($request = [], $with = [], $idsAllowed = [])
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['id'])) {
+            if (! empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
         });
@@ -76,12 +75,12 @@ class FilingInvoiceUserUserRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
-                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
+            if (! empty($request['company_id'])) {
+                $query->whereHas('filing_invoice.filing', function ($subQuery) use ($request) {
+                    $subQuery->where('company_id', $request['company_id']);
                 });
             }
 
@@ -108,17 +107,16 @@ class FilingInvoiceUserUserRepository extends BaseRepository
         return $data;
     }
 
-
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['company_id'])) {
-                $query->whereHas("filing_invoice.filing", function ($subQuery) use ($request) {
-                    $subQuery->where("company_id", $request['company_id']);
+            if (! empty($request['company_id'])) {
+                $query->whereHas('filing_invoice.filing', function ($subQuery) use ($request) {
+                    $subQuery->where('company_id', $request['company_id']);
                 });
             }
-            if (!empty($request['status'])) {
-                $query->where("status", $request['status']);
+            if (! empty($request['status'])) {
+                $query->where('status', $request['status']);
             }
         });
 

@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('assignment_batches', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->text('description')->nullable();
             $table->string('status', 15)->nullable();
 

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUuid('company_id')->constrained();
             $table->string('name');
             $table->string('nit');
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

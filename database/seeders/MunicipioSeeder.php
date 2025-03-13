@@ -1139,7 +1139,7 @@ class MunicipioSeeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new Municipio();
+            $data = new Municipio;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

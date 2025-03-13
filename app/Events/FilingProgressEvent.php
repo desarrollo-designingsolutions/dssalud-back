@@ -13,6 +13,7 @@ class FilingProgressEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $filing_id;
+
     public $progress;
 
     /**

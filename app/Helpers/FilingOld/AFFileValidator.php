@@ -10,35 +10,35 @@ class AFFileValidator
     /**
      * Valida el archivo AF y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Código del prestador de servicios de salud",
-            "columna 2: Razón social o apellidos y nombre del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del prestador de servicios de salud",
-            "columna 4: Número de identificación del prestador",
-            "columna 5: Número de la factura",
-            "columna 6: Fecha de expedición de la factura",
-            "columna 7: Fecha de inicio",
-            "columna 8: Fecha final",
-            "columna 9: Código entidad administradora",
-            "columna 10: Nombre entidad administradora",
-            "columna 11: Número del contrato",
-            "columna 12: Plan de beneficios",
-            "columna 13: Número de la póliza",
-            "columna 14: Valor total del pago compartido (copago)",
-            "columna 15: Valor de la comisión",
-            "columna 16: Valor total de descuentos",
-            "columna 17: Valor neto a pagar por la entidad contratante"
+            'columna 1: Código del prestador de servicios de salud',
+            'columna 2: Razón social o apellidos y nombre del prestador de servicios de salud',
+            'columna 3: Tipo de identificación del prestador de servicios de salud',
+            'columna 4: Número de identificación del prestador',
+            'columna 5: Número de la factura',
+            'columna 6: Fecha de expedición de la factura',
+            'columna 7: Fecha de inicio',
+            'columna 8: Fecha final',
+            'columna 9: Código entidad administradora',
+            'columna 10: Nombre entidad administradora',
+            'columna 11: Número del contrato',
+            'columna 12: Plan de beneficios',
+            'columna 13: Número de la póliza',
+            'columna 14: Valor total del pago compartido (copago)',
+            'columna 15: Valor de la comisión',
+            'columna 16: Valor total de descuentos',
+            'columna 17: Valor neto a pagar por la entidad contratante',
         ];
 
         // 1. Validar código del prestador de servicios de salud (columna 1)
@@ -59,7 +59,7 @@ class AFFileValidator
 
         // Que sea el mismo registrado en el archivo de control. Debe ser igual en todos los registros del archivo AF
         $numberInvoiceCT = self::getNumberInvoiceCT($filing_id);
-        if (!empty($numberInvoiceCT)) {
+        if (! empty($numberInvoiceCT)) {
             // Se valida que el número de factura sea igual en todos los registros del archivo AF
             $validationNumberInvoice = self::validationNumberInvoice($filing_id, $numberInvoiceCT);
 
@@ -123,8 +123,8 @@ class AFFileValidator
         }
 
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["NI", "CC", "CE", "CD", "PA", "PE"];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        $allowedPrefixes = ['NI', 'CC', 'CE', 'CD', 'PA', 'PE'];
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AF_ERROR_004',
@@ -243,7 +243,7 @@ class AFFileValidator
 
         // El arreglo normal convertido
         $normalArray = array_map(function ($item) {
-            return explode(",", str_replace('\/', '/', $item));
+            return explode(',', str_replace('\/', '/', $item));
         }, $contentDataArrayCt);
 
         // Filtrar el arreglo para encontrar el elemento deseado
@@ -253,7 +253,7 @@ class AFFileValidator
 
         // Obtener el valor de la posición 0 del elemento filtrado
         $desiredValue = '';
-        if (!empty($filteredArray)) {
+        if (! empty($filteredArray)) {
             $firstItem = reset($filteredArray); // Obtener el primer elemento del arreglo filtrado
             $desiredValue = $firstItem[0];
         }
@@ -271,12 +271,12 @@ class AFFileValidator
         $contentDataArrayAf = json_decode(Redis::get("filingOld:{$filing_id}:AF"), 1);
 
         // Convertir cada cadena en un arreglo
-        $processedDataArrayAf = array_map(fn($item) => explode(",", str_replace('\/', '/', $item)), $contentDataArrayAf);
+        $processedDataArrayAf = array_map(fn ($item) => explode(',', str_replace('\/', '/', $item)), $contentDataArrayAf);
 
         // Extraer la primera columna (posiciones 0) de todos los sub-arreglos
         $firstColumnAf = array_column($processedDataArrayAf, 0);
 
         // Verificar si todas las posiciones son iguales a la variable específica
-        return array_reduce($firstColumnAf, fn($carry, $item) => $carry && ($item === $search), true);
+        return array_reduce($firstColumnAf, fn ($carry, $item) => $carry && ($item === $search), true);
     }
 }

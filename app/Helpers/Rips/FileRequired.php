@@ -16,7 +16,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 function openFileZip($fileZip, $company_id = null)
 {
-    $fileZip = public_path('storage/' . $fileZip);
+    $fileZip = public_path('storage/'.$fileZip);
 
     $zip = new ZipArchive;
     if ($zip->open($fileZip) === true) {
@@ -24,7 +24,7 @@ function openFileZip($fileZip, $company_id = null)
         // Directorio temporal para extraer los archivos del ZIP
         $tempDirectory = storage_path('app/temp_zip');
         // $tempDirectory = public_path('storage/companies/company_' . $company_id); // storage_path('app/temp_zip');
-        if (!is_dir($tempDirectory)) {
+        if (! is_dir($tempDirectory)) {
             mkdir($tempDirectory, 0777, true);
         }
 
@@ -34,13 +34,13 @@ function openFileZip($fileZip, $company_id = null)
             $extension = pathinfo($filename, PATHINFO_EXTENSION);
             $contenido = $zip->getFromName($filename);
 
-            $rutaTemporal = $tempDirectory . '/' . $filename;
+            $rutaTemporal = $tempDirectory.'/'.$filename;
             // Extraer el archivo del ZIP
             $zip->extractTo($tempDirectory, $filename);
 
             if ($extension == 'txt') {
                 // Verificar y convertir la codificación a UTF-8 si es necesario
-                if (!mb_check_encoding($contenido, 'UTF-8')) {
+                if (! mb_check_encoding($contenido, 'UTF-8')) {
                     // Proporciona la codificación de caracteres de origen si la conoces (por ejemplo, ISO-8859-1).
                     $contenido = mb_convert_encoding($contenido, 'UTF-8', 'ISO-8859-1');
                 }
@@ -122,7 +122,7 @@ function validationFileZip($rip, &$errorMessages)
         if ($extension === 'zip') {
             $zip = new \ZipArchive;
 
-            $zipPath = public_path('storage/' . $path_zip);
+            $zipPath = public_path('storage/'.$path_zip);
 
             if ($zip->open($zipPath) === true) {
 
@@ -131,7 +131,7 @@ function validationFileZip($rip, &$errorMessages)
 
                     $extensionArchivo = pathinfo($nameFile, PATHINFO_EXTENSION);
 
-                    //validar que todos los archivos sean txt sino se muere
+                    // validar que todos los archivos sean txt sino se muere
                     if (strtolower($extensionArchivo) !== 'txt') {
                         $errorMessages[] = [
                             'file' => $nameZip,
@@ -152,12 +152,12 @@ function validationFileZip($rip, &$errorMessages)
 
                             if (strpos($nombreSinExtension, $inicialPermitida['type']) === 0) {
 
-                                //validamos la cantidad de elementos que tenga cada registro de cada archivo
+                                // validamos la cantidad de elementos que tenga cada registro de cada archivo
                                 $contenido = $zip->getFromName($nameFile);
 
                                 $contenido = mb_convert_encoding($contenido, 'UTF-8', 'UTF-8');
 
-                                if (isset($contenido) && !empty(trim($contenido))) {
+                                if (isset($contenido) && ! empty(trim($contenido))) {
 
                                     $dataArrayTxt = formatDataTxt($contenido);
                                     validarLongitudElementos($dataArrayTxt, $nameFile, $inicialPermitida['cant'], $errorMessages);
@@ -188,7 +188,7 @@ function validationFileZip($rip, &$errorMessages)
 
                 // Verifica que se cumplan los requisitos
                 if (($countAf >= 1 && $countUs >= 1 && ($countAc >= 1 || $countAp >= 1 || $countAm >= 1 || $countAt >= 1))) {
-                    return true; //"El archivo ZIP cumple con los requisitos.";
+                    return true; // "El archivo ZIP cumple con los requisitos.";
                 } else {
                     $errorMessages[] = [
                         'file' => $nameZip,
@@ -232,7 +232,7 @@ function validationFileZip($rip, &$errorMessages)
                     'error' => 'No se pudo abrir el archivo ZIP.',
                     'data1' => storage_path($nameZip),
                     'data2' => public_path(storage_path($nameZip)),
-                    'data3' => '/' . $nameZip,
+                    'data3' => '/'.$nameZip,
                 ];
 
                 return false;
@@ -323,10 +323,7 @@ function buildAllDataTogether($files)
     $dataArrayAN = collect($dataArrayAN);
     $dataArrayAT = collect($dataArrayAT);
 
-
-
     $dataArrayAF = $dataArrayAF->map(function ($item) use ($dataArrayAC, $dataArrayUS, $dataArrayAP, $dataArrayAM, $dataArrayAU, $dataArrayAH, $dataArrayAN, $dataArrayAT) {
-
 
         invoiceUserServices($dataArrayAC, $dataArrayUS, $item, 'consultas');
 
@@ -401,7 +398,7 @@ function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
             $invoice['usuarios'][$i]['servicios'] = [];
         }
 
-        if (isset($invoice['usuarios'][$i]['servicios']) && !isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
+        if (isset($invoice['usuarios'][$i]['servicios']) && ! isset($invoice['usuarios'][$i]['servicios'][$keyService])) {
             $invoice['usuarios'][$i]['servicios'][$keyService] = [];
         }
 
@@ -416,8 +413,6 @@ function invoiceUserServices($dataArray, $dataArrayUS, &$invoice, $keyService)
         $i++;
     }
 }
-
-
 
 function formatValueAT($datos)
 {
@@ -520,7 +515,7 @@ function formatValueAU($datos)
         'codDiagnosticoRelacionadoE1' => trim($datos[9]),
         'codDiagnosticoRelacionadoE2' => trim($datos[10]),
         'codDiagnosticoRelacionadoE3' => trim($datos[11]),
-        'condicionDestinoUsuarioEgreso' => trim($datos[12]) . ' ' . trim($datos[13]),
+        'condicionDestinoUsuarioEgreso' => trim($datos[12]).' '.trim($datos[13]),
         'codDiagnosticoCausaMuerte' => trim($datos[14]),
         'fechaEgreso' => null,
         'consecutivo' => null,
@@ -682,8 +677,6 @@ function validarLongitudElementos(&$array, $file_name, $cantidadEsperada, &$erro
     }
 }
 
-
-
 function minimFilesRequired($path, $errors)
 {
     $message = 'Mínimo Deben Ser 5 Archivos .txt';
@@ -693,7 +686,7 @@ function minimFilesRequired($path, $errors)
     $quantity = 0;
 
     while ($file = readdir($directory)) {
-        if (!is_dir(public_path($path . '/' . $file))) {
+        if (! is_dir(public_path($path.'/'.$file))) {
             $quantity++;
         }
     }
@@ -723,13 +716,13 @@ function validateFileNames($directory, $strings)
     $filesRequeridos = [];
 
     while ($file = readdir($directory)) {
-        if (!is_dir($file)) {
+        if (! is_dir($file)) {
             $filename = pathinfo($file, PATHINFO_FILENAME); // Obtener el nombre del archivo sin extensión
             $filename = strtolower($filename); // Convertir el nombre del archivo a minúsculas
             $found = false;
 
             foreach ($strings as $string) {
-                $pattern = '/^' . preg_quote(strtolower($string), '/') . '/'; // Expresión regular para coincidir al principio
+                $pattern = '/^'.preg_quote(strtolower($string), '/').'/'; // Expresión regular para coincidir al principio
                 if (preg_match($pattern, $filename)) {
                     $found = true;
                     break;
@@ -738,8 +731,8 @@ function validateFileNames($directory, $strings)
                 }
             }
 
-            if (!$found) {
-                $errors[] = $message . $file;
+            if (! $found) {
+                $errors[] = $message.$file;
             }
         }
     }
@@ -747,11 +740,11 @@ function validateFileNames($directory, $strings)
     closedir($directory);
 
     if (count($filesRequeridos) > 0) {
-        $errors[] = $message . implode(',', $filesRequeridos);
+        $errors[] = $message.implode(',', $filesRequeridos);
     }
 
     if (count($errors) > 0) {
-        echo 'Archivos no encontrados: ' . implode(', ', $filesRequeridos);
+        echo 'Archivos no encontrados: '.implode(', ', $filesRequeridos);
     } else {
         echo 'Todos los archivos están presentes.';
     }
@@ -839,7 +832,7 @@ function validateGroupedData(Collection $groupedCsvData)
                     'row' => $row['row'],
                     'column' => 'num_factura',
                     'data' => '',
-                    'error' => 'La fila ' . $row['row'] . " tiene 'num_factura' nulo.",
+                    'error' => 'La fila '.$row['row']." tiene 'num_factura' nulo.",
                 ];
             }
 
@@ -849,7 +842,7 @@ function validateGroupedData(Collection $groupedCsvData)
                     'row' => $row['row'],
                     'column' => 'campo',
                     'data' => '',
-                    'error' => 'La fila ' . $row['row'] . " tiene 'campo' nulo.",
+                    'error' => 'La fila '.$row['row']." tiene 'campo' nulo.",
                 ];
             }
 
@@ -859,25 +852,25 @@ function validateGroupedData(Collection $groupedCsvData)
                     'row' => $row['row'],
                     'column' => 'valor',
                     'data' => '',
-                    'error' => 'La fila ' . $row['row'] . " tiene 'valor' nulo.",
+                    'error' => 'La fila '.$row['row']." tiene 'valor' nulo.",
                 ];
             }
 
             // Verificar si se está validando una factura o un usuario
-            if (!empty($row['num_factura']) && empty($row['num_identificacion'])) {
+            if (! empty($row['num_factura']) && empty($row['num_identificacion'])) {
                 $validatingFactura = true;
             }
 
-            if (!empty($row['num_factura']) && !empty($row['num_identificacion'])) {
+            if (! empty($row['num_factura']) && ! empty($row['num_identificacion'])) {
                 $validatingUsuario = true;
                 $validatingFactura = false;
             }
         }
 
         // Lógica para determinar campos requeridos para la validación de factura o usuario
-        if ($validatingFactura && !$validatingUsuario) {
+        if ($validatingFactura && ! $validatingUsuario) {
             $requiredFields = ['TipoNota', 'numNota'];
-        } elseif (!$validatingFactura && $validatingUsuario) {
+        } elseif (! $validatingFactura && $validatingUsuario) {
             $requiredFields = ['fechaNacimiento', 'codPaisResidencia', 'incapacidad'];
         }
 
@@ -891,7 +884,7 @@ function validateGroupedData(Collection $groupedCsvData)
                 }
             }
 
-            if (!$found) {
+            if (! $found) {
                 $errorMessage = [
                     'file' => $group[0]['file'],
                     'row' => $group[0]['row'],
@@ -907,7 +900,7 @@ function validateGroupedData(Collection $groupedCsvData)
                     $errorMessage['error'] .= " en la factura '{$numFactura}' del usuario '{$row['num_identificacion']}'";
                 }
 
-                $errorMessage['error'] .= ', fila ' . $group[0]['row'] . '.';
+                $errorMessage['error'] .= ', fila '.$group[0]['row'].'.';
 
                 $errorMessages[] = $errorMessage;
             }
@@ -919,7 +912,7 @@ function validateGroupedData(Collection $groupedCsvData)
 
 function openFileJson($path_json)
 {
-    $jsonFilePath = public_path('storage/' . $path_json);
+    $jsonFilePath = public_path('storage/'.$path_json);
 
     $jsonContents = null;
     // Verificar si el archivo existe
@@ -936,170 +929,170 @@ function processData($build, $groupedData)
     // return$groupedData;
     $buildData = json_decode(collect($build), true);
 
-    //recorremos el array agrupado del csv
+    // recorremos el array agrupado del csv
     foreach ($groupedData as $key => $group) {
-        //buscamos la posicion de la factura que estamos recorriendo
-        //en el array general de facturas
+        // buscamos la posicion de la factura que estamos recorriendo
+        // en el array general de facturas
         $index = collect($buildData)->search(function ($objeto, $clave) use ($key) {
             return $objeto['numFactura'] == $key;
         });
 
-        //si existe la factura
+        // si existe la factura
         if ($index !== false) {
             foreach ($group as $row) {
 
                 // Verificar si se está validando una factura o un usuario
-                if (!empty($row['num_factura']) && empty($row['num_identificacion'])) {
+                if (! empty($row['num_factura']) && empty($row['num_identificacion'])) {
                     $requiredFields = ['TipoNota', 'numNota'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && empty($row['servicio'])) {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && empty($row['servicio'])) {
                     $requiredFields = ['codPaisOrigen', 'fechaNacimiento', 'codPaisResidencia', 'codZonaTerritorialResidencia', 'incapacidad', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
 
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
 
                                 $buildData[$index]['usuarios'][$indexU][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'consultas') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'consultas') {
                     $requiredFields = ['conceptoRecaudo', 'fechaInicioAtencion', 'modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
 
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['consultas'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'procedimientos') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'procedimientos') {
                     $requiredFields = ['conceptoRecaudo', 'fechaInicioAtencion', 'idMIPRES', 'modalidadGrupoServicioTecSal', 'grupoServicios', 'codServicio', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
 
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['procedimientos'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'medicamentos') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'medicamentos') {
                     $requiredFields = ['conceptoRecaudo', 'idMIPRES', 'fechaDispensAdmon', 'codDiagnosticoPrincipal', 'codDiagnosticoRelacionado', 'formaFarmaceutica', 'unidadMinDispensa', 'diasTratamiento', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'vrUnitMedicamento', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
 
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['medicamentos'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'otrosServicios') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'otrosServicios') {
                     $requiredFields = ['conceptoRecaudo', 'idMIPRES', 'fechaSuministroTecnologia', 'tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'valorPagoModerador', 'numFEVPagoModerador', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
 
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 // dd($buildData[$index]['usuarios'][$indexU]['servicios']['otrosServicios'][$row['id_servicio'] - 1][$valueF]);
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['otrosServicios'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'urgencias') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'urgencias') {
                     $requiredFields = ['consecutivo', 'fechaInicioAtencion'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['urgencias'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'hospitalizacion') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'hospitalizacion') {
                     $requiredFields = ['consecutivo', 'fechaInicioAtencion'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['hospitalizacion'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
                     }
                 }
-                if (!empty($row['num_factura']) && !empty($row['num_identificacion']) && $row['servicio'] == 'recienNacidos') {
+                if (! empty($row['num_factura']) && ! empty($row['num_identificacion']) && $row['servicio'] == 'recienNacidos') {
                     $requiredFields = ['tipoDocumentoIdentificacion', 'numDocumentoIdentificacion', 'numConsultasCPrenatal', 'consecutivo'];
-                    //recorremos los dos campos obligatorios
+                    // recorremos los dos campos obligatorios
                     foreach ($requiredFields as $keyF => $valueF) {
-                        //recorremos internamente la factura del csv
-                        //si existen los key pasamos la data del csv al build general
+                        // recorremos internamente la factura del csv
+                        // si existen los key pasamos la data del csv al build general
                         if ($row['campo'] == $valueF) {
                             $indexU = collect($buildData[$index]['usuarios'])->search(function ($objeto, $clave) use ($row) {
                                 return $objeto['numDocumentoIdentificacion'] == $row['num_identificacion'];
                             });
 
-                            if (!empty($row['valor'])) {
+                            if (! empty($row['valor'])) {
                                 $buildData[$index]['usuarios'][$indexU]['servicios']['recienNacidos'][$row['id_servicio'] - 1][$valueF] = $row['valor'];
                             }
                         }
@@ -1288,7 +1281,7 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
     $exito = true;
     foreach ($requiredFields as $field) {
         if (empty($value[$field])) {
-            //si una factura tiene false es que no pasa la validacion (osea algun campo configurado no tiene valor)
+            // si una factura tiene false es que no pasa la validacion (osea algun campo configurado no tiene valor)
             $array[$element1] = false;
             $exito = false;
             break;
@@ -1310,7 +1303,6 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 
 //         return;
 //     }
-
 
 //     if ($invoices->where('status', StatusInvoiceEnum::INCOMPLETE)->count() === $invoices->count() && $invoices->where('xml_status_id', StatusInvoiceEnum::ERROR_XML)->count() > 0) {
 //         $rip->status = StatusRipsEnum::ERROR_XML;
@@ -1386,7 +1378,6 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 //         }
 //     }
 
-
 //     //EXCELES
 //     $nameFile = 'rips_' . $rip->numeration . '.xlsx';
 //     $rutaXls = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
@@ -1399,7 +1390,6 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 //     $ruta = 'companies/company_' . $rip->company_id . '/rips/' . $type . '/rip_' . $rip->numeration . '/' . $nameFile; // Ruta donde se guardará la carpeta
 //     Storage::disk('public')->put($ruta, json_encode(array_values($jsonContents))); //guardo el archivo
 
-
 //     //actualizo el registro del rip en la bd
 //     // return sumVrServicioRips($jsonContents);
 //     $rip->sumVr = sumVrServicioRips($jsonContents); //actualizo la suma de los campos vrservicio de los servicios
@@ -1409,16 +1399,16 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 //     //guardo el registro del rip en la bd
 // }
 
-//suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
+// suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
 function sumVrServicioRips($invoices)
 {
     $sumVrRips = 0;
     foreach ($invoices as $invoice) {
         $sumVrRips += sumVrServicio($invoice);
     }
+
     return $sumVrRips;
 }
-
 
 // function saveReloadDataRips($data, $updateAll = true)
 // {
@@ -1500,13 +1490,9 @@ function sumVrServicioRips($invoices)
 //     $invoice->save();
 // }
 
-
-
-
-
 function sumVrServicio($valueJsonInvoice)
 {
-    //suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
+    // suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
     $sumVrInvoice = 0;
     if (isset($valueJsonInvoice['usuarios']) && count($valueJsonInvoice['usuarios']) > 0) {
         foreach ($valueJsonInvoice['usuarios'] as $user) {
@@ -1633,7 +1619,7 @@ function generateConsecutive(&$buildDataFinal)
 function deleteFolderRecursively($folderPath)
 {
     if (is_dir($folderPath)) {
-        $files = glob($folderPath . '/*');
+        $files = glob($folderPath.'/*');
         foreach ($files as $file) {
             if (is_dir($file)) {
                 deleteFolderRecursively($file);
@@ -1642,12 +1628,12 @@ function deleteFolderRecursively($folderPath)
             }
         }
         rmdir($folderPath);
+
         return true;
     } else {
         return false;
     }
 }
-
 
 function removeKeysRecursively(&$array)
 {

@@ -27,7 +27,7 @@ class CompanyFormResource extends JsonResource
             'city_id' => $this->city_id,
             'address' => $this->address,
             'email' => $this->email,
-            'start_date' => $this->created_at->format("Y-m-d"),
+            'start_date' => $this->created_at->format('Y-m-d'),
             'final_date' => $this->final_date,
             'logo' => $this->logo,
         ];

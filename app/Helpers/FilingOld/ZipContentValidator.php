@@ -10,14 +10,14 @@ class ZipContentValidator
     /**
      * Valida el contenido del ZIP (cantidad y tipos de archivos).
      *
-     * @param string $filePath Ruta del archivo ZIP
+     * @param  string  $filePath  Ruta del archivo ZIP
      * @return bool Verdadero si pasa las validaciones, falso si hay errores
      */
     public static function validate(string $filePath, string $uniqid)
     {
         $keyErrorRedis = "'filingOld:{$uniqid}:errors";
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($filePath) !== true) {
             return false;
         }
@@ -46,6 +46,7 @@ class ZipContentValidator
                 'El archivo ZIP contiene más de 10 archivos. Reduzca la cantidad a máximo 10 archivos.'
             );
             $zip->close();
+
             return false;
         }
 
@@ -63,9 +64,9 @@ class ZipContentValidator
                 'El archivo ZIP contiene menos de 4 archivos. Asegúrese de incluir al menos 4 archivos.'
             );
             $zip->close();
+
             return false;
         }
-
 
         // 6. Verificar tipos de archivos (AF, US, y al menos uno de AC/AP/AM/AT)
         $hasAF = false;
@@ -75,13 +76,21 @@ class ZipContentValidator
 
         foreach ($fileNames as $fileName) {
             $prefix = strtoupper(substr(basename($fileName), 0, 2));
-            if ($prefix === 'AF') $hasAF = true;
-            if ($prefix === 'US') $hasUS = true;
-            if ($prefix === 'CT') $hasCT = true;
-            if (in_array($prefix, ['AC', 'AP', 'AM', 'AT'])) $hasACorSimilar = true;
+            if ($prefix === 'AF') {
+                $hasAF = true;
+            }
+            if ($prefix === 'US') {
+                $hasUS = true;
+            }
+            if ($prefix === 'CT') {
+                $hasCT = true;
+            }
+            if (in_array($prefix, ['AC', 'AP', 'AM', 'AT'])) {
+                $hasACorSimilar = true;
+            }
         }
 
-        if (!$hasAF) {
+        if (! $hasAF) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIP_ERROR_005',
@@ -94,7 +103,7 @@ class ZipContentValidator
                 'Falta un archivo que inicie con AF. Incluya al menos un archivo AF en el ZIP.'
             );
         }
-        if (!$hasUS) {
+        if (! $hasUS) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIP_ERROR_006',
@@ -107,7 +116,7 @@ class ZipContentValidator
                 'Falta un archivo que inicie con US. Incluya al menos un archivo US en el ZIP.'
             );
         }
-        if (!$hasCT) {
+        if (! $hasCT) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIP_ERROR_007',
@@ -120,7 +129,7 @@ class ZipContentValidator
                 'Falta un archivo que inicie con CT. Incluya al menos un archivo CT en el ZIP.'
             );
         }
-        if (!$hasACorSimilar) {
+        if (! $hasACorSimilar) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'ZIP_ERROR_008',
@@ -135,6 +144,7 @@ class ZipContentValidator
         }
 
         $zip->close();
+
         return $hasAF && $hasUS && $hasACorSimilar;
     }
 }

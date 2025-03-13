@@ -13,8 +13,8 @@ use App\Models\TipoMedicamentoPosVersion2;
 use App\Models\ZonaVersion2;
 use Carbon\Carbon;
 
-//'validacion_type_Y' => 'N' todas la vidaciones que tengan este valor, seran informativas
-//31-01-2024 solicitud=> German
+// 'validacion_type_Y' => 'N' todas la vidaciones que tengan este valor, seran informativas
+// 31-01-2024 solicitud=> German
 
 function RVC001($dataTxt, $value2, &$errorMessages)
 {
@@ -700,7 +700,7 @@ function RVC015($dataTxt, $key, $value2, &$errorMessages)
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
-                'data' => $dataTxt[$key], //$dataTxt,
+                'data' => $dataTxt[$key], // $dataTxt,
                 'error' => 'El código CUPS informado no corresponde a una consulta.',
             ];
 
@@ -1755,7 +1755,6 @@ function RVC021($dataTxt, $value2, &$errorMessages)
         $error = true;
     }
 
-
     if ($cupsRips && $cupsRips->extra_VIII == 'Z' || empty($cupsRips->extra_VIII)) {
         $error = false;
     }
@@ -2235,8 +2234,8 @@ function RVC063($dataTxt, &$errorMessages)
 {
     $validation = true;
 
-    $ium = null; //Ium::where("codigo",$dataTxt)->first();
-    $catalogoCum = null; //CatalogoCum::where("codigo",$dataTxt)->first();
+    $ium = null; // Ium::where("codigo",$dataTxt)->first();
+    $catalogoCum = null; // CatalogoCum::where("codigo",$dataTxt)->first();
     if ($ium || $catalogoCum) {
         $errorMessages[] = [
             'validacion' => 'RVC063',
@@ -2800,10 +2799,10 @@ function validateYesNo($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
 function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $validacion_type_Y = 'R', $stringArray = [])
 {
     $arrayPersonalized = [];
-    $msg = "Asegúrese de incluir el cero inicial";
+    $msg = 'Asegúrese de incluir el cero inicial';
     switch ($key) {
         case 'TipoNota':
-            $arrayPersonalized = ['00','01', '02', '03'];
+            $arrayPersonalized = ['00', '01', '02', '03'];
             break;
         case 'codZonaTerritorialResidencia':
             $arrayPersonalized = ['01', '02'];
@@ -2829,7 +2828,7 @@ function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
                 '422', '423', '706', '709', '711', '712', '714', '715', '717', '728', '729', '731', '733', '734', '739', '740',
                 '742', '743', '744', '745', '746', '747', '748', '749',
             ];
-            $msg = "";
+            $msg = '';
             break;
 
         default:

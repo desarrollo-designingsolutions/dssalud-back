@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        //ESTE USUARIO SUPER ADMINISTRADOR NO VA A TENER COMPAÑIA
+        // ESTE USUARIO SUPER ADMINISTRADOR NO VA A TENER COMPAÑIA
         $arrayData = [
             [
                 'name' => 'SuperAdmin',
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $value) {
-            $data = new User();
+            $data = new User;
             $data->name = $value['name'];
             $data->surname = $value['surname'];
             $data->email = $value['email'];

@@ -3,8 +3,8 @@
 use App\Http\Controllers\CompanyController;
 use Illuminate\Support\Facades\Route;
 
-//Rutas protegidas
-Route::middleware(["check.permission:company.list"])->group(function () {
+// Rutas protegidas
+Route::middleware(['check.permission:company.list'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------

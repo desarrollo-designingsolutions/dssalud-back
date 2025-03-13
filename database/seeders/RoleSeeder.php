@@ -19,7 +19,7 @@ class RoleSeeder extends Seeder
 
         $arrayData = [
             [
-                "id" => Constants::ROLE_SUPERADMIN_UUID,
+                'id' => Constants::ROLE_SUPERADMIN_UUID,
                 'name' => 'Super Administrador',
                 'description' => 'Super Administrador',
                 'viewable' => 0,
@@ -31,10 +31,10 @@ class RoleSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $key => $value) {
-            $model = new Role();
+            $model = new Role;
             $model->id = $value['id'];
             $model->name = $value['name'];
-            $model->guard_name = "api";
+            $model->guard_name = 'api';
             $model->description = $value['description'];
             $model->viewable = $value['viewable'];
 

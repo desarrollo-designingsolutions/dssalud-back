@@ -19,11 +19,11 @@ class FileRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (!empty($request['fileable_id'])) {
+                if (! empty($request['fileable_id'])) {
                     $query->where('fileable_id', $request['fileable_id']);
                 }
-                if (!empty($request['fileable_type'])) {
-                    $query->where('fileable_type', 'App\\Models\\' . $request['fileable_type']);
+                if (! empty($request['fileable_type'])) {
+                    $query->where('fileable_type', 'App\\Models\\'.$request['fileable_type']);
                 }
 
                 if (isset($request['searchQuery']['relationsGeneral']) && count($request['searchQuery']['relationsGeneral']) > 0) {
@@ -42,7 +42,7 @@ class FileRepository extends BaseRepository
                     });
 
                     foreach ($customColumns as $key => $value) {
-                        if ($value == 'created_at' && !empty($search)) {
+                        if ($value == 'created_at' && ! empty($search)) {
                             $date = Carbon::createFromFormat('d/m/Y', $search);
                             $query->orWhereDate('created_at', '=', $date);
                         }
@@ -62,7 +62,7 @@ class FileRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();

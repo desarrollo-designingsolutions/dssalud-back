@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('invoice_audits', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->foreignUuid('third_id')->nullable()->constrained();
             $table->string('invoice_number')->nullable();
             $table->decimal('total_value', 15, 2);
@@ -26,7 +26,6 @@ return new class extends Migration
             $table->string('contract_number')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
 
         });
     }

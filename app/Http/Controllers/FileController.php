@@ -86,7 +86,7 @@ class FileController extends Controller
                 $modelId = $request->input('fileable_id');
                 $path = "companies/company_{$validatedData['company_id']}/{$modelType}/{$modelId}/files";
 
-                $validatedData['fileable_type'] = 'App\\Models\\' . $validatedData['fileable_type'];
+                $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
                 $path = $file->store($path, 'public');
@@ -122,7 +122,7 @@ class FileController extends Controller
                 $modelId = $request->input('fileable_id');
                 $path = "companies/company_{$validatedData['company_id']}/{$modelType}/{$modelId}/files";
 
-                $validatedData['fileable_type'] = 'App\\Models\\' . $validatedData['fileable_type'];
+                $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
                 $path = $file->store($path, 'public');
@@ -180,10 +180,10 @@ class FileController extends Controller
             $sanitizedFileName = preg_replace('/[\/\\\\?%*:|"<>]/', '_', $file);
 
             // Construye la ruta completa del archivo
-            $filePath = storage_path('app/public/' . $file);
+            $filePath = storage_path('app/public/'.$file);
 
             // Verifica si el archivo existe en el almacenamiento
-            if (! Storage::exists('public/' . $file)) {
+            if (! Storage::exists('public/'.$file)) {
                 return response()->json([
                     'code' => 500,
                     'message' => 'El archivo no existe en el almacenamiento',
@@ -204,7 +204,7 @@ class FileController extends Controller
             // Maneja cualquier excepción inesperada
             return response()->json([
                 'code' => 500,
-                'message' => 'Ocurrió un error inesperado: ' . $e->getMessage(),
+                'message' => 'Ocurrió un error inesperado: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -213,7 +213,7 @@ class FileController extends Controller
     {
         try {
 
-            if (!$request->hasFile('files')) {
+            if (! $request->hasFile('files')) {
                 return response()->json(['code' => 400, 'message' => 'No se encontraron archivos'], 400);
             }
 
@@ -222,7 +222,7 @@ class FileController extends Controller
             $modelId = $request->input('fileable_id');
 
             // Validar parámetros requeridos
-            if (!$company_id || !$modelType || !$modelId) {
+            if (! $company_id || ! $modelType || ! $modelId) {
                 return response()->json(['code' => 400, 'message' => 'Faltan parámetros requeridos'], 400);
             }
 
@@ -232,12 +232,12 @@ class FileController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\' . $modelType;
-            if (!class_exists($modelClass)) {
+            $modelClass = 'App\\Models\\'.$modelType;
+            if (! class_exists($modelClass)) {
                 return response()->json(['code' => 400, 'message' => 'Modelo no válido'], 400);
             }
             $modelInstance = $modelClass::find($modelId);
-            if (!$modelInstance) {
+            if (! $modelInstance) {
                 return response()->json(['code' => 404, 'message' => 'Instancia no encontrada'], 404);
             }
 
@@ -262,7 +262,7 @@ class FileController extends Controller
                     'fileable_type' => $modelClass,
                     'fileable_id' => $modelId,
                     'support_type_id' => $request->input('support_type_id', null),
-                    'channel' => "filing_invoice.".$modelId,
+                    'channel' => 'filing_invoice.'.$modelId,
                 ];
 
                 ProcessMassUpload::dispatch(
@@ -278,17 +278,14 @@ class FileController extends Controller
 
             $this->dispatchEventFinal($modelType, $modelId);
 
-
-
-
             return response()->json([
                 'code' => 200,
                 'message' => "Se enviaron {$fileCount} archivos a la cola",
                 'upload_id' => $uploadId,
-                'count' => $fileCount
+                'count' => $fileCount,
             ], 202);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json(['code' => 500, 'message' => 'Error: '.$e->getMessage()], 500);
         }
     }
 
@@ -311,9 +308,10 @@ class FileController extends Controller
                 $basePath = "companies/company_{$modelInstance->company->id}/filings/{$modelInstance->filing->type->value}/filing_{$modelInstance->filing->id}/invoices/{$modelInstance->invoice_number}/supports/{$finalName}";
             }
         }
+
         return [
-            "finalName" => $finalName,
-            "basePath" => $basePath
+            'finalName' => $finalName,
+            'basePath' => $basePath,
         ];
     }
 

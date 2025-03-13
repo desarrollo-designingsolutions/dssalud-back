@@ -537,7 +537,7 @@ class IpsNoRepsSeeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new IpsNoReps();
+            $data = new IpsNoReps;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

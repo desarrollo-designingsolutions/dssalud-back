@@ -25,7 +25,6 @@ trait HttpResponseTrait
             ? $errorData['message']
             : Constants::ERROR_MESSAGE_TRYCATCH;
 
-
         $response = [
             'code' => $errorStatus,
             'message' => $errorMessage,

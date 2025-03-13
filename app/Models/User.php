@@ -15,10 +15,10 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
-
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasUuids, HasRoles, HasPermissions, Searchable, Cacheable;
+    use Cacheable, HasApiTokens, HasFactory, HasPermissions, HasRoles, HasUuids, Notifiable, Searchable;
+
+    use \OwenIt\Auditing\Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -58,14 +58,14 @@ class User extends Authenticatable implements Auditable
     public function getActionDescription($event)
     {
         return match ($event) {
-            "created" => 'Creación de un usuario',
-            "updated" => 'Actualización de un usuario',
-            "deleted" => 'Eliminación de un usuario',
-            default => ""
+            'created' => 'Creación de un usuario',
+            'updated' => 'Actualización de un usuario',
+            'deleted' => 'Eliminación de un usuario',
+            default => ''
         };
     }
 
-    //Auditoria
+    // Auditoria
     public function getColumnsConfig()
     {
         return [
@@ -89,7 +89,7 @@ class User extends Authenticatable implements Auditable
     // Método de acceso para combinar nombre y apellido
     public function getFullNameAttribute()
     {
-        return $this->name . ' ' . $this->surname;
+        return $this->name.' '.$this->surname;
     }
 
     public function getAllPermissionsAttribute()

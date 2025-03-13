@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 trait AuditMap
 {
-
     public function applyColumnMappingToAudits(&$audits)
     {
         foreach ($audits as $audit) {
@@ -31,7 +30,6 @@ trait AuditMap
             }
         }
     }
-
 
     protected function applyColumnMapping($modelOld, $columns)
     {
@@ -67,7 +65,7 @@ trait AuditMap
 
                     if (isset($columns[$key]['model']) && isset($columns[$key]['model_field'])) {
                         // Instanciación del modelo
-                        $modelClass = "App\Models\\" . $columns[$key]['model'];
+                        $modelClass = "App\Models\\".$columns[$key]['model'];
                         $registro = $modelClass::find($modelOld[$key]);
 
                         // Comprobar que se ha encontrado el registro
@@ -80,7 +78,6 @@ trait AuditMap
                         }
                     }
 
-
                     // Eliminamos la clave original
                     unset($modelOld[$key]);
                 } else {
@@ -89,6 +86,7 @@ trait AuditMap
                 }
             }
         }
+
         return $modelOld;
     }
 }

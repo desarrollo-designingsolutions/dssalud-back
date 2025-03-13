@@ -20,9 +20,11 @@ class BrevoProcessSendEmail implements ShouldQueue
     public $params;
 
     public $attachments;
+
     public $emailTo;
 
     public $cc;
+
     public $cco;
 
     /**
@@ -33,7 +35,7 @@ class BrevoProcessSendEmail implements ShouldQueue
         $emails = [];
         if (is_array($emailTo)) {
             $emails = array_merge($emailTo);
-        } else if (is_string($emailTo)) {
+        } elseif (is_string($emailTo)) {
             $emails[] = $emailTo;
         }
 
@@ -51,7 +53,7 @@ class BrevoProcessSendEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        $brevoEmailService = new BrevoEmailService();
+        $brevoEmailService = new BrevoEmailService;
         $brevoEmailService->setTemplateId($this->templateId);
         $brevoEmailService->setSubject($this->subject);
         $brevoEmailService->setTo($this->emailTo);
@@ -65,7 +67,6 @@ class BrevoProcessSendEmail implements ShouldQueue
         if ($this->cco && is_array($this->cco)) {
             $brevoEmailService->setCco($this->cco);
         }
-
 
         $brevoEmailService->sendEmail();
     }

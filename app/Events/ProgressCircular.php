@@ -13,6 +13,7 @@ class ProgressCircular implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $channel;
+
     public $progress;
 
     public function __construct($channel, $progress)
@@ -25,5 +26,4 @@ class ProgressCircular implements ShouldBroadcastNow
     {
         return new Channel($this->channel);
     }
-
 }

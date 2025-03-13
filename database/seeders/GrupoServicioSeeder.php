@@ -22,7 +22,7 @@ class GrupoServicioSeeder extends Seeder
         ];
 
         foreach ($dataArray as $key => $value) {
-            $data = new GrupoServicio();
+            $data = new GrupoServicio;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];

@@ -26,10 +26,9 @@ class DatabaseSeeder extends Seeder
             // CompanySeeder::class,
             UserSeeder::class,
 
-
             ThirdSeederXlsx::class,
 
-            //TO VALIDATIONS
+            // TO VALIDATIONS
 
             Cie10Seeder::class,
             CupsRipsSeeder::class,
@@ -52,7 +51,7 @@ class DatabaseSeeder extends Seeder
 
         ]);
 
-        $client = new ClientRepository();
+        $client = new ClientRepository;
 
         $client->createPasswordGrantClient(null, 'Laravel Personal Grant Client', 'https://localhost');
         $client->createPersonalAccessClient(null, 'Laravel Password Access Client', 'https://localhost');

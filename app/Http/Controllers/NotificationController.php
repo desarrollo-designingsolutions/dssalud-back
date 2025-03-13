@@ -47,9 +47,9 @@ class NotificationController extends Controller
             $user = auth()->user(); // Obtener el usuario autenticado
 
             // Marcar las notificaciones como leídas
-            $user->notifications->whereIn('id', $request->input("notification_ids"))->markAsRead();
+            $user->notifications->whereIn('id', $request->input('notification_ids'))->markAsRead();
 
-            UpdateNotificationEvent::dispatch($user, $request->input("notification_ids"));
+            UpdateNotificationEvent::dispatch($user, $request->input('notification_ids'));
 
             return response()->json(['code' => 200]);
         } catch (Throwable $th) {
@@ -69,10 +69,9 @@ class NotificationController extends Controller
             $user = auth()->user(); // Obtener el usuario autenticado
 
             // Marcar las notificaciones como no leídas
-            $user->notifications->whereIn('id', $request->input("notification_ids"))->markAsUnread();
+            $user->notifications->whereIn('id', $request->input('notification_ids'))->markAsUnread();
 
-            UpdateNotificationEvent::dispatch($user, $request->input("notification_ids"));
-
+            UpdateNotificationEvent::dispatch($user, $request->input('notification_ids'));
 
             return response()->json(['code' => 200]);
         } catch (Throwable $th) {
@@ -98,7 +97,6 @@ class NotificationController extends Controller
                 ->update(['is_removed' => true]);  // Actualizar el campo is_removed a true
 
             UpdateNotificationEvent::dispatch($user, $notificationIds);
-
 
             return response()->json(['code' => 200]);
         } catch (Throwable $th) {

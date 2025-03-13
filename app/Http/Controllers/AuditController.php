@@ -6,8 +6,6 @@ use App\Http\Resources\Audit\AuditResource;
 use App\Repositories\UserRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
-use Throwable;
-
 
 class AuditController extends Controller
 {

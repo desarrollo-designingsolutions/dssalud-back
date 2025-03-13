@@ -87,7 +87,7 @@ class ProcessFilingValidationTxt implements ShouldQueue
         $filing->validationTxt = json_encode($contenido_json2);
         $filing->save();
 
-        if (!empty($this->lastProcess)) {
+        if (! empty($this->lastProcess)) {
             // Ya sea que tenga errores txt o no, la radicacion queda abierta
             $status = StatusFilingEnum::FILING_EST_008;
 

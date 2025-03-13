@@ -14,8 +14,8 @@ use App\Traits\HttpResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 
 class PassportAuthController extends Controller
 {
@@ -25,8 +25,7 @@ class PassportAuthController extends Controller
         protected UserRepository $userRepository,
         protected MenuRepository $menuRepository,
         protected MailService $mailService
-    ) {
-    }
+    ) {}
 
     public function register(Request $request)
     {
@@ -43,7 +42,7 @@ class PassportAuthController extends Controller
             return [
                 'code' => 200,
                 'user' => $user,
-                'access_token' => $accessToken
+                'access_token' => $accessToken,
             ];
         });
     }
@@ -59,30 +58,30 @@ class PassportAuthController extends Controller
 
             Auth::attempt($data);
 
-            if (!Auth::attempt($data)) {
+            if (! Auth::attempt($data)) {
                 // Si las credenciales son incorrectas, lanzar una excepción
                 throw new \Exception(json_encode([
-                    "message" => "Credenciales incorrectas",
+                    'message' => 'Credenciales incorrectas',
                 ]));
             }
 
             $user = Auth::user();
             if ($user->company) {
-                if (!$user->company?->is_active) {
+                if (! $user->company?->is_active) {
                     return response()->json([
                         'code' => '401',
                         'error' => 'Not authorized',
                         'message' => 'La empresa a la cual usted pertenece se encuentra inactiva',
                     ], 401);
                 }
-                if (!$user->is_active) {
+                if (! $user->is_active) {
                     return response()->json([
                         'code' => '401',
                         'error' => 'Not authorized',
                         'message' => 'El usuario se encuentra inactivo',
                     ], 401);
                 }
-                if (!empty($user->company->final_date)) {
+                if (! empty($user->company->final_date)) {
                     $now = Carbon::now()->format('Y-m-d');
                     $compareDate = Carbon::parse($user->company->final_date)->format('Y-m-d');
                     if ($now >= $compareDate) {
@@ -104,9 +103,9 @@ class PassportAuthController extends Controller
             $obj['role_id'] = $user->role_id;
             $obj['company_id'] = $user->company_id;
             $obj['third'] = [
-                "id" => $user->third?->id,
-                "nit" => $user->third?->nit,
-                "name" => $user->third?->name,
+                'id' => $user->third?->id,
+                'nit' => $user->third?->nit,
+                'name' => $user->third?->name,
             ];
             $obj['photo'] = $user->photo;
             $obj['first_time'] = $user->first_time;
@@ -117,7 +116,6 @@ class PassportAuthController extends Controller
             if ($user->company?->logo && Storage::disk('public')->exists($user->company->logo)) {
                 $photo = $user->company->logo;
             }
-
 
             $company['logo'] = $photo;
             $permisos = $user->getAllPermissions();
@@ -140,12 +138,12 @@ class PassportAuthController extends Controller
                     $arrayMenu[$key]['to']['name'] = $value->to;
                     $arrayMenu[$key]['icon']['icon'] = $value->icon ?? 'mdi-arrow-right-thin-circle-outline';
 
-                    if (!empty($value['children'])) {
+                    if (! empty($value['children'])) {
                         foreach ($value['children'] as $key2 => $value2) {
                             $arrayMenu[$key]['children'][$key2]['title'] = $value2->title;
                             $arrayMenu[$key]['children'][$key2]['to'] = $value2->to;
                             // $arrayMenu[$key]["children"][$key2]["icon"]["icon"] = $value2->icon ?? "mdi-arrow-right-thin-circle-outline";
-                            if (!empty($value2['children'])) {
+                            if (! empty($value2['children'])) {
                                 foreach ($value2['children'] as $key3 => $value3) {
                                     if (in_array($value3->requiredPermission, $permisos->pluck('name')->toArray())) {
                                         $arrayMenu[$key]['children'][$key2]['children'][$key3]['title'] = $value3->title;
@@ -180,7 +178,7 @@ class PassportAuthController extends Controller
             $user = Auth::user();
 
             return [
-                'user' => $user
+                'user' => $user,
             ];
         });
     }
@@ -188,34 +186,34 @@ class PassportAuthController extends Controller
     public function sendResetLink(PassportAuthSendResetLinkRequest $request)
     {
         return $this->execute(function () use ($request) {
-            $user = $this->userRepository->findByEmail($request->input("email"));
+            $user = $this->userRepository->findByEmail($request->input('email'));
 
             // Generar el enlace de restablecimiento
             $token = Password::getRepository()->create($user);
 
-            $action_url = env("SYSTEM_URL_FRONT") . 'ResetPassword/' . $token . '?email=' . urlencode($request->input("email"));
+            $action_url = env('SYSTEM_URL_FRONT').'ResetPassword/'.$token.'?email='.urlencode($request->input('email'));
 
             // Enviar el correo usando el job de Brevo
             BrevoProcessSendEmail::dispatch(
                 emailTo: [
                     [
-                        "name" => $user->full_name,
-                        "email" => $request->input("email"),
+                        'name' => $user->full_name,
+                        'email' => $request->input('email'),
                     ],
                 ],
-                subject: "Link Restablecer Contraseña",
+                subject: 'Link Restablecer Contraseña',
                 templateId: 3,  // El ID de la plantilla de Brevo que quieres usar
                 params: [
-                    "full_name" => $user->full_name,
-                    "bussines_name" => $user->company?->name,
+                    'full_name' => $user->full_name,
+                    'bussines_name' => $user->company?->name,
                     'action_url' => $action_url,
 
                 ],  // Aquí pasas los parámetros para la plantilla, por ejemplo, el texto del mensaje
             );
 
             return [
-                "code" => 200,
-                'message' => 'Te hemos enviado por correo electrónico el enlace para restablecer tu contraseña.'
+                'code' => 200,
+                'message' => 'Te hemos enviado por correo electrónico el enlace para restablecer tu contraseña.',
             ];
         });
     }
@@ -242,12 +240,12 @@ class PassportAuthController extends Controller
             if ($response == Password::PASSWORD_RESET) {
                 return [
                     'code' => 200,
-                    'message' => 'La contraseña ha sido cambiada correctamente.'
+                    'message' => 'La contraseña ha sido cambiada correctamente.',
                 ];
             }
 
             throw new \Exception(json_encode([
-                "message" => "El token de restablecimiento es inválido o ha expirado.",
+                'message' => 'El token de restablecimiento es inválido o ha expirado.',
             ]));
         });
     }

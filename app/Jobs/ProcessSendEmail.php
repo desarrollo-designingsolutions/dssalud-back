@@ -46,11 +46,11 @@ class ProcessSendEmail implements ShouldQueue
         $emails = [];
         if (is_array($this->emailTo)) {
             $emails = array_merge($this->emailTo);
-        } else if (is_string($this->emailTo)) {
+        } elseif (is_string($this->emailTo)) {
             $emails[] = $this->emailTo;
         }
 
-        $mailService = new MailService();
+        $mailService = new MailService;
         $mailService->setEmailTo($emails);
         $mailService->setView($this->view);
         $mailService->setSubject($this->subject);

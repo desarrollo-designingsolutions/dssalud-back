@@ -7,17 +7,16 @@ use Illuminate\Support\Str;
 
 function filterComponent($query, &$request, $model = null)
 {
-    if (isset($request["searchQuery"]) && is_string($request["searchQuery"])) {
-        $request["searchQuery"] = json_decode($request["searchQuery"], 1);
+    if (isset($request['searchQuery']) && is_string($request['searchQuery'])) {
+        $request['searchQuery'] = json_decode($request['searchQuery'], 1);
         // var_dump($request["searchQuery"]);
     }
 
     // Aplicar búsqueda global si existe el término de búsqueda
-    if (!empty($request["searchQuery"]['generalSearch'])) {
-        $relations = $request["searchQuery"]['relationsGeneral'] ?? [];
-        $query->search($request["searchQuery"]['generalSearch'], $relations);
+    if (! empty($request['searchQuery']['generalSearch'])) {
+        $relations = $request['searchQuery']['relationsGeneral'] ?? [];
+        $query->search($request['searchQuery']['generalSearch'], $relations);
     }
-
 
     $query->where(function ($query) use ($request, $model) {
         if (isset($request['searchQuery']['arrayFilter']) && count($request['searchQuery']['arrayFilter']) > 0) {
@@ -26,23 +25,23 @@ function filterComponent($query, &$request, $model = null)
                     continue;
                 }
 
-                //Si existe el elemento relacion y es un string debo pasarlo a array
+                // Si existe el elemento relacion y es un string debo pasarlo a array
                 if (isset($value['relation']) && is_string($value['relation'])) {
                     $value['relation'] = [$value['relation']];
                 }
 
-                //Busquedas si tiene relacion o no
-                if (isset($value['type']) && !empty($value['type']) && $value['type'] == 'has' && isset($value['relation']) && !empty($value['relation'])) {
+                // Busquedas si tiene relacion o no
+                if (isset($value['type']) && ! empty($value['type']) && $value['type'] == 'has' && isset($value['relation']) && ! empty($value['relation'])) {
 
                     foreach ($value['relation'] as $key => $relation) {
 
-                        $findRelation = $relation; //relaciona  buscar
+                        $findRelation = $relation; // relaciona  buscar
                         if ((strpos($relation, '.') !== false)) { // si la relacion o palabra tiene "."
-                            $findRelation = explode(".", $relation);
+                            $findRelation = explode('.', $relation);
                             $findRelation = $findRelation[0]; // debo obtener el primer valor y solo este se busca en la class o modelo
                         }
-                        //si se pasa el modelo, la relacion debe existir en el modelo, pero si no se pasa el modelo se entiende que es sobre el modelo, de donde se usa esta funcion
-                        if ((!empty($model) && method_exists($model, $findRelation)) || is_null($model)) { //busco la relacion en mi modelo
+                        // si se pasa el modelo, la relacion debe existir en el modelo, pero si no se pasa el modelo se entiende que es sobre el modelo, de donde se usa esta funcion
+                        if ((! empty($model) && method_exists($model, $findRelation)) || is_null($model)) { // busco la relacion en mi modelo
                             if ($value['search'] === 1 || $value['search'] === '1') {
                                 $query->has($relation);
                             } elseif ($value['search'] === 0 || $value['search'] === '0') {
@@ -52,8 +51,8 @@ function filterComponent($query, &$request, $model = null)
                     }
                 }
 
-                //Busqueda normal
-                if (!empty($value['input_type']) && isset($value['search']) && !empty($value['search_key'])) {
+                // Busqueda normal
+                if (! empty($value['input_type']) && isset($value['search']) && ! empty($value['search_key'])) {
 
                     if ($value['input_type'] == 'date') {
                         $query->whereDate($value['search_key'], $value['search']);
@@ -63,19 +62,19 @@ function filterComponent($query, &$request, $model = null)
                     } else {
                         $search = $value['search'];
 
-                        if ($value['type'] == 'LIKE' && !is_array($search)) {
-                            $search = '%' . $value['search'] . '%';
+                        if ($value['type'] == 'LIKE' && ! is_array($search)) {
+                            $search = '%'.$value['search'].'%';
                         }
                         if (isset($value['relation'])) {
                             foreach ($value['relation'] as $key => $relation) {
-                                $findRelation = $relation; //relaciona  buscar
+                                $findRelation = $relation; // relaciona  buscar
                                 if ((strpos($relation, '.') !== false)) { // si la relacion o palabra tiene "."
-                                    $findRelation = explode(".", $relation);
+                                    $findRelation = explode('.', $relation);
                                     $findRelation = $findRelation[0]; // debo obtener el primer valor y solo este se busca en la class o modelo
                                 }
 
-                                //si se pasa el modelo, la relacion debe existir en el modelo, pero si no se pasa el modelo se entiende que es sobre el modelo, de donde se usa esta funcion
-                                if ((!empty($model) && method_exists($model, $findRelation)) || is_null($model)) { //busco la relacion en mi modelo
+                                // si se pasa el modelo, la relacion debe existir en el modelo, pero si no se pasa el modelo se entiende que es sobre el modelo, de donde se usa esta funcion
+                                if ((! empty($model) && method_exists($model, $findRelation)) || is_null($model)) { // busco la relacion en mi modelo
                                     $query->whereHas($relation, function ($x) use ($value, $search) {
                                         if (is_array($search)) {
                                             // Verificar si es un array de objetos con clave "value"
@@ -85,7 +84,7 @@ function filterComponent($query, &$request, $model = null)
                                             $x->whereIn($value['relation_key'], $search);
                                         } else {
                                             // Maneja el caso del valor cero
-                                            if ($search === 0 || $search === '0' || !empty($search)) {
+                                            if ($search === 0 || $search === '0' || ! empty($search)) {
                                                 $x->where($value['relation_key'], $value['type'], $search);
                                             }
                                         }
@@ -102,7 +101,7 @@ function filterComponent($query, &$request, $model = null)
                                 $query->whereIn($value['search_key'], $search);
                             } else {
                                 // Maneja el caso del valor cero
-                                if ($search === 0 || $search === '0' || !empty($search)) {
+                                if ($search === 0 || $search === '0' || ! empty($search)) {
                                     $query->where($value['search_key'], $value['type'], $search);
                                 }
                             }
@@ -148,7 +147,6 @@ function paginatePerzonalized($data)
     );
 }
 
-
 function clearCacheLaravel()
 {
     // Limpia la caché de permisos
@@ -157,7 +155,6 @@ function clearCacheLaravel()
     Artisan::call('view:clear');
     Artisan::call('optimize:clear');
 }
-
 
 function generatePastelColor($opacity = 1.0)
 {
@@ -174,7 +171,7 @@ function generatePastelColor($opacity = 1.0)
 function truncate_text($text, $maxLength = 15)
 {
     if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength) . '...';
+        return substr($text, 0, $maxLength).'...';
     }
 
     return $text;
@@ -185,9 +182,8 @@ function formatNumber($number, $currency_symbol = '$ ')
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, 2, ',', '.');
 
-    return $currency_symbol . $formattedNumber;
+    return $currency_symbol.$formattedNumber;
 }
-
 
 function formattedElement($element)
 {
@@ -265,7 +261,7 @@ function customSort($a, $b, $sortingRules)
     foreach ($sortingRules as $rule) {
         $field = $rule['field'];
 
-        if (!isset($a[$field]) || !isset($b[$field])) {
+        if (! isset($a[$field]) || ! isset($b[$field])) {
             // Verificar si el campo existe en ambos elementos para evitar errores
             continue;
         }
@@ -320,24 +316,22 @@ function customCompare($valueA, $valueB)
     }
 }
 
-
-
 function getStatusRips($value = null, $compareByKey = 'value', $returnByKey = 'title', $typeSearch = '===')
 {
     $types = [
-        ['value' => "Incomplete", 'title' => 'Incompleto'],
-        ['value' => "Completed_for_us", 'title' => 'Completado por nosotros'],
-        ['value' => "Completed_for_them", 'title' => 'Completado por ellos'],
-        ['value' => "Not Sent", 'title' => 'Sin Enviar'],
-        ['value' => "In process", 'title' => 'En proceso'],
-        ['value' => "Zip Error", 'title' => 'Error Zip'],
-        ['value' => "Excel Error", 'title' => 'Error Excel'],
-        ['value' => "Processed", 'title' => 'Procesado'],
-        ['value' => "Not Validated", 'title' => 'Sin Validar'],
-        ['value' => "Pending XML", 'title' => 'Pendiente de XML'],
-        ['value' => "Pending Excel", 'title' => 'Pendiente de EXCEL'],
-        ['value' => "Validated", 'title' => 'Validado'],
-        ['value' => "Nit Error", 'title' => 'Error Nit'],
+        ['value' => 'Incomplete', 'title' => 'Incompleto'],
+        ['value' => 'Completed_for_us', 'title' => 'Completado por nosotros'],
+        ['value' => 'Completed_for_them', 'title' => 'Completado por ellos'],
+        ['value' => 'Not Sent', 'title' => 'Sin Enviar'],
+        ['value' => 'In process', 'title' => 'En proceso'],
+        ['value' => 'Zip Error', 'title' => 'Error Zip'],
+        ['value' => 'Excel Error', 'title' => 'Error Excel'],
+        ['value' => 'Processed', 'title' => 'Procesado'],
+        ['value' => 'Not Validated', 'title' => 'Sin Validar'],
+        ['value' => 'Pending XML', 'title' => 'Pendiente de XML'],
+        ['value' => 'Pending Excel', 'title' => 'Pendiente de EXCEL'],
+        ['value' => 'Validated', 'title' => 'Validado'],
+        ['value' => 'Nit Error', 'title' => 'Error Nit'],
     ];
 
     return getStatus($value, $types, $compareByKey, $returnByKey, $typeSearch);
@@ -345,13 +339,12 @@ function getStatusRips($value = null, $compareByKey = 'value', $returnByKey = 't
 function getTypeRips($value = null, $compareByKey = 'value', $returnByKey = 'title', $typeSearch = '===')
 {
     $types = [
-        ['value' => "Automatic", 'title' => 'Automatico'],
-        ['value' => "Manual", 'title' => 'Manual'],
+        ['value' => 'Automatic', 'title' => 'Automatico'],
+        ['value' => 'Manual', 'title' => 'Manual'],
     ];
 
     return getStatus($value, $types, $compareByKey, $returnByKey, $typeSearch);
 }
-
 
 function transformDate($fecha)
 {
@@ -392,24 +385,23 @@ function convertNullToEmptyString(array $data): array
     }, $data);
 }
 
-
 function parseDate($fecha)
 {
     // Separar la fecha en día, mes y año
     $dateType = explode('-', $fecha); // Si no funciona con '/', probar con '-'
-    if (!isset($dateType[0]) || !isset($dateType[1]) || !isset($dateType[2])) {
+    if (! isset($dateType[0]) || ! isset($dateType[1]) || ! isset($dateType[2])) {
         [$dia, $mes, $ano] = explode('/', $fecha);
     }
 
     // Crear un objeto DateTime con la fecha en el formato original
     $datetime = DateTime::createFromFormat('d/m/Y', $fecha);
-    if (!$datetime) {
+    if (! $datetime) {
         $datetime = DateTime::createFromFormat('d-m-Y', $fecha); // Si no funciona con '/', probar con '-'
 
-        if (!$datetime) {
+        if (! $datetime) {
             $datetime = DateTime::createFromFormat('Y-m-d', $fecha); // Si no funciona con '/', probar con '-'
 
-            if (!$datetime) {
+            if (! $datetime) {
                 $datetime = DateTime::createFromFormat('Y/m/d', $fecha); // Si no funciona con '/', probar con '-'
             }
         }
@@ -421,18 +413,17 @@ function parseDate($fecha)
     $fecha = Carbon::parse($datetime);
 
     // Validar el valor devuelto
-    if (!$fecha) {
+    if (! $fecha) {
         throw new Exception('Formato de fecha invalido1');
     }
 
     // Validar el valor devuelto por DateTime::createFromFormat()
-    if (!$datetime) {
+    if (! $datetime) {
         throw new Exception('Formato de fecha invalido2');
     }
 
     return $fecha;
 }
-
 
 /**
  * Normaliza los datos JSON para que siempre sean un arreglo
@@ -444,7 +435,7 @@ function normalizeJsonData($data): array
     }
 
     // Si es un arreglo asociativo (una sola), lo envolvemos en un arreglo
-    if (is_array($data) && !isNumericArray($data)) {
+    if (is_array($data) && ! isNumericArray($data)) {
         return [$data];
     }
 
@@ -462,5 +453,6 @@ function isNumericArray(array $array): bool
     }
 
     $keys = array_keys($array);
+
     return array_keys($keys) === $keys; // Comprueba si las claves son 0, 1, 2...
 }

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Imports\ThirdsImport;
 use Illuminate\Database\Seeder;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\ThirdsImport;
 
 class ThirdSeederXlsx extends Seeder
 {
@@ -16,8 +16,8 @@ class ThirdSeederXlsx extends Seeder
         $filePath = public_path('seeders/thirds.xlsx');
 
         // Depuración: Verifica si el archivo existe
-        if (!file_exists($filePath)) {
-            throw new \Exception("Archivo no encontrado en: " . $filePath);
+        if (! file_exists($filePath)) {
+            throw new \Exception('Archivo no encontrado en: '.$filePath);
         }
 
         Excel::import(new ThirdsImport, $filePath);

@@ -10,10 +10,8 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow; // Agrega esta interfaz
 class ThirdsImport implements ToModel, WithHeadingRow
 {
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
         return Third::updateOrCreate(

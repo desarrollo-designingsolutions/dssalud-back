@@ -12,24 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('filings', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
 
             $table->foreignUuid('company_id')->constrained();
-            $table->foreignUuid('user_id')->constrained()->comment("Usuario que subio el zip");
+            $table->foreignUuid('user_id')->constrained()->comment('Usuario que subio el zip');
 
             $table->foreignUuid('contract_id')->nullable()->constrained();
 
-            $table->string('path_zip')->nullable()->comment("ruta del archivo zip");
-            $table->string('path_json')->nullable()->comment("ruta del archivo json");
+            $table->string('path_zip')->nullable()->comment('ruta del archivo zip');
+            $table->string('path_json')->nullable()->comment('ruta del archivo json');
 
+            $table->json('validationZip')->nullable()->comment('errores de validacion Zip');
+            $table->json('validationTxt')->nullable()->comment('errores de validacion TXT');
 
-            $table->json('validationZip')->nullable()->comment("errores de validacion Zip");
-            $table->json('validationTxt')->nullable()->comment("errores de validacion TXT");
-
-            $table->string("type");
+            $table->string('type');
             $table->string('status');
             $table->string('sumVr')->default(0);
-
 
             $table->timestamps();
             $table->softDeletes();

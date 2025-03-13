@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Filing extends Model
 {
-    use HasUuids, SoftDeletes,Searchable,Cacheable;
+    use Cacheable, HasUuids,Searchable,SoftDeletes;
 
     protected $casts = [
         'type' => TypeFilingEnum::class,
@@ -32,7 +32,6 @@ class Filing extends Model
         return $this->belongsTo(Contract::class);
     }
 
-
     public function filingInvoice(): HasMany
     {
         return $this->hasMany(FilingInvoice::class, 'filing_id');
@@ -40,21 +39,16 @@ class Filing extends Model
 
     public function filingInvoicePreRadicated(): HasMany
     {
-        return $this->hasMany(FilingInvoice::class, 'filing_id')->where("status", StatusFilingInvoiceEnum::FILINGINVOICE_EST_001);
+        return $this->hasMany(FilingInvoice::class, 'filing_id')->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001);
     }
 
-
-
-    //contar facturas con xml validados
+    // contar facturas con xml validados
     public function getXmlCountValidateAttribute(): int
     {
-        return $this->filingInvoice()->where("status_xml", StatusFilingInvoiceEnum::FILINGINVOICE_EST_003)->count() ?? 0;
+        return $this->filingInvoice()->where('status_xml', StatusFilingInvoiceEnum::FILINGINVOICE_EST_003)->count() ?? 0;
     }
 
-
-
-
-    //VERIFICAR SI EXISTEN ERRORES DE VALIDACIÓN
+    // VERIFICAR SI EXISTEN ERRORES DE VALIDACIÓN
     // Atributo personalizado para verificar errores de validación
     public function getHasValidationErrorsAttribute()
     {
@@ -71,6 +65,7 @@ class Filing extends Model
                 return is_array($parsed['errorMessages'] ?? null) && count($parsed['errorMessages']) > 0;
             }
         }
+
         return false;
     }
 

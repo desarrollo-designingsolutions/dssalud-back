@@ -31,14 +31,14 @@ class FilingInvoiceController extends Controller
     public function getPaginatedUsers(Request $request, $invoiceId)
     {
         return $this->execute(function () use ($request, $invoiceId) {
-            $filingInvoice = $this->filingInvoiceRepository->find($invoiceId, select: ["id", "invoice_number"]);
+            $filingInvoice = $this->filingInvoiceRepository->find($invoiceId, select: ['id', 'invoice_number']);
 
             $getPaginatedDataRedis = getPaginatedDataRedis($request, $invoiceId, $this->filingInvoiceRepository);
 
             return [
-                "filingInvoice" => $filingInvoice,
-                "dataUsers" => $getPaginatedDataRedis["data"],
-                "pagination" => $getPaginatedDataRedis["pagination"],
+                'filingInvoice' => $filingInvoice,
+                'dataUsers' => $getPaginatedDataRedis['data'],
+                'pagination' => $getPaginatedDataRedis['pagination'],
             ];
         });
     }
@@ -47,7 +47,7 @@ class FilingInvoiceController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-             $data = $this->filingInvoiceRepository->paginate($request->all());
+            $data = $this->filingInvoiceRepository->paginate($request->all());
             $tableData = FilingInvoicePaginateResource::collection($data);
 
             return [
@@ -67,49 +67,48 @@ class FilingInvoiceController extends Controller
 
             $filter = $request->all();
 
-            $filing = $this->filingRepository->find($request->input("filing_id"));
+            $filing = $this->filingRepository->find($request->input('filing_id'));
 
             $data = [
                 [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Facturas Pre-radicadas",
-                    "value" => $this->filingInvoiceRepository->countData([
+                    'icon' => 'tabler-checkup-list',
+                    'color' => 'success',
+                    'title' => 'Facturas Pre-radicadas',
+                    'value' => $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001
+                        'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
                     ]),
-                    "isHover" => false,
-                    "to" => null,
+                    'isHover' => false,
+                    'to' => null,
                 ],
                 [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Facturas Radicadas",
-                    "value" => $this->filingInvoiceRepository->countData([
+                    'icon' => 'tabler-checkup-list',
+                    'color' => 'success',
+                    'title' => 'Facturas Radicadas',
+                    'value' => $this->filingInvoiceRepository->countData([
                         ...$filter,
-                        "status" => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002
+                        'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
                     ]),
-                    "isHover" => false,
-                    "to" => null,
+                    'isHover' => false,
+                    'to' => null,
                 ],
                 [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Valor facturas",
-                    "value" => formatNumber($filing->sumVr),
-                    "isHover" => false,
-                    "to" => null,
+                    'icon' => 'tabler-checkup-list',
+                    'color' => 'success',
+                    'title' => 'Valor facturas',
+                    'value' => formatNumber($filing->sumVr),
+                    'isHover' => false,
+                    'to' => null,
                 ],
                 [
-                    "icon" => "tabler-checkup-list",
-                    "color" => "success",
-                    "title" => "Cantidad XML",
-                    "value" => $filing->xml_count_validate,
-                    "isHover" => false,
-                    "to" => null,
+                    'icon' => 'tabler-checkup-list',
+                    'color' => 'success',
+                    'title' => 'Cantidad XML',
+                    'value' => $filing->xml_count_validate,
+                    'isHover' => false,
+                    'to' => null,
                 ],
             ];
-
 
             return [
                 'code' => 200,
@@ -124,8 +123,8 @@ class FilingInvoiceController extends Controller
         return $this->execute(function () use ($request) {
             if ($request->hasFile('archiveXml')) {
                 // Inicializar variables
-                $company_id = $request->input("company_id");
-                $third_nit = $request->input("third_nit");
+                $company_id = $request->input('company_id');
+                $third_nit = $request->input('third_nit');
                 $filing_invoice = $this->filingInvoiceRepository->find($request->input('filing_invoice_id'));
                 $jsonContents = openFileJson($filing_invoice->path_json);
                 $file = $request->file('archiveXml');
@@ -189,7 +188,7 @@ class FilingInvoiceController extends Controller
 
             return [
                 'code' => 200,
-                'errorMessages' => $errorMessages
+                'errorMessages' => $errorMessages,
             ];
         });
     }
@@ -204,7 +203,6 @@ class FilingInvoiceController extends Controller
             $excel = Excel::raw(new FilingInvoiceExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
-
 
             return [
                 'code' => 200,
@@ -223,10 +221,9 @@ class FilingInvoiceController extends Controller
                 $data->delete();
             }
 
-
             return [
                 'code' => 200,
-                'message' => "Registro eliminado con éxito.",
+                'message' => 'Registro eliminado con éxito.',
             ];
         });
     }

@@ -16,12 +16,12 @@ class SupportTypeSeeder extends Seeder
         $arrayData = [
             [
                 'code' => '001',
-                'company_id' =>Constants::COMPANY_UUID,
+                'company_id' => Constants::COMPANY_UUID,
                 'name' => 'Facturas',
             ],
             [
                 'code' => '002',
-                'company_id' =>Constants::COMPANY_UUID,
+                'company_id' => Constants::COMPANY_UUID,
                 'name' => 'Historia clinica',
             ],
 
@@ -32,7 +32,7 @@ class SupportTypeSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $key => $value) {
-            $data = new SupportType();
+            $data = new SupportType;
             $data->code = $value['code'];
             $data->company_id = $value['company_id'];
             $data->name = $value['name'];

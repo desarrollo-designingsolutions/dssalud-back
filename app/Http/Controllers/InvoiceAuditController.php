@@ -32,5 +32,4 @@ class InvoiceAuditController extends Controller
             ];
         });
     }
-
 }

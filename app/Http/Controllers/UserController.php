@@ -20,8 +20,7 @@ class UserController extends Controller
         protected UserRepository $userRepository,
         protected RoleRepository $roleRepository,
         protected CompanyRepository $companyRepository,
-    ) {
-    }
+    ) {}
 
     public function paginate(Request $request)
     {
@@ -61,11 +60,11 @@ class UserController extends Controller
 
             $data = $this->userRepository->store($post, withCompany: false);
 
-            $data->syncRoles($request->input("role_id"));
+            $data->syncRoles($request->input('role_id'));
 
             return [
                 'code' => 200,
-                'message' => 'Usuario agregado correctamente'
+                'message' => 'Usuario agregado correctamente',
             ];
         });
     }
@@ -95,13 +94,13 @@ class UserController extends Controller
 
             $data = $this->userRepository->store($post, $id, withCompany: false);
 
-            $data->syncRoles($request->input("role_id"));
+            $data->syncRoles($request->input('role_id'));
 
             clearCacheLaravel();
 
             return [
                 'code' => 200,
-                'message' => 'Usuario modificado correctamente'
+                'message' => 'Usuario modificado correctamente',
             ];
         });
     }
@@ -119,7 +118,7 @@ class UserController extends Controller
 
             return [
                 'code' => 200,
-                'message' => $msg
+                'message' => $msg,
             ];
         });
     }
@@ -133,7 +132,7 @@ class UserController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'User ' . $msg . ' con éxito'
+                'message' => 'User '.$msg.' con éxito',
             ];
         });
     }
@@ -142,16 +141,16 @@ class UserController extends Controller
     {
         return $this->execute(function () use ($request) {
             // Obtener el usuario autenticado
-            $user = $this->userRepository->find($request->input("id"));
+            $user = $this->userRepository->find($request->input('id'));
 
             // Cambiar la contraseña
-            $user->password = $request->input("new_password");
+            $user->password = $request->input('new_password');
             $user->first_time = false;
             $user->save();
 
             return [
-                "code" => 200,
-                'message' => 'Contraseña modificada con éxito.'
+                'code' => 200,
+                'message' => 'Contraseña modificada con éxito.',
             ];
         });
     }
@@ -164,7 +163,7 @@ class UserController extends Controller
             // Cambiar la photo
             if ($request->file('photo')) {
                 $file = $request->file('photo');
-                $ruta = 'companies/company_' . $user->company_id . '/' . $user->id . $request->input('photo');
+                $ruta = 'companies/company_'.$user->company_id.'/'.$user->id.$request->input('photo');
                 $photo = $file->store($ruta, 'public');
                 $user->photo = $photo;
                 $user->save();
@@ -173,7 +172,7 @@ class UserController extends Controller
             return [
                 'code' => 200,
                 'message' => 'Foto modificada con éxito.',
-                'photo' => $user->photo
+                'photo' => $user->photo,
             ];
         });
     }

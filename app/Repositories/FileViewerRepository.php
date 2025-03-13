@@ -22,27 +22,25 @@ class FileViewerRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (!empty($request['name'])) {
-                    $query->where('name', 'like', '%' . $request['name'] . '%');
+                if (! empty($request['name'])) {
+                    $query->where('name', 'like', '%'.$request['name'].'%');
                 }
 
-
-                //idsAllowed
-                if (!empty($request['idsAllowed']) && count($request['idsAllowed']) > 0) {
+                // idsAllowed
+                if (! empty($request['idsAllowed']) && count($request['idsAllowed']) > 0) {
                     $query->whereIn('id', $request['idsAllowed']);
                 }
 
-                //idsNotAllowed
-                if (!empty($request['idsNotAllowed']) && count($request['idsNotAllowed']) > 0) {
+                // idsNotAllowed
+                if (! empty($request['idsNotAllowed']) && count($request['idsNotAllowed']) > 0) {
                     $query->whereNotIn('id', $request['idsNotAllowed']);
                 }
 
-                if (!empty($request['company_id'])) {
-                    $query->where("company_id", $request['company_id']);
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
                 }
 
             });
-
 
         if (count($order) > 0) {
             foreach ($order as $key => $value) {
@@ -77,7 +75,7 @@ class FileViewerRepository extends BaseRepository
             $data[$key] = is_array($request[$key]) ? $request[$key]['value'] : $request[$key];
         }
 
-        if (!empty($validatedData['password'])) {
+        if (! empty($validatedData['password'])) {
             $data->password = $validatedData['password'];
         } else {
             unset($data->password);
@@ -106,11 +104,10 @@ class FileViewerRepository extends BaseRepository
         return $this->model::where('email', $email)->first();
     }
 
-
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
 
@@ -142,7 +139,7 @@ class FileViewerRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['status_id'])) {
+            if (! empty($request['status_id'])) {
                 $query->where('status_id', $request['status_id']);
             }
 
@@ -161,8 +158,6 @@ class FileViewerRepository extends BaseRepository
         return $data;
     }
 
-
-
     public function timeLine($request = [])
     {
         $typeData = $request['typeData'] ?? 'all';
@@ -170,7 +165,7 @@ class FileViewerRepository extends BaseRepository
         // Cargar los datos con relaciones, incluyendo los eliminados
         $data = $this->model::find($request['auditable_id']);
 
-        if (!$data) {
+        if (! $data) {
             return collect(); // Si no hay datos, devolver una colección vacía
         }
 
@@ -201,7 +196,6 @@ class FileViewerRepository extends BaseRepository
                 $audits = $audits->merge($element->audits);
             }
         }
-
 
         return $audits;
     }

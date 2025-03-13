@@ -52,7 +52,6 @@ class CompanyRepository extends BaseRepository
         }, Constants::REDIS_TTL);
     }
 
-
     public function store(array $request)
     {
         $request = $this->clearNull($request);
@@ -74,7 +73,7 @@ class CompanyRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {

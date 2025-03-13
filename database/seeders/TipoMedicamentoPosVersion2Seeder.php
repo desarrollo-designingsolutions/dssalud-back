@@ -22,7 +22,7 @@ class TipoMedicamentoPosVersion2Seeder extends Seeder
         ];
 
         foreach ($dataArray as $value) {
-            $data = new TipoMedicamentoPosVersion2();
+            $data = new TipoMedicamentoPosVersion2;
             $data->codigo = $value['codigo'];
             $data->nombre = $value['nombre'];
             $data->descripcion = $value['descripcion'];
