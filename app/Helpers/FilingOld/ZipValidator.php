@@ -13,9 +13,9 @@ class ZipValidator
      * @param string $filePath Ruta del archivo ZIP
      * @return bool Verdadero si pasa las validaciones, falso si hay errores
      */
-    public static function validate(string $filePath): bool
+    public static function validate(string $filePath,$uniqid): bool
     {
-        $keyErrorRedis = "'filingOld:{$filing->id}:errors";
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
 
         ErrorCollector::clear($keyErrorRedis);
 

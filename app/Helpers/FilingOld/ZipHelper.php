@@ -19,7 +19,7 @@ class ZipHelper
     public static function openFileZip($uniqid, $fileZip): array
     {
 
-        $keyErrorRedis = "'filingOld:{$uniqid}:errors";
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
 
         // Obtener la ruta completa del archivo en el servidor
         $fullZipPath = Storage::disk(Constants::DISK_FILES)->path($fileZip);

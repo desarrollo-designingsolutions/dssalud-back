@@ -15,11 +15,11 @@ class CTFileValidator
      * @param string $rowNumber numero de la fila del txt a validar
      * @param string $filing_id numero de la fila del txt a validar
      */
-    public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id)
+    public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = explode(",", $rowData);
+        $rowData = array_map('trim', explode(",", $rowData));
 
         $titleColumn = [
             "columna 1: Código del prestador de servicios de salud",
@@ -47,7 +47,6 @@ class CTFileValidator
                 $rowData[0],
                 'El valor registrado no es numerico.'
             );
-            $isValid = false;
         }
         if (strlen($rowData[0]) !== 12) {
             ErrorCollector::addError(
@@ -61,7 +60,6 @@ class CTFileValidator
                 $rowData[0],
                 'El dato registrado contiene una logitud diferente a 12 caracteres.'
             );
-            $isValid = false;
         }
 
         // 2. Validar fecha (columna 2)
@@ -77,7 +75,6 @@ class CTFileValidator
                 $rowData[1],
                 'El dato registrado no usa el formato de fecha establecido.'
             );
-            $isValid = false;
         } elseif (self::isDateAfterToday($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -90,7 +87,6 @@ class CTFileValidator
                 $rowData[1],
                 'La fecha registrada es mayor a la fecha actual.'
             );
-            $isValid = false;
         }
 
         // 3. Validar codigo_archivo (columna 3)
@@ -108,7 +104,6 @@ class CTFileValidator
                 $rowData[2],
                 'El codigo de archivo no cumple con el formato permitido.'
             );
-            $isValid = false;
         }
 
         if (in_array($rowData[2], $codigoArchivos)) {
@@ -123,7 +118,6 @@ class CTFileValidator
                 $rowData[2],
                 'El codigo de archivo solo puede ser registrado una vez por cada tipo.'
             );
-            $isValid = false;
         } else {
             $codigoArchivos[] = $rowData[2];
             Redis::set("filingOld:{$filing_id}:validationCt_codigoArchivos", json_encode($codigoArchivos));
@@ -131,7 +125,7 @@ class CTFileValidator
 
 
         // 4. Validar total_registros (columna 4)
-        if (!ctype_digit($rowData[3]) || strpos($rowData[3], '.') !== false) {
+        if (!ctype_digit($rowData[3])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_CT_ERROR_007',
@@ -143,7 +137,6 @@ class CTFileValidator
                 $rowData[3],
                 'El valor registrado no es numerico.'
             );
-            $isValid = false;
         } else {
             $fileToFind = $rowData[2] . ".txt";
             $expectedCount = (int) $rowData[3];
@@ -160,7 +153,6 @@ class CTFileValidator
                     $rowData[2],
                     'No se encontró el archivo correspondiente al código ' . $fileToFind . '. Verifique que exista en el ZIP.'
                 );
-                $isValid = false;
             } elseif ($actualCount !== $expectedCount) {
                 ErrorCollector::addError(
                     $keyErrorRedis,
@@ -173,11 +165,8 @@ class CTFileValidator
                     $rowData[3],
                     "El total de registros ($expectedCount) no coincide con las filas encontradas ($actualCount) en el archivo " . $fileToFind . '. Ajuste el valor o el archivo.'
                 );
-                $isValid = false;
             }
         }
-
-        return $isValid;
     }
 
     /**

@@ -19,17 +19,16 @@ class ValidationOrchestrator
     {
         $keyErrorRedis = "filingOld:{$uniqid}:errors";
 
-
         // Obtener la ruta completa del archivo en el servidor
         $fullFilePath = Storage::disk(Constants::DISK_FILES)->path($zipPath);
 
         ErrorCollector::clear($keyErrorRedis);
 
-        if (!ZipValidator::validate($fullFilePath)) {
+        if (!ZipValidator::validate($fullFilePath,$uniqid)) {
             return ErrorCollector::getErrors($keyErrorRedis);
         }
 
-        if (!ZipContentValidator::validate($fullFilePath)) {
+        if (!ZipContentValidator::validate($fullFilePath,$uniqid)) {
             return ErrorCollector::getErrors($keyErrorRedis);
         }
 

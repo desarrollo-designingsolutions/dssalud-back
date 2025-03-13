@@ -39,7 +39,7 @@ class ProcessFilingValidation implements ShouldQueue
         // Busco el registro
         $filing = Filing::find($this->filing_id);
 
-        $keyErrorRedis = "'filingOld:{$this->filing_id}:errors";
+        $keyErrorRedis = "filingOld:{$this->filing_id}:errors";
 
 
         $files = ZipHelper::openFileZip($filing->id, $filing->path_zip);

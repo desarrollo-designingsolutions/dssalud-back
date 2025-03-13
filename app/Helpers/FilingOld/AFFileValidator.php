@@ -131,7 +131,7 @@ class AFFileValidator
 
 
         // 4. Validar total_registros (columna 4)
-        if (!ctype_digit($rowData[3]) || strpos($rowData[3], '.') !== false) {
+        if (!ctype_digit($rowData[3])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AF_ERROR_007',

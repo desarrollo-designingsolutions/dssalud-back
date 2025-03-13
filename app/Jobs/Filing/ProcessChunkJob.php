@@ -50,22 +50,12 @@ class ProcessChunkJob implements ShouldQueue
             if (strpos($this->file_name, 'US') !== false) {
                 USFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
             }
-            if (strpos($this->file_name, 'AF') !== false) {
-                AFFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
-            }
-            //  elseif (strpos($this->file_name, 'AF') !== false) {
-
-            //     AFFileValidator::validate($this->file_name, [$row], $rowNumber);
-            // } elseif (strpos($this->file_name, 'US') !== false) {
-
-            //     USFileValidator::validate($this->file_name, [$row], $rowNumber);
-            // } elseif (strpos($this->file_name, 'AP') !== false) {
-
-            //     APFileValidator::validate($this->file_name, [$row], $rowNumber);
-            // } elseif (strpos($this->file_name, 'AC') !== false) {
-
-            //     ACFileValidator::validate($this->file_name, [$row], $rowNumber);
+            // if (strpos($this->file_name, 'AF') !== false) {
+            //     AFFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
             // }
+            if (strpos($this->file_name, 'AC') !== false) {
+                ACFileValidator::validate($this->file_name, $row, $rowNumber, $this->filing_id);
+            }
         }
 
         // Actualizar el contador de filas procesadas en Redis
