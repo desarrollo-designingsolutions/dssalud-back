@@ -63,7 +63,7 @@ class AHFileValidator
         if (empty($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_003',
+                'FILE_AP_ERROR_002',
                 'R',
                 null,
                 $fileName,
@@ -159,7 +159,7 @@ class AHFileValidator
         if (!in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_004',
+                'FILE_AP_ERROR_008',
                 'R',
                 null,
                 $fileName,
@@ -175,7 +175,7 @@ class AHFileValidator
         if (empty($rowData[16])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_008',
+                'FILE_AP_ERROR_009',
                 'R',
                 null,
                 $fileName,
@@ -191,7 +191,7 @@ class AHFileValidator
         if (empty($rowData[17])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_009',
+                'FILE_AP_ERROR_010',
                 'R',
                 null,
                 $fileName,
