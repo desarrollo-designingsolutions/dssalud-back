@@ -15,7 +15,7 @@ class ZipValidator
      */
     public static function validate(string $filePath, string $uniqid): bool
     {
-        $keyErrorRedis = "'filingOld:{$uniqid}:errors";
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
 
         ErrorCollector::clear($keyErrorRedis);
 
