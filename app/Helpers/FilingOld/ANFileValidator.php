@@ -4,10 +4,10 @@ namespace App\Helpers\FilingOld;
 
 use App\Helpers\Common\ErrorCollector;
 
-class AMFileValidator
+class ANFileValidator
 {
     /**
-     * Valida el archivo AM y sus columnas.
+     * Valida el archivo AN y sus columnas.
      *
      * @param string $fileName Nombre del archivo
      * @param string $rowData datos de la fila del txt a validar
