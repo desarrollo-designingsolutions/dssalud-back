@@ -50,7 +50,7 @@ class APFileValidator
                 $rowNumber,
                 $titleColumn[0],
                 $rowData[0],
-                'El dato registrado es obligatorio.'
+                'El numero de factura es un dato obligatorio'
             );
         }
 
