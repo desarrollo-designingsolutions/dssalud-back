@@ -73,7 +73,7 @@ class AFFileValidator
                     $rowNumber,
                     $titleColumn[0],
                     $rowData[0],
-                    'El dato registrado no es igual al informado en el archivo AF. AF'
+                    'El dato registrado no es igual al informado en el archivo AF'
                 );
             }
         } else {
@@ -86,7 +86,7 @@ class AFFileValidator
                 $rowNumber,
                 $titleColumn[0],
                 $rowData[0],
-                'El dato registrado no es igual al informado en el archivo AF. CT'
+                'El dato registrado no es igual al informado en el archivo AF'
             );
         }
 
@@ -111,7 +111,7 @@ class AFFileValidator
         if (empty($rowData[2])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_003',
+                'FILE_AF_ERROR_004',
                 'R',
                 null,
                 $fileName,
@@ -127,7 +127,7 @@ class AFFileValidator
         if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_004',
+                'FILE_AF_ERROR_005',
                 'R',
                 null,
                 $fileName,
@@ -143,7 +143,7 @@ class AFFileValidator
         if (empty($rowData[3])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_005',
+                'FILE_AF_ERROR_006',
                 'R',
                 null,
                 $fileName,
@@ -159,7 +159,7 @@ class AFFileValidator
         if (empty($rowData[4])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_006',
+                'FILE_AF_ERROR_007',
                 'R',
                 null,
                 $fileName,
@@ -175,7 +175,7 @@ class AFFileValidator
         if (empty($rowData[5])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_007',
+                'FILE_AF_ERROR_008',
                 'R',
                 null,
                 $fileName,
@@ -191,7 +191,7 @@ class AFFileValidator
         if (empty($rowData[6])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_007',
+                'FILE_AF_ERROR_009',
                 'R',
                 null,
                 $fileName,
@@ -207,7 +207,7 @@ class AFFileValidator
         if (empty($rowData[7])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_008',
+                'FILE_AF_ERROR_010',
                 'R',
                 null,
                 $fileName,
@@ -223,7 +223,7 @@ class AFFileValidator
         if (empty($rowData[8])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AF_ERROR_009',
+                'FILE_AF_ERROR_011',
                 'R',
                 null,
                 $fileName,

@@ -59,7 +59,7 @@ class APFileValidator
         if (empty($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AP_ERROR_003',
+                'FILE_AP_ERROR_002',
                 'R',
                 null,
                 $fileName,
