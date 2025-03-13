@@ -15,7 +15,7 @@ class ZipContentValidator
      */
     public static function validate(string $filePath, string $uniqid)
     {
-        $keyErrorRedis = "'filingOld:{$uniqid}:errors";
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
 
         $zip = new ZipArchive;
         if ($zip->open($filePath) !== true) {
