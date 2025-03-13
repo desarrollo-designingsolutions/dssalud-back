@@ -25,17 +25,21 @@ class AHFileValidator
             "columna 2: Código del prestador de servicios de salud",
             "columna 3: Tipo de identificación del usuario",
             "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Fecha del procedimiento",
-            "columna 6: Numero de autorizacion",
-            "columna 7: Código del procedimiento",
-            "columna 8: Ambito de realización del procedimiento",
-            "columna 9: Finalidad del procedimiento",
-            "columna 10: Personal que atiende",
-            "columna 11: Diagnóstico principal",
-            "columna 12: Diagnostico relacionado",
-            "columna 13: Complicación",
-            "columna 14: Forma de realización del acto quirúrgico",
-            "columna 15: Valor del procedimiento"
+            "columna 5: Via de ingreso a la institucion",
+            "columna 6: Fecha de ingreso del usuario a la institución",
+            "columna 7: Hora de ingreso del usuario a la Institución",
+            "columna 8: Numero de autorizacion",
+            "columna 9: Causa externa",
+            "columna 10: Diagnostico principal de ingreso",
+            "columna 11: Diagnóstico principal de egreso",
+            "columna 12: Diagnóstico relacionado Nro. 1 de egreso",
+            "columna 13: Diagnóstico relacionado Nro. 2 de egreso",
+            "columna 14: Diagnóstico relacionado Nro. 3 de egreso",
+            "columna 15: Diagnóstico de la complicacion",
+            "columna 16: Estado a la salida",
+            "columna 17: Diagnóstico de la causa básica de muerte",
+            "columna 18: Fecha de egreso del usuario a la institución",
+            "columna 19: Hora de egreso del usuario de la institución"
         ];
 
         // 1. Número de la factura (columna 0)
@@ -70,9 +74,9 @@ class AHFileValidator
             );
         }
 
-        // 3. Tipo de identificación del usuario (columna 2)
+        // 3. Via de ingreso a la institucion (columna 4)
         // Valor obligatorio
-        if (empty($rowData[2])) {
+        if (empty($rowData[4])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_003',
@@ -80,14 +84,14 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[2],
-                $rowData[2],
+                $titleColumn[4],
+                $rowData[4],
                 'El dato registrado es obligatorio.'
             );
         }
 
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["CC", "CE", "CD", "PA", "SC", "PE", "RE", "RC", "TI", "CN", "AS", "MS"];
+        $allowedPrefixes = ["1", "2", "3", "4"];
         if (!in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -102,9 +106,9 @@ class AHFileValidator
             );
         }
 
-        // 4. Número de identificación del usuario en el sistema (columna 3)
+        // 4. Fecha de ingreso del usuario a la institución (columna 5)
         // Valor obligatorio
-        if (empty($rowData[3])) {
+        if (empty($rowData[5])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_005',
@@ -112,15 +116,15 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[3],
-                $rowData[3],
-                'El dato registrado es obligatorio.'
+                $titleColumn[5],
+                $rowData[5],
+                'La Fecha de ingreso del usuario a la institución es un dato obligatorio.'
             );
         }
 
-        // 5. Fecha del procedimiento (columna 4)
+        // 5. Hora de ingreso del usuario a la Institución (columna 6)
         // Valor obligatorio
-        if (empty($rowData[4])) {
+        if (empty($rowData[6])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_006',
@@ -128,15 +132,15 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[4],
-                $rowData[4],
-                'El dato registrado es obligatorio.'
+                $titleColumn[6],
+                $rowData[6],
+                'La Hora de ingreso del usuario a observacion es un dato obligatorio.'
             );
         }
 
-        // 6. Código del procedimiento (columna 6)
+        // 6. Causa externa (columna 7)
         // Valor obligatorio
-        if (empty($rowData[6])) {
+        if (empty($rowData[7])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_007',
@@ -144,15 +148,31 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[6],
-                $rowData[6],
-                'El dato registrado es obligatorio.'
+                $titleColumn[7],
+                $rowData[7],
+                'El campo causa externa es un dato de registro obligatorio.'
             );
         }
 
-        // 7. Ambito de realización del procedimiento (columna 7)
+        // Unicamente los valores permitidos
+        $allowedPrefixes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15"];
+        if (!in_array($rowData[2], $allowedPrefixes)) {
+            ErrorCollector::addError(
+                $keyErrorRedis,
+                'FILE_AP_ERROR_004',
+                'R',
+                null,
+                $fileName,
+                $rowNumber,
+                $titleColumn[2],
+                $rowData[2],
+                'El dato registrado no es una opción permitida.'
+            );
+        }
+
+        // 7. Fecha de egreso del usuario a la institución (columna 16)
         // Valor obligatorio
-        if (empty($rowData[7])) {
+        if (empty($rowData[16])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_008',
@@ -160,15 +180,15 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[7],
-                $rowData[7],
+                $titleColumn[16],
+                $rowData[16],
                 'El dato registrado es obligatorio.'
             );
         }
 
-        // 8. Valor del procedimiento (columna 14)
+        // 8. Hora de egreso del usuario de la institución (columna 17)
         // Valor obligatorio
-        if (empty($rowData[14])) {
+        if (empty($rowData[17])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_009',
@@ -176,8 +196,8 @@ class AHFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[14],
-                $rowData[14],
+                $titleColumn[17],
+                $rowData[17],
                 'El dato registrado es obligatorio.'
             );
         }
