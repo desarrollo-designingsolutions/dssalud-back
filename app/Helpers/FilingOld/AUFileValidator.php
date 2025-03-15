@@ -208,6 +208,6 @@ class AUFileValidator
          }
 
 
-        logMessage(ErrorCollector::getErrors($keyErrorRedis));
+        // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
 }

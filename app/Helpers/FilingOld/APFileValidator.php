@@ -182,6 +182,6 @@ class APFileValidator
             );
         }
 
-        logMessage(ErrorCollector::getErrors($keyErrorRedis));
+        // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
 }

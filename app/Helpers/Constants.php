@@ -20,5 +20,12 @@ class Constants
 
     public const REDIS_TTL = '315360000'; // 10 años en segundos
 
-    public const DISK_FILES = 'public'; // 10 años en segundos
+    public const DISK_FILES = 'public'; // sistema de archivos
+
+
+
+    //LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275
+    public const  KEY_NUMFACT = 'num_factura';
+    public const  KEY_NumDocumentoIdentificacion = 'numDocumentoIdentificacion';
+    public const  KEY_VrServicio = 'vrServicio';
 }

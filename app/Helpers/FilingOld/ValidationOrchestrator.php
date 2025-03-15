@@ -34,23 +34,23 @@ class ValidationOrchestrator
 
         $zip = new ZipArchive;
         $zip->open($fullFilePath);
-        $tempDir = sys_get_temp_dir().'/'.uniqid();
+        $tempDir = sys_get_temp_dir() . '/' . uniqid();
         mkdir($tempDir);
         $zip->extractTo($tempDir);
 
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $fileName = $zip->getNameIndex($i);
             if (substr($fileName, -1) !== '/') {
-                $filePath = $tempDir.'/'.$fileName;
-                InternalFileValidator::validate($filePath);
+                $filePath = $tempDir . '/' . $fileName;
+                InternalFileValidator::validate($uniqid, $filePath);
+
             }
         }
 
         $zip->close();
 
         // Limpiar el directorio temporal
-        array_map('unlink', glob("$tempDir/*"));
-        rmdir($tempDir);
+        // rmdir($tempDir);
 
         return ErrorCollector::getErrors($keyErrorRedis);
     }

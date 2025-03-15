@@ -6,6 +6,7 @@ use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FileUploadProgress;
 use App\Events\FilingInvoiceRowUpdatedNow;
 use App\Events\ProgressCircular;
+use App\Helpers\Constants;
 use App\Repositories\FilingInvoiceRepository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -47,11 +48,11 @@ class ProcessMassXmlUpload implements ShouldQueue
         $infoValidation = validateDataFilesXml($this->data['tempPath'], $data);
 
         // Determinar el estado y la ruta del archivo XML
-        $finalName = "{$this->data['third_nit']}_{$filing_invoice->invoice_number}_{$this->data['originalName']}";
+        $finalName = "{$this->data['originalName']}";
         $finalPath = "companies/company_{$this->data['company_id']}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml/{$finalName}";
         if ($infoValidation['totalErrorMessages'] == 0) {
             // Mover el archivo
-            Storage::disk('public')->move($this->data['tempPath'], $finalPath);
+            Storage::disk(Constants::DISK_FILES)->move($this->data['tempPath'], $finalPath);
 
             $filing_invoice->path_xml = $finalPath;
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;

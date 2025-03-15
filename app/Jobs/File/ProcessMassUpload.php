@@ -4,6 +4,7 @@ namespace App\Jobs\File;
 
 use App\Events\FileUploadProgress;
 use App\Events\ProgressCircular;
+use App\Helpers\Constants;
 use App\Repositories\FileRepository;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,8 +43,11 @@ class ProcessMassUpload implements ShouldQueue
 
     public function handle(FileRepository $fileRepository)
     {
+         // Obtener la ruta completa del archivo en el servidor
+         $fullZipPath = Storage::disk(Constants::DISK_FILES)->path($this->tempPath);
+
         // Mover el archivo
-        Storage::disk('public')->move($this->tempPath, $this->finalPath);
+        Storage::disk(Constants::DISK_FILES)->move($fullZipPath, $this->finalPath);
 
         $fileRepository->store([
             'company_id' => $this->data['company_id'],

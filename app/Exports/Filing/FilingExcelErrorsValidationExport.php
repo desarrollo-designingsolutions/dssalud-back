@@ -22,13 +22,7 @@ class FilingExcelErrorsValidationExport implements FromView, ShouldAutoSize, Wit
 
     public function view(): View
     {
-        if (! empty($this->data['validationTxt']['errorMessages'] ?? [])) {
             return view('Exports.Filing.FilingExcelErrorsValidationTxtExport', ['data' => $this->data['errorMessages']]);
-        }
-
-        if (! empty($this->data['validationZip']['errorMessages'] ?? [])) {
-            return view('Exports.Filing.FilingExcelErrorsValidationZipExport', ['data' => $this->data['errorMessages']]);
-        }
 
     }
 

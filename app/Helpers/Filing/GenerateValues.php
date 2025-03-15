@@ -36,7 +36,7 @@ function getPaginatedDataRedis(Request $request, $invoiceId, $model, $redisPrefi
                 ],
             ];
         }
-        logMessage('no deberia entrar aqui');
+        // logMessage('no deberia entrar aqui');
 
         // Guardar el elemnto de la factura en Redis
         $redisKeyInvoice = "filingInvoice:{$invoice->id}:dataBd";

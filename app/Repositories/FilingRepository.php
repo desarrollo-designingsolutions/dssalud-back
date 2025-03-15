@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
+use App\Events\FilingInvoiceRowUpdatedNow;
 use App\Helpers\Constants;
 use App\Models\Filing;
 use App\Models\FilingInvoice;
@@ -137,8 +138,8 @@ class FilingRepository extends BaseRepository
         foreach ($validations as $validation) {
             if (isset($data[$validation['key']])) {
                 $parsedData = json_decode($data[$validation['key']], true);
-                if (isset($parsedData['errorMessages'])) {
-                    foreach ($parsedData['errorMessages'] as $message) {
+                if (isset($parsedData)) {
+                    foreach ($parsedData as $message) {
                         $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
                         $errorMessages[] = $message; // Agregar el mensaje al array de errorMessages
                     }
@@ -155,7 +156,7 @@ class FilingRepository extends BaseRepository
 
     public function getAllValidation($filing_id)
     {
-        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->select(['validationXml', 'validationTxt'])->get();
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->select(['validationXml', 'validationTxt'])->get();
 
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
@@ -168,10 +169,10 @@ class FilingRepository extends BaseRepository
         ];
 
         // Iterar sobre cada validación
-        foreach ($fileInvoices as $fileInvoice) {
+        foreach ($filingInvoices as $filingInvoice) {
             foreach ($validations as $validation) {
-                if (isset($fileInvoice[$validation['key']])) {
-                    $parsedData = json_decode($fileInvoice[$validation['key']], true);
+                if (isset($filingInvoice[$validation['key']])) {
+                    $parsedData = json_decode($filingInvoice[$validation['key']], true);
                     foreach ($parsedData as $message) {
                         $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
                         $errorMessages[] = $message; // Agregar el mensaje al array de errorMessages
@@ -185,17 +186,17 @@ class FilingRepository extends BaseRepository
 
     public function getCountFilingInvoicePreRadicated($filing_id)
     {
-        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->count();
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->count();
 
-        return $fileInvoices;
+        return $filingInvoices;
     }
 
     public function changeStatusFilingInvoicePreRadicated($filing_id)
     {
-        $fileInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->update([
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->update([
             'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
         ]);
 
-        return $fileInvoices;
+        return $filingInvoices;
     }
 }

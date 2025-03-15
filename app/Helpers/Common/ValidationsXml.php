@@ -7,6 +7,7 @@ function validateDataFilesXml($archivo, $data)
     $errorMessages = [];
     $arrayExito = [];
 
+    logMessage($archivo);
     $arrayExito[] = validationFileXml($archivo, $data, $errorMessages);
     if ($arrayExito[0]['result'] == false) {
         return [
@@ -22,10 +23,10 @@ function validateDataFilesXml($archivo, $data)
     $arrayExito[] = validationResultCode($dataXml, $validation['cbc:ValidationResultCode'], $errorMessages);
 
     $numFac = $attachedDocument['cbc:ID'];
-    $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
+    // $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
 
     $nit = $attachedDocument['cac:SenderParty']['cac:PartyTaxScheme']['cbc:CompanyID'];
-    $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
+    // $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
 
     return [
         'errorMessages' => $errorMessages,
@@ -33,7 +34,7 @@ function validateDataFilesXml($archivo, $data)
     ];
 }
 
-function validationResultCode($dataXml, $value2, &$errorMessages)
+function validationResultCode($data, $value2, &$errorMessages)
 {
 
     $validation = true;
@@ -42,9 +43,9 @@ function validationResultCode($dataXml, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'validationResultCode',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataXml['numFactura'],
-            'file' => $dataXml['file_name'] ?? null,
-            'row' => $dataXml['row'] ?? null,
+            'num_invoice' => $data['numInvoice'],
+            'file' => $data['file_name'] ?? null,
+            'row' => $data['row'] ?? null,
             'column' => 'ValidationResultCode',
             'data' => $value2,
             'error' => 'el ValidationResultCode debe ser el numero 2.',

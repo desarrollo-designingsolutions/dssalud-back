@@ -6,6 +6,7 @@ use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
+use App\Events\FilingInvoiceRowUpdatedNow;
 use App\Events\FilingProgressEvent;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
@@ -85,7 +86,7 @@ class FilingController extends Controller
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
-                $ruta = '/companies/company_'.$company_id.'/filings/'.$type->value.'/filing_'.$filing->id; // Ruta donde se guardará la carpeta
+                $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
                 $path_zip = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
                 $filing->path_zip = $path_zip;
@@ -155,6 +156,7 @@ class FilingController extends Controller
         return $this->runTransaction(function () use ($id) {
 
             $this->filingRepository->changeState($id, null, 'validationTxt');
+            $this->filingRepository->changeState($id, null, 'validationZip');
 
             return [
                 'code' => 200,
@@ -173,48 +175,94 @@ class FilingController extends Controller
             $filing = $this->filingRepository->find($filing_id);
 
             $validationTxt = json_decode($filing->validationTxt, 1);
-            $jsonSuccessfullInvoices = $validationTxt['jsonSuccessfullInvoices'];
-            $errorMessages = collect($validationTxt['errorMessages']);
 
-            $sumVr = sumVrServicioRips($jsonSuccessfullInvoices);
+            logMessage($filing);
 
-            $filing = $this->filingRepository->store([
-                'id' => $filing_id,
-                'sumVr' => $sumVr,
-                'contract_id' => $contract_id,
-                'validationTxt' => null,
-            ]);
 
-            // tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
-            $buildDataFinal = json_decode(collect($jsonSuccessfullInvoices), 1);
-            // le quitamos al array  general las key que no se deben guardar en json
-            eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
-            // quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
-            deleteFieldsPerzonalizedJson($buildDataFinal);
+            if ($filing->type = TypeFilingEnum::FILING_TYPE_001) {
 
-            // Recorremos las facturas
-            foreach ($buildDataFinal as $invoice) {
-
-                // Buscar los mensajes de error de la factura
-                $errorMessagesInvoice = $errorMessages->where('num_invoice', $invoice['numFactura'])->values();
-
-                // genero y guardo el archivo JSON de la factura
-                $nameFile = $invoice['numFactura'].'.json';
-                $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice['numFactura'].'/'.$nameFile; // Ruta donde se guardará la carpeta
-                Storage::disk('public')->put($routeJson, json_encode($invoice)); // guardo el archivo
-
-                // Guardamos la factura y obtenemos el modelo creado
-                $filingInvoice = $this->filingInvoiceRepository->store([
-                    'filing_id' => $filing_id,
-                    'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
-                    'status_xml' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
-                    'sumVr' => sumVrServicio($invoice),
-                    'date' => Carbon::now(),
-                    'invoice_number' => $invoice['numFactura'],
-                    'users_count' => count($invoice['usuarios']),
-                    'path_json' => $routeJson,
-                    'validationTxt' => json_encode($errorMessagesInvoice->all()),
+                $filing = $this->filingRepository->store([
+                    'id' => $filing_id,
+                    'sumVr' => 0,
+                    'contract_id' => $contract_id,
                 ]);
+
+
+                $buildDataFinal = openFileJson($filing->path_json);
+
+                //Sumatoria de los valores de los servicios
+                $sumVrServicios = 0;
+
+                // Recorremos las facturas
+                foreach ($buildDataFinal as $invoice) {
+
+                    // genero y guardo el archivo JSON de la factura
+                    $nameFile = $invoice[Constants::KEY_NUMFACT] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice[Constants::KEY_NUMFACT] . '/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk('public')->put($routeJson, json_encode($invoice)); // guardo el archivo
+
+                    $sumTotalServices = sumVrServicio($invoice);
+
+                    $sumVrServicios += $sumTotalServices;
+
+                    // Guardamos la factura y obtenemos el modelo creado
+                    $filingInvoice = $this->filingInvoiceRepository->store([
+                        'filing_id' => $filing_id,
+                        'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                        'status_xml' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
+                        'sumVr' => $sumTotalServices,
+                        'date' => Carbon::now(),
+                        'invoice_number' => $invoice[Constants::KEY_NUMFACT],
+                        'users_count' => count($invoice['usuarios']),
+                        'path_json' => $routeJson,
+                    ]);
+                }
+
+                $filing->sumVr = $sumVrServicios;
+                $filing->save();
+            } else if ($filing->type = TypeFilingEnum::FILING_TYPE_002) {
+
+                $jsonSuccessfullInvoices = $validationTxt['jsonSuccessfullInvoices'];
+                $errorMessages = collect($validationTxt['errorMessages']);
+                $sumVr = sumVrServicios($jsonSuccessfullInvoices);
+                $filing = $this->filingRepository->store([
+                    'id' => $filing_id,
+                    'sumVr' => $sumVr,
+                    'contract_id' => $contract_id,
+                    'validationTxt' => null,
+                ]);
+
+                // tomamos y hacemos un clon exacto de $jsonSuccessfullInvoices
+                $buildDataFinal = json_decode(collect($jsonSuccessfullInvoices), 1);
+                // le quitamos al array  general las key que no se deben guardar en json
+                eliminarKeysRecursivas($buildDataFinal, ['row', 'file_name']);
+                // quitamos los campos que se necesitan por ahora  (numDocumentoIdentificacion,numFEVPagoModerador de de AH , AN,AU)
+                deleteFieldsPerzonalizedJson($buildDataFinal);
+
+                // Recorremos las facturas
+                foreach ($buildDataFinal as $invoice) {
+
+                    // Buscar los mensajes de error de la factura
+                    $errorMessagesInvoice = $errorMessages->where('num_invoice', $invoice['numFactura'])->values();
+
+                    // genero y guardo el archivo JSON de la factura
+                    $nameFile = $invoice['numFactura'] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk('public')->put($routeJson, json_encode($invoice)); // guardo el archivo
+
+                    // Guardamos la factura y obtenemos el modelo creado
+                    $filingInvoice = $this->filingInvoiceRepository->store([
+                        'filing_id' => $filing_id,
+                        'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                        'status_xml' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
+                        'sumVr' => sumVrServicio($invoice),
+                        'date' => Carbon::now(),
+                        'invoice_number' => $invoice['numFactura'],
+                        'users_count' => count($invoice['usuarios']),
+                        'path_json' => $routeJson,
+                        'validationTxt' => json_encode($errorMessagesInvoice->all()),
+                    ]);
+                }
             }
 
             return [
@@ -261,7 +309,7 @@ class FilingController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\'.$modelType;
+            $modelClass = 'App\\Models\\' . $modelType;
             if (! class_exists($modelClass)) {
                 return ['code' => 400, 'message' => 'Modelo no válido'];
             }
@@ -274,7 +322,7 @@ class FilingController extends Controller
             $supportTypes = $this->supportTypeRepository->all();
 
             foreach ($files as $index => $file) {
-                $tempPath = $file->store('temp', 'public');
+                $tempPath = $file->store('temp', Constants::DISK_FILES);
                 $originalName = $file->getClientOriginalName();
 
                 // Construcción dinámica del finalPath con el nombre del archivo
@@ -384,7 +432,7 @@ class FilingController extends Controller
                     FilingProgressEvent::dispatch($filing->id, $progress);
                 } catch (\Exception $e) {
                     // Registrar error y continuar
-                    \Log::error("Error procesando archivo {$originalName}: ".$e->getMessage());
+                    \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
 
                     continue;
                 }
@@ -429,8 +477,11 @@ class FilingController extends Controller
             $uploadId = uniqid();
 
             foreach ($files as $index => $file) {
-                $tempPath = $file->store('temp', 'public');
+                $tempPath = $file->store('temp', Constants::DISK_FILES);
                 $originalName = $file->getClientOriginalName();
+
+                // Obtener la ruta completa del archivo en el servidor
+                $tempPath = Storage::disk(Constants::DISK_FILES)->path($tempPath);
 
                 $data = [
                     'company_id' => $company_id,
@@ -446,6 +497,7 @@ class FilingController extends Controller
 
                 ProcessMassXmlUpload::dispatch($data);
             }
+
 
             return [
                 'code' => 200,

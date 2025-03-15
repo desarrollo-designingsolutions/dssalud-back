@@ -23,17 +23,21 @@ class InternalFileValidator
     /**
      * Valida las columnas de un archivo extraído del ZIP.
      *
+     * @param  string  $uniqid  id unico del proceso
      * @param  string  $filePath  Ruta del archivo extraído
      * @return bool Verdadero si pasa las validaciones, falso si hay errores
      */
-    public static function validate(string $filePath): bool
+    public static function validate(string $uniqid, string $filePath): bool
     {
+        $keyErrorRedis = "filingOld:{$uniqid}:errors";
+
         $fileName = basename($filePath);
         $prefix = strtoupper(substr($fileName, 0, 2));
         $expected = self::$expectedColumns[$prefix] ?? null;
 
         if ($expected === null) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_009',
                 'R',
                 null,
@@ -50,6 +54,7 @@ class InternalFileValidator
         $handle = fopen($filePath, 'r');
         if (! $handle) {
             ErrorCollector::addError(
+                $keyErrorRedis,
                 'ZIP_ERROR_010',
                 'R',
                 null,
@@ -72,6 +77,7 @@ class InternalFileValidator
                 // Suponiendo que num_invoice está en la primera columna (ajústalo según tu formato)
                 $numInvoice = $line[0] ?? null;
                 ErrorCollector::addError(
+                    $keyErrorRedis,
                     'ZIP_ERROR_011',
                     'R',
                     $numInvoice,

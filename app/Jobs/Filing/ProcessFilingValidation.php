@@ -46,6 +46,7 @@ class ProcessFilingValidation implements ShouldQueue
         Redis::set("filingOld:{$this->filing_id}:total_rows", $totalRows);
         Redis::set("filingOld:{$this->filing_id}:processed_rows", 0);
         Redis::set("filingOld:{$this->filing_id}:validationCt_codigoArchivos", json_encode([]));
+        Redis::set("filingOld:{$this->filing_id}:files_txts", json_encode($files));
 
         // Procesar cada archivo y despachar sub-jobs por chunk
         foreach ($files as $file) {

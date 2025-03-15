@@ -202,6 +202,6 @@ class ANFileValidator
 
 
 
-        logMessage(ErrorCollector::getErrors($keyErrorRedis));
+        // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
 }

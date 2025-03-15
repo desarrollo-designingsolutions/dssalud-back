@@ -234,7 +234,7 @@ class AFFileValidator
             );
         }
 
-        logMessage(ErrorCollector::getErrors($keyErrorRedis));
+        // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
 
     private static function getNumberInvoiceCT($filing_id): bool|string

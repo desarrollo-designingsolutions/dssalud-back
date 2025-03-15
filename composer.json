@@ -40,6 +40,7 @@
             "app/Helpers/Global.php",
             "app/Helpers/Filing/GenerateValues.php",
             "app/Helpers/Common/ErrorCollector.php",
+            "app/Helpers/Common/ValidationsXml.php",
             "app/Helpers/FilingOld/InternalFileValidator.php",
             "app/Helpers/FilingOld/ValidationOrchestrator.php",
             "app/Helpers/FilingOld/ZipContentValidator.php",
@@ -49,7 +50,6 @@
             "app/Helpers/Rips/Validations.php",
             "app/Helpers/Rips/ValidationsTxt.php",
             "app/Helpers/Rips/ValidationsExcel.php",
-            "app/Helpers/Rips/ValidationsXml.php",
             "app/Helpers/Rips/ValidationsRipsManual.php"
         ]
     },

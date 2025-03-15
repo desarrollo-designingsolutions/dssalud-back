@@ -2,7 +2,9 @@
 
 namespace App\Jobs\Filing;
 
+use App\Enums\Filing\StatusFilingEnum;
 use App\Events\ProgressCircular;
+use App\Helpers\Common\ErrorCollector;
 use App\Helpers\FilingOld\ACFileValidator;
 use App\Helpers\FilingOld\AFFileValidator;
 use App\Helpers\FilingOld\AHFileValidator;
@@ -13,6 +15,7 @@ use App\Helpers\FilingOld\ATFileValidator;
 use App\Helpers\FilingOld\AUFileValidator;
 use App\Helpers\FilingOld\CTFileValidator;
 use App\Helpers\FilingOld\USFileValidator;
+use App\Models\Filing;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -94,5 +97,11 @@ class ProcessChunkJob implements ShouldQueue
 
         // Despachar evento para el frontend
         ProgressCircular::dispatch("filing.{$this->filing_id}", $percentage);
+
+        if ($percentage == 100) {
+
+            ProcessSaveFiling::dispatch($this->filing_id);
+
+        }
     }
 }

@@ -246,6 +246,6 @@ class ACFileValidator
 
 
 
-        logMessage(ErrorCollector::getErrors($keyErrorRedis));
+        // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }
 }

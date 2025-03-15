@@ -23,15 +23,39 @@ class ZipContentValidator
         }
 
         $fileCount = $zip->numFiles;
-        $fileNames = [];
+        $fileNames = []; // Para almacenar nombres de archivos
+        $folderNames = []; // Para almacenar nombres de carpetas
 
         for ($i = 0; $i < $fileCount; $i++) {
             $fileName = $zip->getNameIndex($i);
-            if ($fileName && substr($fileName, -1) !== '/') {
-                $fileNames[] = $fileName;
+            if ($fileName) {
+                if (substr($fileName, -1) === '/') {
+                    // Es una carpeta (termina en '/')
+                    $folderNames[] = rtrim($fileName, '/'); // Quitamos el '/' final para un nombre más limpio
+                } else {
+                    // Es un archivo
+                    $fileNames[] = $fileName;
+                }
             }
         }
 
+        // no se aceptan carpetas
+        if (count($folderNames) > 0) {
+            ErrorCollector::addError(
+                $keyErrorRedis,
+                'ZIP_ERROR_015',
+                'R',
+                null,
+                basename($filePath),
+                null,
+                null,
+                count($fileNames),
+                'El archivo ZIP contiene una carpeta lo cual no es valido.'
+            );
+            $zip->close();
+
+            return false;
+        }
         // 4. Máximo 10 archivos
         if (count($fileNames) > 10) {
             ErrorCollector::addError(

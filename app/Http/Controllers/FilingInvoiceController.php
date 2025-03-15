@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
+use App\Helpers\Constants;
 use App\Http\Resources\FilingInvoice\FilingInvoicePaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
@@ -138,12 +139,14 @@ class FilingInvoiceController extends Controller
                 // Validar datos del XML
                 $infoValidation = validateDataFilesXml($request->file('archiveXml')->path(), $data);
 
+                // logMessage($infoValidation);
+
                 // Determinar el estado y la ruta del archivo XML
                 if ($infoValidation['totalErrorMessages'] == 0) {
-                    $finalName = "{$third_nit}_{$filing_invoice->invoice_number}_{$file->getClientOriginalName()}";
+                    $finalName = "{$third_nit}_{$filing_invoice->invoice_number}_FILEXML.{$file->getClientOriginalExtension()}";
                     $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml";
 
-                    $path = $file->storeAs($finalPath, $finalName, 'public');
+                    $path = $file->storeAs($finalPath, $finalName, Constants::DISK_FILES);
                     $filing_invoice->path_xml = $path;
                     $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
                     $filing_invoice->validationXml = null;

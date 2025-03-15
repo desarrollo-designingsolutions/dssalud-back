@@ -1,8 +1,10 @@
 <?php
 
+use App\Helpers\Constants;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 function filterComponent($query, &$request, $model = null)
@@ -63,7 +65,7 @@ function filterComponent($query, &$request, $model = null)
                         $search = $value['search'];
 
                         if ($value['type'] == 'LIKE' && ! is_array($search)) {
-                            $search = '%'.$value['search'].'%';
+                            $search = '%' . $value['search'] . '%';
                         }
                         if (isset($value['relation'])) {
                             foreach ($value['relation'] as $key => $relation) {
@@ -171,7 +173,7 @@ function generatePastelColor($opacity = 1.0)
 function truncate_text($text, $maxLength = 15)
 {
     if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength).'...';
+        return substr($text, 0, $maxLength) . '...';
     }
 
     return $text;
@@ -182,7 +184,7 @@ function formatNumber($number, $currency_symbol = '$ ')
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, 2, ',', '.');
 
-    return $currency_symbol.$formattedNumber;
+    return $currency_symbol . $formattedNumber;
 }
 
 function formattedElement($element)
@@ -289,7 +291,7 @@ function customSort($a, $b, $sortingRules)
                 }
                 break;
 
-                // Puedes agregar más tipos de ordenación según sea necesario
+            // Puedes agregar más tipos de ordenación según sea necesario
 
             default:
                 // Si el tipo de orden no es 'asc' ni 'desc', no realizar ninguna comparación
@@ -455,4 +457,58 @@ function isNumericArray(array $array): bool
     $keys = array_keys($array);
 
     return array_keys($keys) === $keys; // Comprueba si las claves son 0, 1, 2...
+}
+
+
+function openFileJson($path_json)
+{
+
+    // Obtener la ruta completa del archivo en el servidor
+    $jsonFilePath = Storage::disk(Constants::DISK_FILES)->path($path_json);
+
+    $jsonContents = null;
+    // Verificar si el archivo existe
+    if (file_exists($jsonFilePath)) {
+        // Leer el contenido del archivo JSON
+        $jsonContents = json_decode(file_get_contents($jsonFilePath), 1);
+    }
+
+    return $jsonContents;
+}
+
+function sumVrServicios($invoices)
+{
+    $sumVr = 0;
+    foreach ($invoices as $invoice) {
+        $sumVr += sumVrServicio($invoice);
+    }
+
+    return $sumVr;
+}
+
+function sumVrServicio($valueJsonInvoice)
+{
+    // suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
+    $sumVrInvoice = 0;
+    if (isset($valueJsonInvoice['usuarios']) && count($valueJsonInvoice['usuarios']) > 0) {
+        foreach ($valueJsonInvoice['usuarios'] as $user) {
+
+            $elements = ['consultas', 'procedimientos', 'medicamentos', 'urgencias', 'otrosServicios', 'hospitalizacion', 'recienNacidos'];
+            foreach ($elements as $ele) {
+                if (isset($user['servicios'][$ele]) && count($user['servicios'][$ele]) > 0) {
+                    foreach ($user['servicios'][$ele] as $query) {
+                        $vrServicio = 0;
+                        if (isset($query[Constants::KEY_VrServicio])) {
+                            $vrServicio = str_replace('.', '', $query[Constants::KEY_VrServicio]);
+                        }
+                        if (intval($vrServicio) > 0) {
+                            $sumVrInvoice += intval($vrServicio);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return $sumVrInvoice;
 }

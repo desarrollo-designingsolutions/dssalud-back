@@ -30,7 +30,7 @@ class FilingInvoiceRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($filter) {
+        return $this->cacheService->remember($cacheKey, function () use ($filter,$request) {
 
             $query = QueryBuilder::for($this->model->query())
                 ->select(['filing_invoices.id', 'invoice_number', 'users_count', 'case_number', 'sumVr', 'status', 'status_xml', 'date'])
@@ -70,9 +70,17 @@ class FilingInvoiceRepository extends BaseRepository
                     'date',
                 ]);
 
+
             if (isset($filter['files_count']) && is_numeric($filter['files_count'])) {
                 $query->having('files_count', '=', $filter['files_count']);
             }
+
+
+            if(!empty($request["filing_id"])){
+                $query = $query->where("filing_id",$request["filing_id"]);
+            }
+
+
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;

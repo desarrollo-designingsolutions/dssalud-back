@@ -910,19 +910,7 @@ function validateGroupedData(Collection $groupedCsvData)
     return $errorMessages;
 }
 
-function openFileJson($path_json)
-{
-    $jsonFilePath = public_path('storage/'.$path_json);
 
-    $jsonContents = null;
-    // Verificar si el archivo existe
-    if (file_exists($jsonFilePath)) {
-        // Leer el contenido del archivo JSON
-        $jsonContents = json_decode(file_get_contents($jsonFilePath), 1);
-    }
-
-    return $jsonContents;
-}
 
 function processData($build, $groupedData)
 {
@@ -1400,15 +1388,7 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 // }
 
 // suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
-function sumVrServicioRips($invoices)
-{
-    $sumVrRips = 0;
-    foreach ($invoices as $invoice) {
-        $sumVrRips += sumVrServicio($invoice);
-    }
 
-    return $sumVrRips;
-}
 
 // function saveReloadDataRips($data, $updateAll = true)
 // {
@@ -1489,33 +1469,6 @@ function sumVrServicioRips($invoices)
 //     $invoice->company_id = $rip->company_id;
 //     $invoice->save();
 // }
-
-function sumVrServicio($valueJsonInvoice)
-{
-    // suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
-    $sumVrInvoice = 0;
-    if (isset($valueJsonInvoice['usuarios']) && count($valueJsonInvoice['usuarios']) > 0) {
-        foreach ($valueJsonInvoice['usuarios'] as $user) {
-
-            $elements = ['consultas', 'procedimientos', 'medicamentos', 'urgencias', 'otrosServicios', 'hospitalizacion', 'recienNacidos'];
-            foreach ($elements as $ele) {
-                if (isset($user['servicios'][$ele]) && count($user['servicios'][$ele]) > 0) {
-                    foreach ($user['servicios'][$ele] as $query) {
-                        $vrServicio = 0;
-                        if (isset($query['vrServicio'])) {
-                            $vrServicio = str_replace('.', '', $query['vrServicio']);
-                        }
-                        if (intval($vrServicio) > 0) {
-                            $sumVrInvoice += intval($vrServicio);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return $sumVrInvoice;
-}
 
 function deleteFieldsPerzonalizedJson(&$buildDataFinal)
 {
