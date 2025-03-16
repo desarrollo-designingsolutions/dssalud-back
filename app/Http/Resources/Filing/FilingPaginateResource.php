@@ -17,7 +17,8 @@ class FilingPaginateResource extends JsonResource
         return [
             'id' => $this->id,
             'contract_name' => $this->contract?->name,
-            'type' => $this->type->description(),
+            'type_description' => $this->type->description(),
+            'type' => $this->type,
             'status' => $this->status,
             'sumVr' => formatNumber($this->sumVr),
             'filing_invoice_pre_radicated_count' => $this->filing_invoice_pre_radicated_count,

@@ -81,12 +81,12 @@ class BaseRepository
             'withCount' => $withCount,
         ], 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($id, $with, $select, $withCount) {
+        return $this->cacheService->remember($cacheKey, function () use ($id, $with, $select, $withCount) {
             return $this->model->select($select)
                 ->withCount($withCount)
                 ->with($with)
                 ->find($id);
-        // }); // Usa el defaultTtl de CacheService
+        }); // Usa el defaultTtl de CacheService
     }
 
     /**

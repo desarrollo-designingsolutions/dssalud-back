@@ -60,7 +60,7 @@ class FilingController extends Controller
     public function showData($id)
     {
         return $this->execute(function () use ($id) {
-            $data = $this->filingRepository->find($id, select: ['id', 'type', 'contract_id', 'validationTxt']);
+            $data = $this->filingRepository->find($id, select: ['id', 'type', 'contract_id', 'validationTxt', 'status']);
 
             return $data;
         });
@@ -544,10 +544,12 @@ class FilingController extends Controller
         return $this->runTransaction(function () use ($id) {
 
             $countData = $this->filingRepository->getCountFilingInvoicePreRadicated($id);
+            $countDataWithOutSupports = $this->filingRepository->getCountFilingInvoiceWithOutSupports($id);
 
             return [
                 'code' => 200,
                 'countData' => $countData,
+                'countDataWithOutSupports' => $countDataWithOutSupports,
             ];
         });
     }
@@ -557,6 +559,7 @@ class FilingController extends Controller
         return $this->runTransaction(function () use ($id) {
 
             $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($id);
+            $this->filingRepository->changeState($id, StatusFilingEnum::FILING_EST_009, 'status');
 
             return [
                 'code' => 200,

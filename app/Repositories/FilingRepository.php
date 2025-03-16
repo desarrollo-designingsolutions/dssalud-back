@@ -191,11 +191,32 @@ class FilingRepository extends BaseRepository
         return $filingInvoices;
     }
 
+    public function getCountFilingInvoiceWithOutSupports($filing_id)
+    {
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->get();
+
+        $countSupports = 0;
+        foreach ($filingInvoices as $key => $value) {
+            if ($value->files_count == 0) {
+                $countSupports++;
+            }
+        }
+
+        return $countSupports;
+    }
+
     public function changeStatusFilingInvoicePreRadicated($filing_id)
     {
-        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->update([
-            'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
-        ]);
+        $filingInvoices = FilingInvoice::where('filing_id', $filing_id)->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001)->get();
+
+        foreach ($filingInvoices as $key => $value) {
+            $value->status = StatusFilingInvoiceEnum::FILINGINVOICE_EST_002;
+            $value->save();
+        }
+
+        // ->update([
+        //     'status' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
+        // ]);
 
         return $filingInvoices;
     }
