@@ -143,7 +143,7 @@ class FilingInvoiceController extends Controller
 
                 // Determinar el estado y la ruta del archivo XML
                 if ($infoValidation['totalErrorMessages'] == 0) {
-                    $finalName = "{$third_nit}_{$filing_invoice->invoice_number}_FILEXML.{$file->getClientOriginalExtension()}";
+                    $finalName = "{$third_nit}_{$filing_invoice->invoice_number}_FILEXML.xml";
                     $finalPath = "companies/company_{$company_id}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml";
 
                     $path = $file->storeAs($finalPath, $finalName, Constants::DISK_FILES);

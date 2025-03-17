@@ -4,7 +4,7 @@ use Saloon\XmlWrangler\XmlReader;
 
 function validateDataFilesXml($archivo, $data)
 {
-    
+
     $errorMessages = [];
     $arrayExito = [];
 
@@ -24,10 +24,10 @@ function validateDataFilesXml($archivo, $data)
     $arrayExito[] = validationResultCode($dataXml, $validation['cbc:ValidationResultCode'], $errorMessages);
 
     $numFac = $attachedDocument['cbc:ID'];
-    // $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
+    $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
 
     $nit = $attachedDocument['cac:SenderParty']['cac:PartyTaxScheme']['cbc:CompanyID'];
-    // $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
+    $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
 
     return [
         'errorMessages' => $errorMessages,

@@ -20,18 +20,15 @@ class ProcessFilingValidationTxt implements ShouldQueue
 
     public $filingId;
 
-    public $userData;
-
     public $lastProcess;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($filingId, $build, $userData = null, $lastProcess = true)
+    public function __construct($filingId, $build, $lastProcess = true)
     {
         $this->build = $build;
         $this->filingId = $filingId;
-        $this->userData = $userData;
         $this->lastProcess = $lastProcess;
     }
 
@@ -45,7 +42,7 @@ class ProcessFilingValidationTxt implements ShouldQueue
         $contenido_json = json_decode($filing->validationTxt, true); // Decodificar los datos JSON en un array asociativo
 
         // Ejecutar la función validateDataFilesTxt para obtener los nuevos datos
-        $infoValidation = validateDataFilesTxt($this->build);
+        $infoValidation = validateDataFilesTxt([$this->build]);
 
         // Combinar los datos
         $contenido_json2 = [];
