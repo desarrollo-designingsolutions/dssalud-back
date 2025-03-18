@@ -70,6 +70,7 @@ class ProcessSaveFiling implements ShouldQueue
         $filing->path_json = $path_json;
         $filing->save();
 
+        Redis::del("filingOld:{$this->filingId}*");
 
         FilingFinishProcessJob::dispatch($filing->id);
     }
