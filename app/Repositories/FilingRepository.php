@@ -45,22 +45,24 @@ class FilingRepository extends BaseRepository
                     'status',
 
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->orWhereHas('contract', function ($subQuery) use ($value) {
-                            $subQuery->where('name', 'like', "%$value%");
-                        });
+                        $query->where(function ($query) use ($value) {
+                            $query->orWhereHas('contract', function ($subQuery) use ($value) {
+                                $subQuery->where('name', 'like', "%$value%");
+                            });
 
-                        QueryFilters::filterByText($query, $value, 'type', [
-                            TypeFilingEnum::FILING_TYPE_001->description() => TypeFilingEnum::FILING_TYPE_001,
-                            TypeFilingEnum::FILING_TYPE_002->description() => TypeFilingEnum::FILING_TYPE_002,
-                        ]);
-                        QueryFilters::filterByText($query, $value, 'status', [
-                            StatusFilingEnum::FILING_EST_008->description() => StatusFilingEnum::FILING_EST_008,
-                            StatusFilingEnum::FILING_EST_009->description() => StatusFilingEnum::FILING_EST_009,
-                        ]);
+                            QueryFilters::filterByText($query, $value, 'type', [
+                                TypeFilingEnum::FILING_TYPE_001->description() => TypeFilingEnum::FILING_TYPE_001,
+                                TypeFilingEnum::FILING_TYPE_002->description() => TypeFilingEnum::FILING_TYPE_002,
+                            ]);
+                            QueryFilters::filterByText($query, $value, 'status', [
+                                StatusFilingEnum::FILING_EST_008->description() => StatusFilingEnum::FILING_EST_008,
+                                StatusFilingEnum::FILING_EST_009->description() => StatusFilingEnum::FILING_EST_009,
+                            ]);
 
-                        $query->orWhere(function ($subQuery) use ($value) {
-                            $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
-                            $subQuery->orWhere('sumVr', 'like', "%$normalizedValue%");
+                            $query->orWhere(function ($subQuery) use ($value) {
+                                $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                                $subQuery->orWhere('sumVr', 'like', "%$normalizedValue%");
+                            });
                         });
                     }),
                 ])

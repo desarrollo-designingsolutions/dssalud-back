@@ -428,24 +428,6 @@ function parseDate($fecha)
 }
 
 /**
- * Normaliza los datos JSON para que siempre sean un arreglo
- */
-function normalizeJsonData($data): array
-{
-    if (is_null($data) || empty($data)) {
-        return [];
-    }
-
-    // Si es un arreglo asociativo (una sola), lo envolvemos en un arreglo
-    if (is_array($data) && ! isNumericArray($data)) {
-        return [$data];
-    }
-
-    // Si ya es un arreglo numérico, lo devolvemos tal cual
-    return is_array($data) ? $data : [$data];
-}
-
-/**
  * Verifica si un arreglo tiene claves numéricas (es una lista)
  */
 function isNumericArray(array $array): bool

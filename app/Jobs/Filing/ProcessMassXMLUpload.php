@@ -47,10 +47,13 @@ class ProcessMassXmlUpload implements ShouldQueue
         // Validar datos del XML
         $infoValidation = validateDataFilesXml($this->data['tempPath'], $data);
 
+        logMessage($infoValidation);
+
         // Determinar el estado y la ruta del archivo XML
         $finalName = "{$this->data['originalName']}";
         $finalPath = "companies/company_{$this->data['company_id']}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml/{$finalName}";
         if ($infoValidation['totalErrorMessages'] == 0) {
+            logMessage('1');
             // Mover el archivo
             Storage::disk(Constants::DISK_FILES)->move($this->data['tempPath'], $finalPath);
 
@@ -58,10 +61,12 @@ class ProcessMassXmlUpload implements ShouldQueue
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
             $filing_invoice->validationXml = null;
         } else {
+            logMessage('2');
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_005;
             $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
         }
 
+        logMessage('3');
         $filing_invoice->save();
 
         FilingInvoiceRowUpdatedNow::dispatch($filing_invoice->id);
