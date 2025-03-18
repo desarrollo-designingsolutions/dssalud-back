@@ -138,10 +138,18 @@ class FilingRepository extends BaseRepository
 
         // Iterar sobre cada validación
         foreach ($validations as $validation) {
+
             if (isset($data[$validation['key']])) {
                 $parsedData = json_decode($data[$validation['key']], true);
+
                 if (isset($parsedData)) {
-                    foreach ($parsedData as $message) {
+                    $elementos = $parsedData;
+
+                    if ($data->type == TypeFilingEnum::FILING_TYPE_002) {
+                        $elementos = $parsedData["errorMessages"];
+                    }
+
+                    foreach ($elementos as $message) {
                         $message['type'] = $validation['type']; // Agregar la propiedad "type" al mensaje de error
                         $errorMessages[] = $message; // Agregar el mensaje al array de errorMessages
                     }
@@ -153,6 +161,7 @@ class FilingRepository extends BaseRepository
             'errorMessages' => $errorMessages,
             'validationTxt' => json_decode($data->validationTxt, 1),
             'validationZip' => json_decode($data->validationZip, 1),
+            'has_invoices' => $data->filingInvoice->count() > 0,
         ];
     }
 

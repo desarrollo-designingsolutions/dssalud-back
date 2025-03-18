@@ -177,9 +177,6 @@ class FilingController extends Controller
 
             $validationTxt = json_decode($filing->validationTxt, 1);
 
-            logMessage($filing);
-
-
             if ($filing->type == TypeFilingEnum::FILING_TYPE_001) {
 
                 $filing = $this->filingRepository->store([
@@ -221,6 +218,7 @@ class FilingController extends Controller
 
                 $filing->sumVr = $sumVrServicios;
                 $filing->save();
+
             } else if ($filing->type == TypeFilingEnum::FILING_TYPE_002) {
                 $jsonSuccessfullInvoices = $validationTxt['jsonSuccessfullInvoices'];
                 $errorMessages = collect($validationTxt['errorMessages']);
@@ -378,7 +376,6 @@ class FilingController extends Controller
             $files = $request->file('files');
             $files = is_array($files) ? $files : [$files];
             $totalFiles = count($files);
-            $chunkSize = (int) env('CHUNKSIZE', 10);
 
             // Guardar registro inicial
             $filing = $this->filingRepository->store([

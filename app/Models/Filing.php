@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Filing extends Model
 {
-    use Cacheable, HasUuids,Searchable,SoftDeletes;
+    use Cacheable, HasUuids, Searchable, SoftDeletes;
 
     protected $casts = [
         'type' => TypeFilingEnum::class,
@@ -74,5 +74,36 @@ class Filing extends Model
     {
         return $this->parseAndCheckArray($obj['validationTxt'] ?? null) ||
             $this->parseAndCheckArray($obj['validationZip'] ?? null);
+    }
+
+    public function getErrorStatusAttribute(): array
+    {
+        $status = [
+            'has_errors' => false,
+            'has_r_errors' => false,
+            'has_n_errors' => false,
+        ];
+
+        $sources = [$this->attributes['validationTxt'] ?? null, $this->attributes['validationZip'] ?? null];
+
+        foreach ($sources as $source) {
+            if ($this->parseAndCheckArray($source)) {
+                $parsed = json_decode($source, true);
+                $errorMessages = $parsed['errorMessages'] ?? [];
+                foreach ($errorMessages as $error) {
+                    if (isset($error['validacion_type_Y'])) {
+                        $status['has_errors'] = true;
+                        if (strtoupper($error['validacion_type_Y']) === 'R') {
+                            $status['has_r_errors'] = true;
+                        }
+                        if (strtoupper($error['validacion_type_Y']) === 'N') {
+                            $status['has_n_errors'] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $status;
     }
 }

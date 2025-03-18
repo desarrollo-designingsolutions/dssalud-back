@@ -47,6 +47,7 @@ class FilingFinishProcessJob implements ShouldBroadcast
             'id' => $this->filing->id,
             'has_validation_errors' => $this->filing->has_validation_errors,
             'status' => $this->filing->status,
+            'error_status' => $this->filing->error_status,
         ];
     }
 }

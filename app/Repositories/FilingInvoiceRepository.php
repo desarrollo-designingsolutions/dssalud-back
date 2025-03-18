@@ -29,8 +29,6 @@ class FilingInvoiceRepository extends BaseRepository
         $this->removeInvalidFilters(['files_count']);
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
-        logMessage($filter);
-        logMessage($request);
         return $this->cacheService->remember($cacheKey, function () use ($filter,$request) {
 
         $query = QueryBuilder::for($this->model->query())
@@ -81,8 +79,6 @@ class FilingInvoiceRepository extends BaseRepository
         if (isset($filter['files_count']) && is_numeric($filter['files_count'])) {
             $query->having('files_count', '=', $filter['files_count']);
         }
-
-        logMessage($query->toRawSql());
 
         $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
