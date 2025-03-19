@@ -23,5 +23,7 @@ class RoutesApi
         'routes/filingInvoice.php',
         'routes/fileViewer.php',
         'routes/invoiceAudit.php',
+        'routes/assignmentBatche.php',
+        'routes/assignment.php',
     ];
 }

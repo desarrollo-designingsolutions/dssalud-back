@@ -14,4 +14,21 @@ class Third extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function invoiceAudits()
+    {
+        return $this->hasMany(InvoiceAudit::class);
+    }
+
+    public function assignedInvoiceAudits()
+    {
+        return $this->hasMany(InvoiceAudit::class)
+                    ->whereHas('assignment');
+    }
+
+    public function sumInvoiceAuditsTotalValue()
+    {
+        return $this->invoiceAudits()->sum('total_value');
+    }
+    
 }

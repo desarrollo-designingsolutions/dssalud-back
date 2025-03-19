@@ -22,6 +22,8 @@ class Constants
 
     public const DISK_FILES = 'public'; // sistema de archivos
 
+    public const CHUNKSIZE = 10;
+
 
 
     //LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275

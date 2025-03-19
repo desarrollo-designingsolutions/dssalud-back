@@ -3,6 +3,7 @@
 namespace App\Jobs\Filing;
 
 use App\Helpers\Common\ErrorCollector;
+use App\Helpers\Constants;
 use App\Helpers\FilingOld\ZipHelper;
 use App\Models\Filing;
 use Illuminate\Bus\Queueable;
@@ -55,7 +56,7 @@ class ProcessFilingValidation implements ShouldQueue
 
             Redis::set("filingOld:{$this->filing_id}:{$prefix_name}", json_encode($file['contentDataArray']));
 
-            $chunkSize = env('CHUNKSIZE', 100);
+            $chunkSize = Constants::CHUNKSIZE;
 
             $chunks = array_chunk($file['contentDataArray'], $chunkSize);
 
