@@ -24,6 +24,4 @@ Route::middleware(['check.permission:menu.medical.bills'])->group(function () {
 
     Route::delete('/assignmentBatche/delete/{id}', [AssignmentBatcheController::class, 'delete']);
 
-    Route::post('/assignmentBatche/uploadCsv', [AssignmentBatcheController::class, 'uploadCsv']);
-
 });

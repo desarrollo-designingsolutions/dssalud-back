@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\AssignmentBatche;
 
+use App\Enums\Assignment\StatusAssignmentEnum;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,9 +19,9 @@ class AssignmentBatchePaginateResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            'assignment_date' => count($this->assignments),
-            'pending_date' => 0,
-            'completed_date' => 0,
+            'count_invoice_assignment' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_002->value),
+            'count_invoice_pending' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_001->value),
+            'count_invoice_completed' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_003->value),
         ];
     }
 }

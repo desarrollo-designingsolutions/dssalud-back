@@ -4,9 +4,12 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\Assignment;
+use App\Models\InvoiceAudit;
+use App\Models\Patient;
 use App\Models\Third;
 use App\QueryBuilder\Filters\DateRangeFilter;
 use App\QueryBuilder\Filters\QueryFilters;
+use App\QueryBuilder\Sort\DynamicConcatSort;
 use App\QueryBuilder\Sort\IsActiveSort;
 use App\QueryBuilder\Sort\RelatedTableSort;
 use App\QueryBuilder\Sort\UserFullNameSort;
@@ -27,49 +30,112 @@ class AssignmentRepository extends BaseRepository
 
     public function paginateThirds($request = [])
     {
-
-        // $data = Third::with([
-        //     'invoiceAudits.assignment' => function ($query) use ($id) {
-        //         $query->where('assignment_batch_id', $id);
-        //     }
-        // ])->withCount(['assignedInvoiceAudits'])->where(function ($query) use ($id) {
-        //     $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($id) {
-        //         $subQuery->where('assignment_batch_id', $id);
-        //         $subQuery->where('status', 'estatus 2');
-        //     });
-        // })->get();
-
-        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateThirds", $request, 'string');
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
-        $query = QueryBuilder::for(Third::query())
-            ->with([
-                'invoiceAudits.assignment' => function ($query) use ($request) {
-                    $query->where('assignment_batch_id', $request['id']);
-                }
-            ])->withCount(['assignedInvoiceAudits'])
+            $query = QueryBuilder::for(Third::query())
+                ->with([
+                    'invoiceAudits.assignment' => function ($query) use ($request) {
+                        $query->where('assignment_batch_id', $request['assignment_batche_id']);
+                    }
+                ])->withCount(['assignedInvoiceAudits'])
+                ->allowedFilters([
+
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+
+                        $query->orWhere('nit', 'like', "%$value%");
+                        $query->orWhere('name', 'like', "%$value%");
+
+                    }),
+
+                ])
+                ->allowedSorts([
+                    'nit',
+                    'name',
+                ])->where(function ($query) use ($request) {
+
+                    $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
+                        $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
+                    });
+
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+            return $query;
+        // }, Constants::REDIS_TTL);
+    }
+
+    public function paginateInvoiceAudit($request = [])
+    {
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateInvoiceAudit", $request, 'string');
+
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        $query = QueryBuilder::for(InvoiceAudit::query())
+            ->withCount(['patients', 'services'])
             ->allowedFilters([
 
-                AllowedFilter::callback('inputGeneral', function ($query, $value) {}),
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    
+                    $query->orWhere('invoice_number', 'like', "%$value%");
+
+                }),
 
             ])
             ->allowedSorts([
-                'description',
+                'invoice_number'
             ])->where(function ($query) use ($request) {
 
-                $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
-                    $subQuery->where('assignment_batch_id', $request['id']);
-                    $subQuery->where('status', 'estatus 2');
-                });
-
                 if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
+                    $query->whereHas('third.company', function ($subQuery) use ($request) {
+                        $subQuery->where('company_id', $request['company_id']);
+                    });
+                }
+
+                if (! empty($request['third_id'])) {
+                    $query->where('third_id', $request['third_id']);
                 }
             })
             ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
         return $query;
         // }, Constants::REDIS_TTL);
+    }
+
+    public function paginatePatient($request = [])
+    {
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginatePatient", $request, 'string');
+
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
+            $query = QueryBuilder::for(Patient::query())
+                ->allowedFilters([
+
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->orWhereRaw("CONCAT(patients.first_name, ' ', patients.second_name, ' ', patients.first_surname, ' ', patients.second_surname) LIKE ?", ["%{$value}%"]);
+
+                        $query->orWhere('identification_number', 'like', "%$value%");
+                        $query->orWhere('gender', 'like', "%$value%");
+                    }),
+
+                ])
+                ->allowedSorts([
+                    AllowedSort::custom('full_name', new DynamicConcatSort("first_name, ' ', second_name, ' ', first_surname, ' ', second_surname")),
+                    'identification_number',
+                    'gender',
+                ])->where(function ($query) use ($request) {
+
+                    if (! empty($request['invoice_audit_id'])) {
+                        $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function store($request)
