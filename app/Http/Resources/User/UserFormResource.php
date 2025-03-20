@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\User;
 
+use App\Http\Resources\Third\ThirdSelectInfiniteResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,6 +22,7 @@ class UserFormResource extends JsonResource
             'email' => $this->email,
             'role_id' => $this->role_id,
             'company_id' => $this->company_id,
+            'third_id' => new ThirdSelectInfiniteResource($this->third),
         ];
     }
 }
