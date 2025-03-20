@@ -61,9 +61,27 @@ class PermissionSeeder extends Seeder
             ],
             [
                 'id' => 8,
+                'name' => 'menu.medical.bills',
+                'description' => 'Visualizar Cuentas médicas',
+                'menu_id' => 8,
+            ],
+            [
+                'id' => 9,
+                'name' => 'assignmentBatche.list',
+                'description' => 'Visualizar Menu de asignación',
+                'menu_id' => 9,
+            ],
+            // [
+            //     'id' => 10,
+            //     'name' => 'medical.bills.list',
+            //     'description' => 'Visualizar Cuentas médicas',
+            //     'menu_id' => 10,
+            // ],
+            [
+                'id' => 11,
                 'name' => 'invoiceAudit.list',
                 'description' => 'Visualizar Auditoria Factura',
-                'menu_id' => 8,
+                'menu_id' => 11,
             ],
         ];
 

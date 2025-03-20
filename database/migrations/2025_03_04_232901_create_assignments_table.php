@@ -20,8 +20,8 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained();
             $table->foreignUuid('invoice_audit_id')->constrained();
 
-            $table->string('phase', 15)->nullable();
-            $table->string('status', 15)->nullable();
+            $table->string('phase')->nullable();
+            $table->string('status')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

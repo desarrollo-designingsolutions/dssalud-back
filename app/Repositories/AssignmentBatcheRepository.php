@@ -3,7 +3,8 @@
 namespace App\Repositories;
 
 use App\Helpers\Constants;
-use App\Models\User;
+use App\Models\AssignmentBatche;
+use App\QueryBuilder\Filters\DateRangeFilter;
 use App\QueryBuilder\Filters\QueryFilters;
 use App\QueryBuilder\Sort\IsActiveSort;
 use App\QueryBuilder\Sort\RelatedTableSort;
@@ -14,11 +15,11 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class UserRepository extends BaseRepository
+class AssignmentBatcheRepository extends BaseRepository
 {
     use AuditMap;
 
-    public function __construct(User $modelo)
+    public function __construct(AssignmentBatche $modelo)
     {
         parent::__construct($modelo);
     }
@@ -29,27 +30,19 @@ class UserRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for($this->model->query())
-                ->select(['users.id', 'users.name', 'users.surname', 'users.email', 'users.is_active', 'users.role_id'])
                 ->allowedFilters([
-                    'is_active',
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
 
-                        $query->orWhere('users.email', 'like', "%$value%");
-                        QueryFilters::filterByText($query, $value, 'is_active', [
-                            'activo' => 1,
-                            'inactivo' => 0,
-                        ]);
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                      $query->orWhere('description', 'like', "%$value%");
+                      $query->orWhere('status', 'like', "%$value%");
                     }),
+                    
                 ])
                 ->allowedSorts([
-                    AllowedSort::custom('full_name', new UserFullNameSort),
-                    'email',
-                    AllowedSort::custom('role_description', new RelatedTableSort('users', 'roles', 'description', 'role_id')),
-                    AllowedSort::custom('is_active', new IsActiveSort),
+                  'description',
                 ])->where(function ($query) use ($request) {
                     if (! empty($request['company_id'])) {
-                        $query->where('users.company_id', $request['company_id']);
+                        $query->where('company_id', $request['company_id']);
                     }
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
@@ -58,29 +51,18 @@ class UserRepository extends BaseRepository
         }, Constants::REDIS_TTL);
     }
 
-    public function store($request, $id = null, $withCompany = true)
+    public function store($request)
     {
-        $validatedData = $this->clearNull($request);
+        $request = $this->clearNull($request);
 
-        $idToUse = $id ?? ($validatedData['id'] ?? null);
-
-        if ($idToUse) {
-            $data = $this->model->find($idToUse);
+        if (! empty($request['id'])) {
+            $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
-            if ($withCompany) {
-                $data->company_id = auth()->user()->company_id;
-            }
         }
 
         foreach ($request as $key => $value) {
             $data[$key] = is_array($request[$key]) ? $request[$key]['value'] : $request[$key];
-        }
-
-        if (! empty($validatedData['password'])) {
-            $data->password = $validatedData['password'];
-        } else {
-            unset($data->password);
         }
 
         $data->save();

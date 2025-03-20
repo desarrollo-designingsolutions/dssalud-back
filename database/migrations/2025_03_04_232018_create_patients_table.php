@@ -15,11 +15,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('invoice_audit_id')->constrained();
             $table->string('type_identification')->nullable();
-            $table->string('idetification_number');
+            $table->string('identification_number');
             $table->string('first_name')->nullable();
             $table->string('second_name')->nullable();
-            $table->string('first_suname')->nullable();
-            $table->string('second_suname')->nullable();
+            $table->string('first_surname')->nullable();
+            $table->string('second_surname')->nullable();
             $table->string('gender')->nullable();
             $table->softDeletes();
         });
