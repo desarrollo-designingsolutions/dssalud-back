@@ -5,6 +5,7 @@ namespace App\Jobs\Filing;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Events\FilingFinishProcessJob;
 use App\Helpers\Common\ErrorCollector;
+use App\Helpers\Constants;
 use App\Helpers\FilingOld\ZipHelper;
 use App\Models\Filing;
 use Illuminate\Bus\Queueable;
@@ -60,7 +61,7 @@ class ProcessSaveFiling implements ShouldQueue
             $nameFile = 'filing_' . $this->filingId . '.json';
             // Guarda el JSON en el sistema de archivos usando el disco predeterminado (puede configurar otros discos si es necesario)
             $ruta = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $this->filingId . '/' . $nameFile; // Ruta donde se guardará la carpeta
-            Storage::disk('public')->put($ruta, json_encode($jsonContents)); //guardo el archivo
+            Storage::disk(Constants::DISK_FILES)->put($ruta, json_encode($jsonContents)); //guardo el archivo
             $path_json = $ruta;
         }
 

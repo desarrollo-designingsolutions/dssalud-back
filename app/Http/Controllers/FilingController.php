@@ -37,8 +37,7 @@ class FilingController extends Controller
         protected FilingRepository $filingRepository,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
-    ) {
-    }
+    ) {}
 
     public function paginate(Request $request)
     {
@@ -189,7 +188,7 @@ class FilingController extends Controller
                 $buildDataFinal = openFileJson($filing->path_json);
 
                 //Sumatoria de los valores de los servicios
-                $sumVrServicios = 0;
+                $sumVrServicios = $filing->sumVr;
 
                 // Recorremos las facturas
                 foreach ($buildDataFinal as $invoice) {
@@ -197,7 +196,7 @@ class FilingController extends Controller
                     // genero y guardo el archivo JSON de la factura
                     $nameFile = $invoice[Constants::KEY_NUMFACT] . '.json';
                     $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice[Constants::KEY_NUMFACT] . '/' . $nameFile; // Ruta donde se guardará la carpeta
-                    Storage::disk('public')->put($routeJson, json_encode($invoice)); // guardo el archivo
+                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                     $sumTotalServices = sumVrServicio($invoice);
 
@@ -218,11 +217,13 @@ class FilingController extends Controller
 
                 $filing->sumVr = $sumVrServicios;
                 $filing->save();
-
             } else if ($filing->type == TypeFilingEnum::FILING_TYPE_002) {
                 $jsonSuccessfullInvoices = $validationTxt['jsonSuccessfullInvoices'];
                 $errorMessages = collect($validationTxt['errorMessages']);
-                $sumVr = sumVrServicios($jsonSuccessfullInvoices);
+
+                $sumVr =  $filing->sumVr;
+
+                $sumVr += sumVrServicios($jsonSuccessfullInvoices);
                 $filing = $this->filingRepository->store([
                     'id' => $filing_id,
                     'sumVr' => $sumVr,
@@ -267,7 +268,7 @@ class FilingController extends Controller
                 'code' => 200,
                 'message' => 'Radicación actualizada con éxito.',
             ];
-        }, debug:false);
+        }, debug: false);
     }
 
     public function getDataModalSupportMasiveFiles($filingId)
@@ -322,6 +323,7 @@ class FilingController extends Controller
             foreach ($files as $index => $file) {
                 $tempPath = $file->store('temp', Constants::DISK_FILES);
                 $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
 
                 // Construcción dinámica del finalPath con el nombre del archivo
                 $separatedName = explode('_', $originalName);

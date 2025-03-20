@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Constants;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Resources\User\UserFormResource;
 use App\Http\Resources\User\UserPaginateResource;
@@ -164,7 +165,7 @@ class UserController extends Controller
             if ($request->file('photo')) {
                 $file = $request->file('photo');
                 $ruta = 'companies/company_'.$user->company_id.'/'.$user->id.$request->input('photo');
-                $photo = $file->store($ruta, 'public');
+                $photo = $file->store($ruta, Constants::DISK_FILES);
                 $user->photo = $photo;
                 $user->save();
             }

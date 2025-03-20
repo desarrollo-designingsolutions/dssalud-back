@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Constants;
 use App\Http\Requests\Company\CompanyStoreRequest;
 use App\Http\Resources\Company\CompanyFormResource;
 use App\Http\Resources\Company\CompanyPaginateResource;
@@ -62,7 +63,7 @@ class CompanyController extends Controller
                 $file = $request->file('logo');
                 $ruta = 'companies/company_'.$company->id.$request->input('logo');
 
-                $logo = $file->store($ruta, 'public');
+                $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
                 $company->save();
             }
@@ -100,7 +101,7 @@ class CompanyController extends Controller
             if ($request->file('logo')) {
                 $file = $request->file('logo');
                 $ruta = 'companies/company_'.$company->id.$request->input('logo');
-                $logo = $file->store($ruta, 'public');
+                $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
                 $company->save();
             }

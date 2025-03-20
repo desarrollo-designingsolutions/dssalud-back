@@ -43,11 +43,22 @@ class ProcessMassUpload implements ShouldQueue
 
     public function handle(FileRepository $fileRepository)
     {
-         // Obtener la ruta completa del archivo en el servidor
-         $fullZipPath = Storage::disk(Constants::DISK_FILES)->path($this->tempPath);
+        // Usar la ruta relativa del disco, no la absoluta
+        $disk = Constants::DISK_FILES;
 
-        // Mover el archivo
-        Storage::disk(Constants::DISK_FILES)->move($fullZipPath, $this->finalPath);
+        // Crear el directorio destino si no existe
+        $directory = dirname($this->finalPath);
+        if (!Storage::disk($disk)->exists($directory)) {
+            Storage::disk($disk)->makeDirectory($directory);
+        }
+
+        // Mover el archivo usando rutas relativas
+        $moved = Storage::disk($disk)->move($this->tempPath, $this->finalPath);
+
+        if (!$moved) {
+            logMessage("Error: No se pudo mover el archivo de {$this->tempPath} a {$this->finalPath}");
+            throw new \Exception("No se pudo mover el archivo");
+        }
 
         $fileRepository->store([
             'company_id' => $this->data['company_id'],
@@ -73,6 +84,6 @@ class ProcessMassUpload implements ShouldQueue
         if (isset($this->data['channel'])) {
             ProgressCircular::dispatch($this->data['channel'], $progress);
         }
-        sleep(4);
+        // sleep(4);
     }
 }

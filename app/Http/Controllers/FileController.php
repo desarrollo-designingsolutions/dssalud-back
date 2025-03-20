@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\FilingInvoiceRowUpdated;
+use App\Helpers\Constants;
 use App\Http\Requests\File\FileStoreRequest;
 use App\Http\Resources\File\FileFormResource;
 use App\Http\Resources\File\FileListResource;
@@ -89,7 +90,7 @@ class FileController extends Controller
                 $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
-                $path = $file->store($path, 'public');
+                $path = $file->store($path, Constants::DISK_FILES);
 
                 $validatedData['pathname'] = $path;
 
@@ -125,7 +126,7 @@ class FileController extends Controller
                 $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
-                $path = $file->store($path, 'public');
+                $path = $file->store($path, Constants::DISK_FILES);
 
                 $validatedData['pathname'] = $path;
             }
@@ -242,7 +243,7 @@ class FileController extends Controller
             }
 
             foreach ($files as $index => $file) {
-                $tempPath = $file->store('temp', 'public');
+                $tempPath = $file->store('temp', Constants::DISK_FILES);
                 $originalName = $file->getClientOriginalName();
                 $extension = $file->getClientOriginalExtension();
 
