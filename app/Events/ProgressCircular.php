@@ -19,11 +19,20 @@ class ProgressCircular implements ShouldBroadcastNow
     public function __construct($channel, $progress)
     {
         $this->channel = $channel;
-        $this->progress = round($progress);
+        $this->progress = $progress;
     }
 
     public function broadcastOn()
     {
         return new Channel($this->channel);
+    }
+
+    public function broadcastWith()
+    { 
+        return [
+            'channel' => $this->channel,
+            'progress' => round($this->progress),
+            'progress222' => $this->progress,
+        ];
     }
 }

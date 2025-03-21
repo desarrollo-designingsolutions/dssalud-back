@@ -24,6 +24,8 @@ class Constants
 
     public const CHUNKSIZE = 10;
 
+    public const NUMBER_CASE_INITIAL = 100;
+
 
 
     //LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275
