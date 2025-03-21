@@ -42,10 +42,10 @@ class AssignmentRepository extends BaseRepository
                 ->allowedFilters([
 
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
-
-                        $query->orWhere('nit', 'like', "%$value%");
-                        $query->orWhere('name', 'like', "%$value%");
-
+                        $query->where(function ($subQuery) use ($value) {
+                            $subQuery->where('nit', 'like', "%$value%")
+                                     ->orWhere('name', 'like', "%$value%");
+                        });
                     }),
 
                 ])
@@ -79,7 +79,7 @@ class AssignmentRepository extends BaseRepository
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                    
+
                     $query->orWhere('invoice_number', 'like', "%$value%");
 
                 }),
