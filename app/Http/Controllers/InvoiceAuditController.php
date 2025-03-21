@@ -8,6 +8,8 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
 use App\Repositories\InvoiceAuditRepository;
+use App\Repositories\PatientRepository;
+use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
@@ -17,6 +19,8 @@ class InvoiceAuditController extends Controller
 
     public function __construct(
         protected InvoiceAuditRepository $invoiceAuditRepository,
+        protected ThirdRepository $thirdRepository,
+        protected PatientRepository $patientRepository,
     ) {}
 
     public function list(Request $request)
@@ -117,6 +121,25 @@ class InvoiceAuditController extends Controller
                 'totalData' => $data->total(),
                 'totalPage' => $data->perPage(),
                 'currentPage' => $data->currentPage(),
+            ];
+        });
+    }
+
+    public function getInformationSheet(Request $request, $third_id, $invoice_audit_id, $patient_id)
+    {
+        return $this->execute(function () use ($request, $third_id, $invoice_audit_id, $patient_id) {
+
+            $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
+            $third = $this->thirdRepository->find($third_id);
+            $patient = $this->patientRepository->find($patient_id);
+
+            return [
+                'code' => 200,
+                'data' => [
+                    'invoice_audit' => $invoice_audit,
+                    'third' => $third,
+                    'patient' => $patient,
+                ],
             ];
         });
     }

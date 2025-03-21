@@ -20,9 +20,9 @@ class AssignmentPaginateThirdsResource extends JsonResource
             'id' => $this->id,
             'nit' => $this->nit,
             'name' => $this->name,
-            'count_invoice_assignment' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_002->value),
-            'count_invoice_pending' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_001->value),
-            'count_invoice_finish' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_003->value),
+            'count_invoice_assignment' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_002->value]),
+            'count_invoice_pending' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_001->value]),
+            'count_invoice_finish' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_003->value]),
             'values' => formatNumber($this->sumInvoiceAuditsTotalValue()),
         ];
     }

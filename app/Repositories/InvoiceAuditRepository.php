@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Assignment\StatusAssignmentEnum;
 use App\Helpers\Constants;
 use App\Models\AssignmentBatche;
 use App\Models\InvoiceAudit;
@@ -54,6 +55,7 @@ class InvoiceAuditRepository extends BaseRepository
                 ->with([
                     'assignments' => function ($query) use ($request) {
                         $query->where('user_id', $request['user_id']);
+                        $query->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
                     }
                 ])
                 ->allowedFilters([
@@ -71,6 +73,7 @@ class InvoiceAuditRepository extends BaseRepository
 
                     $query->whereHas('assignments', function ($subQuery) use ($request) {
                         $subQuery->where('user_id', $request['user_id']);
+                        $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
                     });
 
                     if (! empty($request['company_id'])) {
