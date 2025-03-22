@@ -19,9 +19,9 @@ class AssignmentBatchePaginateResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            'count_invoice_assignment' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_002->value),
-            'count_invoice_pending' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_001->value),
-            'count_invoice_completed' => $this->countInvoiceByStatus(StatusAssignmentEnum::ASSIGNMENT_EST_003->value),
+            'count_invoice' => $this->countInvoiceByFilter(),
+            'count_invoice_pending' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_001->value]),
+            'count_invoice_completed' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_003->value]),
         ];
     }
 }

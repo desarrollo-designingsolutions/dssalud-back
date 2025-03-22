@@ -33,8 +33,17 @@ class AssignmentBatche extends Model
     }
 
     // Método para obtener facturas por estado
-    public function countInvoiceByStatus(string $status)
+    public function countInvoiceByFilter(Array $filter = [])
     {
-        return $this->invoices()->where('assignments.status', $status)->count(); // Filtramos por el campo status en Assignment
+        $query = $this->invoices();
+
+        if (!empty($filter['status'])) {
+            $query->where('assignments.status', $filter['status']);
+        }
+
+        if (!empty($filter['user_id'])) {
+            $query->where('assignments.user_id', $filter['user_id']);
+        }
+        return $query->count();
     }
 }
