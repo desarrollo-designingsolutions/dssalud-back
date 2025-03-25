@@ -26,9 +26,6 @@ function validateDataFilesXml($archivo, $data)
     $numFac = $attachedDocument['cbc:ID'];
     $arrayExito[] = RVC004($data['jsonContents'], $numFac, $errorMessages);
 
-    $nit = $attachedDocument['cac:SenderParty']['cac:PartyTaxScheme']['cbc:CompanyID'];
-    $arrayExito[] = RVC001($data['jsonContents'], $nit, $errorMessages);
-
     return [
         'errorMessages' => $errorMessages,
         'totalErrorMessages' => count($errorMessages),

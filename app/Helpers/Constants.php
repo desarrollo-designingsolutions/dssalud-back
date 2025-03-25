@@ -29,7 +29,7 @@ class Constants
 
 
     //LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275
-    public const  KEY_NUMFACT = 'num_factura';
+    public const  KEY_NUMFACT = 'numFactura';
     public const  KEY_NumDocumentoIdentificacion = 'numDocumentoIdentificacion';
     public const  KEY_VrServicio = 'vrServicio';
 }

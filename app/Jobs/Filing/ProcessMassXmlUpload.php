@@ -36,6 +36,9 @@ class ProcessMassXmlUpload implements ShouldQueue
             'filing_id' => $this->data['filing_id'],
         ]);
 
+        logMessage('juan33333');
+        logMessage($filing_invoice);
+        
         $jsonContents = openFileJson($filing_invoice->path_json);
 
         $data = [
@@ -55,11 +58,13 @@ class ProcessMassXmlUpload implements ShouldQueue
         if ($infoValidation['totalErrorMessages'] == 0) {
             logMessage('1');
             // Mover el archivo
-            Storage::disk(Constants::DISK_FILES)->move($this->data['tempPath'], $finalPath);
+            // Storage::disk(Constants::DISK_FILES)->move($this->data['tempPath'], $finalPath);
 
             $filing_invoice->path_xml = $finalPath;
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
             $filing_invoice->validationXml = null;
+     
+
         } else {
             logMessage('2');
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_005;
@@ -68,6 +73,9 @@ class ProcessMassXmlUpload implements ShouldQueue
 
         logMessage('3');
         $filing_invoice->save();
+
+        logMessage('juan');
+        logMessage($filing_invoice);
 
         FilingInvoiceRowUpdatedNow::dispatch($filing_invoice->id);
 
@@ -86,6 +94,6 @@ class ProcessMassXmlUpload implements ShouldQueue
         if (isset($this->data['channel'])) {
             ProgressCircular::dispatch($this->data['channel'], $progress);
         }
-        sleep(3);
+        // sleep(3);
     }
 }

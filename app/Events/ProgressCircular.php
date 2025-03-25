@@ -32,7 +32,6 @@ class ProgressCircular implements ShouldBroadcastNow
         return [
             'channel' => $this->channel,
             'progress' => round($this->progress),
-            'progress222' => $this->progress,
         ];
     }
 }

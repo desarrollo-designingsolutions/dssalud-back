@@ -12,6 +12,7 @@ use App\Models\Servicio;
 use App\Models\TipoMedicamentoPosVersion2;
 use App\Models\ZonaVersion2;
 use Carbon\Carbon;
+use App\Helpers\Constants;
 
 // 'validacion_type_Y' => 'N' todas la vidaciones que tengan este valor, seran informativas
 // 31-01-2024 solicitud=> German
@@ -24,7 +25,7 @@ function RVC001($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC001',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdObligado',
@@ -69,7 +70,7 @@ function RVC002($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC002',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdObligado',
@@ -118,7 +119,7 @@ function RVC003($dataTxt, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC003',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => 'numDocumentoIdObligado',
@@ -140,14 +141,14 @@ function RVC004($dataTxt, $value2, &$errorMessages)
 {
     $validation = true;
 
-    if ($dataTxt['numFactura'] != $value2) {
+    if ($dataTxt[Constants::KEY_NUMFACT] != $value2) {
         $errorMessages[] = [
             'validacion' => 'RVC004',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
-            'column' => 'numFactura',
+            'column' => Constants::KEY_NUMFACT,
             'data' => $value2,
             'error' => 'El número de la factura informado en RIPS no coincide con el informado en la factura electrónica de venta.',
         ];
@@ -187,7 +188,7 @@ function U02($dataTxt, &$errorMessages)
 
     if (empty($dataTxt['numDocumentoIdentificacion'])) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdentificacion',
@@ -209,7 +210,7 @@ function RVC005($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC005',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoUsuario',
@@ -241,7 +242,7 @@ function RVC006($dataTxt, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC006',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => 'fechaNacimiento',
@@ -254,7 +255,7 @@ function RVC006($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC006',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'fechaNacimiento',
@@ -306,7 +307,7 @@ function RVC007($dataTxt, &$errorMessages, $dataExtra = null)
         $errorMessages[] = [
             'validacion' => 'RVC007',
             'validacion_type_Y' => 'R',
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'fechaNacimiento',
@@ -335,7 +336,7 @@ function RVC008($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC008',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'fechaNacimiento',
@@ -359,7 +360,7 @@ function RVC009($dataTxt, &$errorMessages, $dataExtra = null)
         $errorMessages[] = [
             'validacion' => 'RVC009',
             'validacion_type_Y' => 'N',
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codSexo',
@@ -383,7 +384,7 @@ function RVC010($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC010',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codSexo',
@@ -405,7 +406,7 @@ function U06($dataTxt, &$errorMessages)
     $pais = Pais::where('codigo', $dataTxt['codPaisResidencia'])->first();
     if (! $pais) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codPaisResidencia',
@@ -423,7 +424,7 @@ function U07($dataTxt, &$errorMessages)
     $pais = Municipio::where('codigo', $dataTxt['codMunicipioResidencia'])->first();
     if (! $pais) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codMunicipioResidencia',
@@ -441,7 +442,7 @@ function U08($dataTxt, &$errorMessages)
     $pais = ZonaVersion2::where('codigo', $dataTxt['codZonaTerritorialResidencia'])->first();
     if (! $pais) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codZonaTerritorialResidencia',
@@ -459,7 +460,7 @@ function U09($dataTxt, &$errorMessages)
     $data = LstSiNo::where('codigo', $dataTxt['incapacidad'])->first();
     if (! $data) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'incapacidad',
@@ -476,7 +477,7 @@ function U10($dataTxt, &$errorMessages)
 {
     if (! $dataTxt['consecutivo']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'consecutivo',
@@ -506,7 +507,7 @@ function RVC011($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC011',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -530,7 +531,7 @@ function RVC012($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC012',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -561,7 +562,7 @@ function RVC013($dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC013',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -575,7 +576,7 @@ function RVC013($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC013',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -603,7 +604,7 @@ function RVC014($dataTxt, $key, $value2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC014',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -617,7 +618,7 @@ function RVC014($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC014',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -647,7 +648,7 @@ function RVC079($dataTxt, $key, $value2, &$errorMessages)
                 $errorMessages[] = [
                     'validacion' => 'RVC079',
                     'validacion_type_Y' => 'R',
-                    'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                    'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                     'file' => $dataTxt['file_name'] ?? null,
                     'row' => $dataTxt['row'] ?? null,
                     'column' => $key,
@@ -662,7 +663,7 @@ function RVC079($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC079',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -696,7 +697,7 @@ function RVC015($dataTxt, $key, $value2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC015',
                 'validacion_type_Y' => 'N',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -736,7 +737,7 @@ function RVC016($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC016',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -760,7 +761,7 @@ function RVC017($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC017',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -804,7 +805,7 @@ function RVC018($arrayGlobal, $dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC018',
                 'validacion_type_Y' => 'N',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -853,7 +854,7 @@ function RVC019($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC019',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -889,7 +890,7 @@ function RVC027($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC027',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -913,7 +914,7 @@ function RVC059($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC059',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -937,7 +938,7 @@ function C06($dataTxt, &$errorMessages)
 
     if ($grupoServicios) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'grupoServicios',
@@ -959,7 +960,7 @@ function C07($dataTxt, &$errorMessages)
 
     if ($codServicio) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -981,7 +982,7 @@ function RVC051($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC051',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'finalidadTecnologiaSalud',
@@ -1006,7 +1007,7 @@ function RVC052($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC052',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1030,7 +1031,7 @@ function RVC067($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC067',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1055,7 +1056,7 @@ function RVC068($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC068',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1080,7 +1081,7 @@ function RVC069($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC069',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1105,7 +1106,7 @@ function RVC070($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC070',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1130,7 +1131,7 @@ function RVC071($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC071',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1155,7 +1156,7 @@ function RVC072($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC072',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1180,7 +1181,7 @@ function RVC073($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC073',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1205,7 +1206,7 @@ function RVC074($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC074',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1230,7 +1231,7 @@ function RVC075($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC075',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1255,7 +1256,7 @@ function RVC084($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC084',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1280,7 +1281,7 @@ function RVC085($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC085',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -1301,7 +1302,7 @@ function C09($dataTxt, $value2, &$errorMessages)
     // RipsCausaExternaVersion2::first();
     if ($dataTxt) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'causaMotivoAtencion',
@@ -1337,7 +1338,7 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC028',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1362,7 +1363,7 @@ function RVC029($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC029',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1387,7 +1388,7 @@ function RVC031($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC031',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1411,7 +1412,7 @@ function RVC086($dataTxt, $key1, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC086',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key1,
@@ -1435,7 +1436,7 @@ function RVC087($dataTxt, $key1, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC087',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key1,
@@ -1455,7 +1456,7 @@ function C14($dataTxt, &$errorMessages)
 {
     if ($dataTxt['tipoDiagnosticoPrincipal']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoDiagnosticoPrincipal',
@@ -1472,7 +1473,7 @@ function C15($dataTxt, &$errorMessages)
 {
     if ($dataTxt['tipoDocumentoIdentificacion']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoDocumentoIdentificacion',
@@ -1489,7 +1490,7 @@ function C16($dataTxt, &$errorMessages)
 {
     if ($dataTxt['numDocumentoIdentificacion']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdentificacion',
@@ -1510,7 +1511,7 @@ function RVC034($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC034',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1534,7 +1535,7 @@ function RVC035($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC035',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1558,7 +1559,7 @@ function RVC037($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC037',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1582,7 +1583,7 @@ function RVC036($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC036',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -1606,7 +1607,7 @@ function RVC060($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC060',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'valorPagoModerador',
@@ -1630,7 +1631,7 @@ function RVC061($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC061',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'valorPagoModerador',
@@ -1650,7 +1651,7 @@ function C20($dataTxt, &$errorMessages)
 {
     if ($dataTxt['numFEVPagoModerador']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numFEVPagoModerador',
@@ -1667,7 +1668,7 @@ function C21($dataTxt, &$errorMessages)
 {
     if ($dataTxt['consecutivo']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'consecutivo',
@@ -1694,7 +1695,7 @@ function RVC048($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC048',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numAutorizacion',
@@ -1721,7 +1722,7 @@ function RVC020($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC020',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codProcedimiento',
@@ -1763,7 +1764,7 @@ function RVC021($dataTxt, $value2, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC021',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codProcedimiento',
@@ -1787,7 +1788,7 @@ function RVC022($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC022',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codProcedimiento',
@@ -1811,7 +1812,7 @@ function RVC023($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC023',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codProcedimiento',
@@ -1839,7 +1840,7 @@ function RVC024($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC024',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codTecnologiaSalud',
@@ -1863,7 +1864,7 @@ function RVC025($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC025',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codTecnologiaSalud',
@@ -1904,7 +1905,7 @@ function RVC026($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC026',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codTecnologiaSalud',
@@ -1928,7 +1929,7 @@ function RVC090($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC090',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codProcedimiento',
@@ -1950,7 +1951,7 @@ function P06($dataTxt, &$errorMessages)
 
     if ($dataTxt) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => '??',
@@ -1970,7 +1971,7 @@ function P07($dataTxt, &$errorMessages)
 {
     if ($dataTxt['grupoServicios']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'grupoServicios',
@@ -1987,7 +1988,7 @@ function P08($dataTxt, &$errorMessages)
 {
     if ($dataTxt['grupoServicios']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'grupoServicios',
@@ -2004,7 +2005,7 @@ function P09($dataTxt, &$errorMessages)
 {
     if ($dataTxt['codServicio']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codServicio',
@@ -2025,7 +2026,7 @@ function RVC083($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC083',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'finalidadTecnologiaSalud',
@@ -2045,7 +2046,7 @@ function P11($dataTxt, &$errorMessages)
 {
     if ($dataTxt['tipoDocumentoIdentificacion']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoDocumentoIdentificacion',
@@ -2062,7 +2063,7 @@ function P12($dataTxt, &$errorMessages)
 {
     if ($dataTxt['numDocumentoIdentificacion']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdentificacion',
@@ -2083,7 +2084,7 @@ function RVC030($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC030',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2107,7 +2108,7 @@ function RVC032($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC032',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2131,7 +2132,7 @@ function RVC033($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC033',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'codDiagnosticoPrincipal',
@@ -2152,7 +2153,7 @@ function P19($dataTxt, &$errorMessages)
 {
     if ($dataTxt['numFEVPagoModerador']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numFEVPagoModerador',
@@ -2169,7 +2170,7 @@ function P20($dataTxt, &$errorMessages)
 {
     if ($dataTxt['consecutivo']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'consecutivo',
@@ -2190,7 +2191,7 @@ function RVC049($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC049',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'idMIPRES',
@@ -2215,7 +2216,7 @@ function RVC055($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC055',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoMedicamento',
@@ -2240,7 +2241,7 @@ function RVC063($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC063',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => '??',
@@ -2264,7 +2265,7 @@ function RVC064($dataTxt, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC064',
             'validacion_type_Y' => 'R',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => '??',
@@ -2288,7 +2289,7 @@ function RVC065($dataTxt, $key, &$errorMessages)
         $errorMessages[] = [
             'validacion' => 'RVC065',
             'validacion_type_Y' => 'N',
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2308,7 +2309,7 @@ function M13($dataTxt, &$errorMessages)
 {
     if ($dataTxt['unidadMinDispensa']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'unidadMinDispensa',
@@ -2325,7 +2326,7 @@ function M14($dataTxt, &$errorMessages)
 {
     if ($dataTxt['cantidadMedicamento']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'cantidadMedicamento',
@@ -2342,7 +2343,7 @@ function M15($dataTxt, &$errorMessages)
 {
     if ($dataTxt['diasTratamiento']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'diasTratamiento',
@@ -2359,7 +2360,7 @@ function M16($dataTxt, $value2, &$errorMessages)
 {
     if ($dataTxt['tipoDocumentoIdentificacion'] != $value2) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'tipoDocumentoIdentificacion',
@@ -2376,7 +2377,7 @@ function M17($dataTxt, $value2, &$errorMessages)
 {
     if ($dataTxt['numDocumentoIdentificacion'] != $value2) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numDocumentoIdentificacion',
@@ -2393,7 +2394,7 @@ function M19($dataTxt, &$errorMessages)
 {
     if ($dataTxt['vrServicio']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'vrServicio',
@@ -2410,7 +2411,7 @@ function M22($dataTxt, &$errorMessages)
 {
     if ($dataTxt['numFEVPagoModerador']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'numFEVPagoModerador',
@@ -2427,7 +2428,7 @@ function M23($dataTxt, &$errorMessages)
 {
     if ($dataTxt['consecutivo']) {
         $errorMessages[] = [
-            'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => 'consecutivo',
@@ -2453,7 +2454,7 @@ function RVC038($dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC038',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2483,7 +2484,7 @@ function RVC039($dataTxt, $key, $key2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC039',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2514,7 +2515,7 @@ function RVC040($dataTxt, $key, $key2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC040',
                 'validacion_type_Y' => 'N',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2543,7 +2544,7 @@ function RVC041($dataTxt, $key, $key2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC041',
                 'validacion_type_Y' => 'N',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2569,7 +2570,7 @@ function RVC042($dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC042',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2599,7 +2600,7 @@ function RVC043($dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC043',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2630,7 +2631,7 @@ function RVC044($dataTxt, $key, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC044',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2661,7 +2662,7 @@ function RVC046($dataTxt, $key, $key2, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC046',
                 'validacion_type_Y' => 'R',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2689,7 +2690,7 @@ function RVC053($dataTxt, $key, $key2, $key3, &$errorMessages)
             $errorMessages[] = [
                 'validacion' => 'RVC053',
                 'validacion_type_Y' => 'N',
-                'num_invoice' => $dataTxt['numFactura'] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+                'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
                 'file' => $dataTxt['file_name'] ?? null,
                 'row' => $dataTxt['row'] ?? null,
                 'column' => $key,
@@ -2736,7 +2737,7 @@ function validationFormatDate($dataTxt, $key, &$errorMessages, $dataExtra = null
         $errorMessages[] = [
             'validacion' => 'validationFormatDate',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2757,7 +2758,7 @@ function onlyNumbers($dataTxt, $key, &$errorMessages, $dataExtra = null, $valida
         $errorMessages[] = [
             'validacion' => 'onlyNumbers',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2782,7 +2783,7 @@ function validateYesNo($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
         $errorMessages[] = [
             'validacion' => 'validateYesNo',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2848,7 +2849,7 @@ function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
         $errorMessages[] = [
             'validacion' => 'searchInArray',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2869,7 +2870,7 @@ function notNull($dataTxt, $key, &$errorMessages, $dataExtra = null, $validacion
         $errorMessages[] = [
             'validacion' => 'notNull',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2891,7 +2892,7 @@ function validateStringRange($dataTxt, $key, &$errorMessages, $min = 0, $max = 9
         $errorMessages[] = [
             'validacion' => 'validateStringRange',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
@@ -2914,7 +2915,7 @@ function validateField_codPais($dataTxt, $key, &$errorMessages, $dataExtra = nul
         $errorMessages[] = [
             'validacion' => 'validateField_codPaisOrigen',
             'validacion_type_Y' => $validacion_type_Y,
-            'num_invoice' => isset($dataExtra['numFactura']) ? $dataExtra['numFactura'] : null,
+            'num_invoice' => isset($dataExtra[Constants::KEY_NUMFACT]) ? $dataExtra[Constants::KEY_NUMFACT] : null,
             'file' => $dataTxt['file_name'] ?? null,
             'row' => $dataTxt['row'] ?? null,
             'column' => $key,
