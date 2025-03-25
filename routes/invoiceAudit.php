@@ -4,7 +4,7 @@ use App\Http\Controllers\InvoiceAuditController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas protegidas
-Route::middleware(['check.permission:invoiceAudit.list'])->group(function () {
+Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
