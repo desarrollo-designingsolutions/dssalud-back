@@ -24,4 +24,6 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::get('/invoiceAudit/getInformationSheet/{third_id}/{invoice_audit_id}/{patient_id}', [InvoiceAuditController::class, 'getInformationSheet']);
 
+    Route::get('/invoiceAudit/getServices/{invoice_audit_id}/{patient_id}', [InvoiceAuditController::class, 'getServices']);
+
 });
