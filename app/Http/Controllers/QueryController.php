@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Role\RoleTypeEnum;
+use App\Http\Resources\CodeGlosa\CodeGlosaSelectInfiniteResource;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
 use App\Http\Resources\Third\ThirdSelectInfiniteResource;
 use App\Repositories\CityRepository;
+use App\Repositories\CodeGlosaRepository;
 use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
 use App\Repositories\StateRepository;
@@ -28,6 +30,7 @@ class QueryController extends Controller
         protected ContractRepository $contractRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected ThirdRepository $thirdRepository,
+        protected CodeGlosaRepository $codeGlosaRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -208,7 +211,6 @@ class QueryController extends Controller
 
     public function selectInfiniteThird(Request $request)
     {
-        $request['status'] = 1;
         $third = $this->thirdRepository->list($request->all());
         $dataThird = ThirdSelectInfiniteResource::collection($third);
 
@@ -216,6 +218,19 @@ class QueryController extends Controller
             'code' => 200,
             'third_arrayInfo' => $dataThird,
             'third_countLinks' => $third->lastPage(),
+        ];
+    }
+
+    public function selectInfiniteCodeGlosa(Request $request)
+    {
+        $request['is_active'] = 1;
+        $codeGlosa = $this->codeGlosaRepository->list($request->all());
+        $dataCodeGlosa = CodeGlosaSelectInfiniteResource::collection($codeGlosa);
+
+        return [
+            'code' => 200,
+            'codeGlosa_arrayInfo' => $dataCodeGlosa,
+            'codeGlosa_countLinks' => $codeGlosa->lastPage(),
         ];
     }
 }
