@@ -25,5 +25,6 @@ class RoutesApi
         'routes/invoiceAudit.php',
         'routes/assignmentBatche.php',
         'routes/assignment.php',
+        'routes/glosa.php',
     ];
 }
