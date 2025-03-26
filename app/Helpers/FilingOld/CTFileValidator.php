@@ -137,7 +137,7 @@ class CTFileValidator
                 'El valor registrado no es numerico.'
             );
         } else {
-            $fileToFind = $rowData[2].'.txt';
+            $fileToFind = $rowData[2];
             $expectedCount = (int) $rowData[3];
             $actualCount = self::countFileRows($tempDir, $fileToFind);
             if ($actualCount === null) {
@@ -191,6 +191,28 @@ class CTFileValidator
         return $dateTime > new \DateTime('today');
     }
 
+
+    /**
+     * Abre un archivo de texto con diferentes extensiones.
+     */
+    private static function openTextFile(string $filePath)
+    {
+        $extensions = ['.txt', '.TXT'];
+        $handle = null;
+
+        foreach ($extensions as $ext) {
+            $fullPath = $filePath . $ext;
+            if (file_exists($fullPath)) {
+                $handle = fopen($fullPath, 'r');
+                if ($handle !== false) {
+                    break;
+                }
+            }
+        }
+
+        return $handle;
+    }
+
     /**
      * Cuenta las filas de un archivo basado en su código.
      */
@@ -200,10 +222,10 @@ class CTFileValidator
         if (empty($filePath)) {
             return null;
         }
-
-        $handle = fopen($filePath, 'r');
+ 
+        $handle = self::openTextFile($filePath); // Llamada estática corregida
         if (! $handle) {
-            return null;
+            return null; 
         }
 
         $count = 0;

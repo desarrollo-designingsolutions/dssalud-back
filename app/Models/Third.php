@@ -31,10 +31,14 @@ class Third extends Model
         return $this->invoiceAudits()->sum('total_value');
     }
 
-    public function countInvoiceByStatus(string $status)
+    public function countInvoiceByFilter(Array $filter = [])
     {
-        return $this->invoiceAudits()->whereHas('assignment', function($query) use($status) {
-            $query->where('status', $status);
+        return $this->invoiceAudits()->whereHas('assignment', function($query) use($filter) {
+
+            if (!empty($filter['status'])) {
+                $query->where('status', $filter['status']);
+            }
+            
         })->count(); // Filtramos por el campo status en Assignment
     }
     

@@ -115,6 +115,9 @@ class FilingInvoiceRepository extends BaseRepository
             if (!empty($request['invoice_number'])) {
                 $query->where('invoice_number', $request['invoice_number']);
             }
+            if (!empty($request['filing_id'])) {
+                $query->where('filing_id', $request['filing_id']);
+            }
         });
 
         // Obtener el primer resultado

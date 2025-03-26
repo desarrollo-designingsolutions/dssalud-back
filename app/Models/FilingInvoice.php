@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\Constants;
+
 
 class FilingInvoice extends Model
 {
@@ -28,7 +30,7 @@ class FilingInvoice extends Model
         // Asigna un número de caso automáticamente antes de crear un nuevo registro
         static::creating(function ($model) {
             DB::transaction(function () use ($model) {
-                $numberCaseInitial = env('NUMBER_CASE_INITIAL', 0); // Número inicial de caso si no hay registros previos
+                $numberCaseInitial = Constants::NUMBER_CASE_INITIAL; // Número inicial de caso si no hay registros previos
 
                 // Obtener el último registro ordenado por el número de caso de manera descendente
                 $lastFiling = static::orderBy('case_number', 'desc')->lockForUpdate()->first();

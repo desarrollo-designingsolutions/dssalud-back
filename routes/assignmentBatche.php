@@ -4,7 +4,7 @@ use App\Http\Controllers\AssignmentBatcheController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas protegidas
-Route::middleware(['check.permission:menu.medical.bills'])->group(function () {
+Route::middleware(['check.permission:assignmentBatche.list'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------

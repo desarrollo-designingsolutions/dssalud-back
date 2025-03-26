@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Resources\AssignmentBatche;
+namespace App\Http\Resources\InvoiceAudit;
 
 use App\Enums\Assignment\StatusAssignmentEnum;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AssignmentBatchePaginateResource extends JsonResource
+class InvoiceAuditPaginateServiceResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,10 +18,14 @@ class AssignmentBatchePaginateResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'type' => '???',
+            'nap' => '???',
+            'detail_code' => $this->detail_code,
             'description' => $this->description,
-            'count_invoice' => $this->countInvoiceByFilter(),
-            'count_invoice_pending' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_001->value]),
-            'count_invoice_completed' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_003->value]),
+            'quantity' => $this->quantity,
+            'unit_value' => formatNumber($this->unit_value),
+            'moderator_value' => '???',
+            'total_value' => formatNumber($this->total_value),
         ];
     }
 }
