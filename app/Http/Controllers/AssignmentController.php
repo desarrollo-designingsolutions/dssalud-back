@@ -2,19 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\Constants;
 use App\Http\Requests\Assignment\AssignmentUploadCsvRequest;
-use App\Http\Requests\Assignment\AssignmentStoreRequest;
-use App\Http\Resources\Assignment\AssignmentFormResource;
 use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
 use App\Http\Resources\Assignment\AssignmentPaginatePatientResource;
 use App\Http\Resources\Assignment\AssignmentPaginateThirdsResource;
 use App\Imports\AssingmentImport;
-use App\Models\Assignment;
-use App\Models\InvoiceAudit;
-use App\Models\Third;
 use App\Repositories\CompanyRepository;
-use App\Repositories\RoleRepository;
 use App\Repositories\AssignmentRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
@@ -112,19 +105,5 @@ class AssignmentController extends Controller
         });
     }
 
-    public function uploadCsvGlosa(AssignmentUploadCsvRequest $request)
-    {
-        return $this->runTransaction(function () use ($request) {
 
-            $user_id = $request->input('user_id');
-            $company_id = $request->input('company_id');
-
-            $csv = Excel::import(new AssingmentImport($user_id, $company_id), $request->file('archiveCsv'));
-
-            return [
-                'request' => $request->all(),
-                'csv' => $csv,
-            ];
-        });
-    }
 }

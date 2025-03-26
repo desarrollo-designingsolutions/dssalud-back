@@ -29,6 +29,10 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
 
             ThirdSeederXlsx::class,
+            TypeCodeGlosaSeeder::class,
+            GeneralCodeGlosaSeeder::class,
+            CodeGlosaSeeder::class,
+
 
             // TO VALIDATIONS
 

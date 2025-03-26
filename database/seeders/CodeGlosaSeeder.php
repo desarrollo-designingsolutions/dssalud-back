@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\CodeGlosa;
 use Illuminate\Database\Seeder;
 
-class GlosaSeeder extends Seeder
+class CodeGlosaSeeder extends Seeder
 {
     /**
      * Run the database seeds.

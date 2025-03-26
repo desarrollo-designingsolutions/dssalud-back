@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Helpers\Constants;
 use App\Http\Requests\Company\CompanyStoreRequest;
+use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
 use App\Http\Resources\Company\CompanyFormResource;
 use App\Http\Resources\Company\CompanyPaginateResource;
+use App\Imports\GlosaImport;
 use App\Repositories\CompanyRepository;
 use App\Repositories\GlosaRepository;
 use App\Traits\HttpResponseTrait;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class GlosaController extends Controller
 {
@@ -152,6 +155,21 @@ class GlosaController extends Controller
             return [
                 'code' => 200,
                 'message' => 'Compañia ' . $msg . ' con éxito',
+            ];
+        });
+    }
+
+    public function uploadCsvGlosa(GlosaUploadCsvRequest $request)
+    {
+        return $this->runTransaction(function () use ($request) {
+
+            $user_id = $request->input('user_id');
+
+            $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
+
+            return [
+                'request' => $request->all(),
+                'csv' => $csv,
             ];
         });
     }

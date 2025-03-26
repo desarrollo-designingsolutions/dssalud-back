@@ -6,8 +6,7 @@ namespace App\Imports;
 
 use App\Events\ProgressCircular;
 use App\Helpers\Constants;
-use App\Models\Assignment;
-use App\Services\CacheService;
+use App\Models\Glosa;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Events\AfterImport;
@@ -18,14 +17,9 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 
 class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
 {
-    // ... constructor y otras propiedades ...
-
     public function __construct(
         protected $user_id,
-        protected $company_id,
-    ) {
-        $cache = new CacheService();
-    }
+    ) {}
 
 
     public function registerEvents(): array
@@ -36,14 +30,14 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
                 $totalRows = $event->getReader()->getTotalRows()['Worksheet'];
                 $totalRows = max($totalRows, 1);
 
-                Redis::set("integer:assignments_import_total_{$this->user_id}", $totalRows);
-                Redis::set("integer:assignments_import_processed_{$this->user_id}", 0);
+                Redis::set("integer:glosas_import_total_{$this->user_id}", $totalRows);
+                Redis::set("integer:glosas_import_processed_{$this->user_id}", 0);
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
 
-                Redis::del("integer:assignments_import_total_{$this->user_id}");
-                Redis::del("integer:assignments_import_processed_{$this->user_id}");
+                Redis::del("integer:glosas_import_total_{$this->user_id}");
+                Redis::del("integer:glosas_import_processed_{$this->user_id}");
             }
         ];
     }
@@ -52,20 +46,21 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
     {
         // Incrementar contador y calcular progreso
 
-        $processed = Redis::incrby("integer:assignments_import_processed_{$this->user_id}", 1);
-        $total = Redis::get("integer:assignments_import_total_{$this->user_id}") ?: 1;
+        $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
+        $total = Redis::get("integer:glosas_import_total_{$this->user_id}") ?: 1;
         $progress = ($processed / $total) * 100;
 
         // Emitir evento de progreso
-        ProgressCircular::dispatch("assignment.{$this->user_id}", $progress);
+        ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
-        return Assignment::create(
+        sleep(3);
+        return Glosa::create(
             [
-                'assignment_batch_id' => $row[0],
-                'user_id' => $row[1],
-                'invoice_audit_id' => $row[2],
-                'phase' => $row[3],
-                'status' => $row[4],
+                'user_id' => $row[0],
+                'service_id' => $row[1],
+                'code_glosa_id' => $row[2],
+                'glosa_value' => $row[3],
+                'observation' => $row[4],
             ]
         );
     }

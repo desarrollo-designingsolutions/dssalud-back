@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests\Assignment;
+namespace App\Http\Requests\Glosa;
 
 use App\Helpers\Constants;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class AssignmentUploadCsvRequest extends FormRequest
+class GlosaUploadCsvRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,8 +26,7 @@ class AssignmentUploadCsvRequest extends FormRequest
     {
 
         $rules = [
-            'company_id' => 'required',
-            'user_id' => 'required',
+                        'user_id' => 'required',
             'archiveCsv' => 'required|file|extensions:csv',
         ];
 
@@ -37,8 +36,7 @@ class AssignmentUploadCsvRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'company_id.required' => 'El campo es obligatorio',
-            'user_id.required' => 'El campo es obligatorio',
+                        'user_id.required' => 'El campo es obligatorio',
             'archiveCsv.extensions' => 'El campo es archvio solo permite archivo de tipo csv',
         ];
     }
@@ -46,7 +44,6 @@ class AssignmentUploadCsvRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'company_id' => $this->company_id,
             'id' => $this->id ? formattedElement($this->id) : null,
         ]);
     }

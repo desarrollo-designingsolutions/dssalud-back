@@ -12,8 +12,10 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/glosa/create', [GlosaController::class, 'create']);
+
+    Route::post('/glosa/store', [GlosaController::class, 'store']);
+
+    Route::post('/glosa/uploadCsvGlosa', [GlosaController::class, 'uploadCsvGlosa']);
+
 });
-
-Route::get('/glosa/create', [GlosaController::class, 'create']);
-
-Route::post('/glosa/store', [GlosaController::class, 'store']);
