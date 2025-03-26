@@ -109,6 +109,22 @@ class AssignmentController extends Controller
                 'request' => $request->all(),
                 'csv' => $csv,
             ];
-        }, debug: false);
+        });
+    }
+
+    public function uploadCsvGlosa(AssignmentUploadCsvRequest $request)
+    {
+        return $this->runTransaction(function () use ($request) {
+
+            $user_id = $request->input('user_id');
+            $company_id = $request->input('company_id');
+
+            $csv = Excel::import(new AssingmentImport($user_id, $company_id), $request->file('archiveCsv'));
+
+            return [
+                'request' => $request->all(),
+                'csv' => $csv,
+            ];
+        });
     }
 }

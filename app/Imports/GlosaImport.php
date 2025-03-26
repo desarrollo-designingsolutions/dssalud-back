@@ -16,7 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
+class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
 {
     // ... constructor y otras propiedades ...
 
@@ -36,14 +36,14 @@ class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEv
                 $totalRows = $event->getReader()->getTotalRows()['Worksheet'];
                 $totalRows = max($totalRows, 1);
 
-                Redis::set("Integer:assignments_import_total_{$this->user_id}", $totalRows);
-                Redis::set("Integer:assignments_import_processed_{$this->user_id}", 0);
+                Redis::set("integer:assignments_import_total_{$this->user_id}", $totalRows);
+                Redis::set("integer:assignments_import_processed_{$this->user_id}", 0);
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
 
-                Redis::del("Integer:assignments_import_total_{$this->user_id}");
-                Redis::del("Integer:assignments_import_processed_{$this->user_id}");
+                Redis::del("integer:assignments_import_total_{$this->user_id}");
+                Redis::del("integer:assignments_import_processed_{$this->user_id}");
             }
         ];
     }
@@ -52,8 +52,8 @@ class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEv
     {
         // Incrementar contador y calcular progreso
 
-        $processed = Redis::incrby("Integer:assignments_import_processed_{$this->user_id}", 1);
-        $total = Redis::get("Integer:assignments_import_total_{$this->user_id}") ?: 1;
+        $processed = Redis::incrby("integer:assignments_import_processed_{$this->user_id}", 1);
+        $total = Redis::get("integer:assignments_import_total_{$this->user_id}") ?: 1;
         $progress = ($processed / $total) * 100;
 
         // Emitir evento de progreso
