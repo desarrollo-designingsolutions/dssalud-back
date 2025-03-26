@@ -7,6 +7,7 @@ use App\Helpers\Constants;
 use App\Models\AssignmentBatche;
 use App\Models\InvoiceAudit;
 use App\Models\Patient;
+use App\Models\Service;
 use App\Models\Third;
 use App\QueryBuilder\Sort\DynamicConcatSort;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -156,6 +157,39 @@ class InvoiceAuditRepository extends BaseRepository
 
                 if (! empty($request['third_id'])) {
                     $query->where('third_id', $request['third_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        return $query;
+        // }, Constants::REDIS_TTL);
+    }
+
+    public function paginateServices($request = [])
+    {
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateServices", $request, 'string');
+
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        $query = QueryBuilder::for(Service::query())
+            ->allowedFilters([
+
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    
+                    // $query->orWhere('invoice_number', 'like', "%$value%");
+
+                }),
+
+            ])
+            ->allowedSorts([
+                // 'invoice_number'
+            ])->where(function ($query) use ($request) {
+
+                if (! empty($request['invoice_audit_id'])) {
+                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                }
+                if (! empty($request['patient_id'])) {
+                    $query->where('patient_id', $request['patient_id']);
                 }
             })
             ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);

@@ -6,6 +6,7 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditListResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateBatcheResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
+use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
@@ -131,7 +132,9 @@ class InvoiceAuditController extends Controller
 
             $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
             $third = $this->thirdRepository->find($third_id);
-            $patient = $this->patientRepository->find($patient_id);
+            $patient = $this->patientRepository->list($patient_id);
+
+            $patient = InvoiceAuditPaginatePatientResource::collection($patient)->first();
 
             return [
                 'code' => 200,
@@ -140,6 +143,28 @@ class InvoiceAuditController extends Controller
                     'third' => $third,
                     'patient' => $patient,
                 ],
+            ];
+        });
+    }
+
+    public function getServices(Request $request, $invoice_audit_id, $patient_id)
+    {
+        return $this->execute(function () use ($request, $invoice_audit_id, $patient_id) {
+
+            $request['invoice_audit_id'] = $invoice_audit_id;
+
+            $request['patient_id'] = $patient_id;
+
+            $data = $this->invoiceAuditRepository->paginateServices($request->all());
+            $tableData = InvoiceAuditPaginateServiceResource::collection($data);
+
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
             ];
         });
     }
