@@ -18,11 +18,11 @@ class Assignment extends Model
     }
     public function user()
     {
-        return $this->belongsTo(User::class, 'invoice_audit_id');
+        return $this->belongsTo(User::class);
     }
     public function assignmentBatche()
     {
-        return $this->belongsTo(AssignmentBatche::class, 'invoice_audit_id');
+        return $this->belongsTo(AssignmentBatche::class, 'assignment_batch_id');
     }
     public function thrids()
     {

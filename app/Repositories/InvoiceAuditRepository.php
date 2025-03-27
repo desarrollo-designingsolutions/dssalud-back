@@ -178,6 +178,12 @@ class InvoiceAuditRepository extends BaseRepository
                     });
                 }
 
+                if (!empty($request['assignment_batch_id'])) {
+                    $query->whereHas('assignment', function ($subQuery) use ($request) {
+                        $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                    });
+                }
+
                 if (!empty($request['third_id'])) {
                     $query->where('third_id', $request['third_id']);
                 }
