@@ -36,7 +36,7 @@ class AssignmentBatcheRepository extends BaseRepository
                       $query->orWhere('description', 'like', "%$value%");
                       $query->orWhere('status', 'like', "%$value%");
                     }),
-                    
+
                 ])
                 ->allowedSorts([
                   'description',

@@ -153,9 +153,9 @@ function clearCacheLaravel()
 {
     // Limpia la caché de permisos
     Artisan::call('cache:clear');
-    Artisan::call('config:cache');
-    Artisan::call('view:clear');
-    Artisan::call('optimize:clear');
+    // Artisan::call('config:cache');
+    // Artisan::call('view:clear');
+    // Artisan::call('optimize:clear');
 }
 
 function generatePastelColor($opacity = 1.0)
