@@ -200,12 +200,25 @@ class InvoiceAuditRepository extends BaseRepository
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
                     
                     $query->orWhere('id', 'like', "%$value%");
+                    $query->orWhere('detail_code', 'like', "%$value%");
+                    $query->orWhere('description', 'like', "%$value%");
+                    $query->orWhere('quantity', 'like', "%$value%");
+                    $query->orWhere(function ($subQuery) use ($value) {
+                        $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                        $subQuery->orWhere('unit_value', 'like', "%$normalizedValue%");
+                        $subQuery->orWhere('total_value', 'like', "%$normalizedValue%");
+                    });
 
                 }),
 
             ])
             ->allowedSorts([
-                // 'invoice_number'
+                'id',
+                'detail_code',
+                'description',
+                'quantity',
+                'unit_value',
+                'total_value',
             ])->where(function ($query) use ($request) {
 
                 if (!empty($request['invoice_audit_id'])) {

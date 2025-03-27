@@ -9,6 +9,7 @@ use App\Http\Resources\Glosa\GlosaFormResource;
 use App\Http\Resources\Glosa\GlosaPaginateResource;
 use App\Imports\GlosaImport;
 use App\Repositories\GlosaRepository;
+use App\Repositories\ServiceRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class GlosaController extends Controller
     public function __construct(
         protected GlosaRepository $glosaRepository,
         protected QueryController $queryController,
+        protected ServiceRepository $serviceRepository,
     ) {}
 
     public function paginate(Request $request)
@@ -144,14 +146,20 @@ class GlosaController extends Controller
 
         return $this->runTransaction(function () use ($request) {
 
-            foreach($request->input('servicesIds') as $key => $service){
+            $servicesIDs = $request->input('servicesIds');
+
+            foreach($servicesIDs as $key => $serviceId){
+                $service = $this->serviceRepository->find($serviceId);
+
                 foreach ($request->input('glosas') as $key => $value) {
-                    unset($value['codeGlosa']);
-                    $value['glosa_value'] = $value['partialValue'];
-                    unset($value['partialValue']);
-                    unset($value['typeGlosa']);
-                    $value['service_id'] = $service;
-                    $this->glosaRepository->store($value);
+                    $data = [
+                        'user_id' => $value['user_id'],
+                        'service_id' => $service->id,
+                        'code_glosa_id' => $value['code_glosa_id'],
+                        'glosa_value' => $value['partialValue'] * $service->total_value/100,
+                        'observation' => $value['observation'],
+                    ];
+                    $this->glosaRepository->store($data);
                 }
             }
 
