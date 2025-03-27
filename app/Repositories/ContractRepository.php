@@ -20,6 +20,10 @@ class ContractRepository extends BaseRepository
                 if (! empty($request['company_id'])) {
                     $query->where('company_id', $request['company_id']);
                 }
+            })->where(function ($query) use ($request) {
+                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                }
             });
 
         $data = $data->orderBy('id', 'desc');
