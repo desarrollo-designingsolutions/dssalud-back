@@ -27,13 +27,13 @@ class InvoiceAuditRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (! empty($request['company_id'])) {
+                if (!empty($request['company_id'])) {
                     $query->where('company_id', $request['company_id']);
                 }
             })
             ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                if (isset($request['searchQueryInfinite']) && !empty($request['searchQueryInfinite'])) {
+                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                 }
             });
 
@@ -52,38 +52,30 @@ class InvoiceAuditRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateBatche", $request, 'string');
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for(AssignmentBatche::query())
-                ->with([
-                    'assignments' => function ($query) use ($request) {
-                        $query->where('user_id', $request['user_id']);
-                        $query->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
-                    }
-                ])
-                ->allowedFilters([
+        $query = QueryBuilder::for(AssignmentBatche::query())
+            ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    $query->orWhere('description', 'like', "%$value%");
+                    $query->orWhere('status', 'like', "%$value%");
+                }),
 
-                        // $query->orWhere('nit', 'like', "%$value%");
-                        // $query->orWhere('name', 'like', "%$value%");
+            ])
+            ->allowedSorts([
+                'description',
+            ])->where(function ($query) use ($request) {
+                $query->whereHas('assignments', function ($subQuery) use ($request) {
+                    $subQuery->where('user_id', $request['user_id']);
+                    $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
+                });
 
-                    }),
+                if (!empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-                ])
-                ->allowedSorts([
-                ])->where(function ($query) use ($request) {
-
-                    $query->whereHas('assignments', function ($subQuery) use ($request) {
-                        $subQuery->where('user_id', $request['user_id']);
-                        $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
-                    });
-
-                    if (! empty($request['company_id'])) {
-                        $query->where('company_id', $request['company_id']);
-                    }
-                })
-                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-
-            return $query;
+        return $query;
         // }, Constants::REDIS_TTL);
     }
 
@@ -92,39 +84,71 @@ class InvoiceAuditRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateThirds", $request, 'string');
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for(Third::query())
-                ->with([
-                    'invoiceAudits.assignment' => function ($query) use ($request) {
-                        $query->where('assignment_batch_id', $request['assignment_batche_id']);
-                    }
-                ])->withCount(['assignedInvoiceAudits'])
-                ->allowedFilters([
+        $query = QueryBuilder::for(Third::query())
+            ->with([
+                'invoiceAudits.assignment' => function ($query) use ($request) {
+                    $query->where('assignment_batch_id', $request['assignment_batche_id']);
+                }
+            ])->withCount(['assignedInvoiceAudits'])
+            ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-
-                        $query->orWhere('nit', 'like', "%$value%");
-                        $query->orWhere('name', 'like', "%$value%");
-
-                    }),
-
-                ])
-                ->allowedSorts([
-                    'nit',
-                    'name',
-                ])->where(function ($query) use ($request) {
-
-                    $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
-                        $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
-                        $subQuery->where('user_id', $request['user_id']);
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    $query->where(function ($subQuery) use ($value) {
+                        $subQuery->where('nit', 'like', "%$value%")
+                            ->orWhere('name', 'like', "%$value%");
                     });
+                }),
 
-                    if (! empty($request['company_id'])) {
-                        $query->where('company_id', $request['company_id']);
-                    }
-                })
-                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            ])
+            ->allowedSorts([
+                'nit',
+                'name',
+            ])->where(function ($query) use ($request) {
 
-            return $query;
+                $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
+                    $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
+                    $subQuery->where('user_id', $request['user_id']);
+                });
+
+                if (!empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        // $query = QueryBuilder::for(Third::query())
+        //     ->with([
+        //         'invoiceAudits.assignment' => function ($query) use ($request) {
+        //             $query->where('assignment_batch_id', $request['assignment_batche_id']);
+        //         }
+        //     ])->withCount(['assignedInvoiceAudits'])
+        //     ->allowedFilters([
+
+        //         AllowedFilter::callback('inputGeneral', function ($query, $value) {
+
+        //             $query->orWhere('nit', 'like', "%$value%");
+        //             $query->orWhere('name', 'like', "%$value%");
+
+        //         }),
+
+        //     ])
+        //     ->allowedSorts([
+        //         'nit',
+        //         'name',
+        //     ])->where(function ($query) use ($request) {
+
+        //         $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
+        //             $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
+        //             $subQuery->where('user_id', $request['user_id']);
+        //         });
+
+        //         if (! empty($request['company_id'])) {
+        //             $query->where('company_id', $request['company_id']);
+        //         }
+        //     })
+        //     ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        return $query;
         // }, Constants::REDIS_TTL);
     }
 
@@ -139,7 +163,7 @@ class InvoiceAuditRepository extends BaseRepository
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                    
+
                     $query->orWhere('invoice_number', 'like', "%$value%");
 
                 }),
@@ -148,14 +172,13 @@ class InvoiceAuditRepository extends BaseRepository
             ->allowedSorts([
                 'invoice_number'
             ])->where(function ($query) use ($request) {
-
-                if (! empty($request['company_id'])) {
+                if (!empty($request['company_id'])) {
                     $query->whereHas('third.company', function ($subQuery) use ($request) {
                         $subQuery->where('company_id', $request['company_id']);
                     });
                 }
 
-                if (! empty($request['third_id'])) {
+                if (!empty($request['third_id'])) {
                     $query->where('third_id', $request['third_id']);
                 }
             })
@@ -175,7 +198,7 @@ class InvoiceAuditRepository extends BaseRepository
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                    
+
                     // $query->orWhere('invoice_number', 'like', "%$value%");
 
                 }),
@@ -185,10 +208,10 @@ class InvoiceAuditRepository extends BaseRepository
                 // 'invoice_number'
             ])->where(function ($query) use ($request) {
 
-                if (! empty($request['invoice_audit_id'])) {
+                if (!empty($request['invoice_audit_id'])) {
                     $query->where('invoice_audit_id', $request['invoice_audit_id']);
                 }
-                if (! empty($request['patient_id'])) {
+                if (!empty($request['patient_id'])) {
                     $query->where('patient_id', $request['patient_id']);
                 }
             })
@@ -204,30 +227,30 @@ class InvoiceAuditRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginatePatient", $request, 'string');
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for(Patient::query())
-                ->allowedFilters([
+        $query = QueryBuilder::for(Patient::query())
+            ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->orWhereRaw("CONCAT(patients.first_name, ' ', patients.second_name, ' ', patients.first_surname, ' ', patients.second_surname) LIKE ?", ["%{$value}%"]);
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    $query->orWhereRaw("CONCAT(patients.first_name, ' ', patients.second_name, ' ', patients.first_surname, ' ', patients.second_surname) LIKE ?", ["%{$value}%"]);
 
-                        $query->orWhere('identification_number', 'like', "%$value%");
-                        $query->orWhere('gender', 'like', "%$value%");
-                    }),
+                    $query->orWhere('identification_number', 'like', "%$value%");
+                    $query->orWhere('gender', 'like', "%$value%");
+                }),
 
-                ])
-                ->allowedSorts([
-                    AllowedSort::custom('full_name', new DynamicConcatSort("first_name, ' ', second_name, ' ', first_surname, ' ', second_surname")),
-                    'identification_number',
-                    'gender',
-                ])->where(function ($query) use ($request) {
+            ])
+            ->allowedSorts([
+                AllowedSort::custom('full_name', new DynamicConcatSort("first_name, ' ', second_name, ' ', first_surname, ' ', second_surname")),
+                'identification_number',
+                'gender',
+            ])->where(function ($query) use ($request) {
 
-                    if (! empty($request['invoice_audit_id'])) {
-                        $query->where('invoice_audit_id', $request['invoice_audit_id']);
-                    }
-                })
-                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+                if (!empty($request['invoice_audit_id'])) {
+                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-            return $query;
+        return $query;
         // }, Constants::REDIS_TTL);
     }
 
@@ -235,7 +258,7 @@ class InvoiceAuditRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (! empty($request['id'])) {
+        if (!empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -252,10 +275,10 @@ class InvoiceAuditRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['idsAllowed'])) {
+            if (!empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (! empty($request['company_id'])) {
+            if (!empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {

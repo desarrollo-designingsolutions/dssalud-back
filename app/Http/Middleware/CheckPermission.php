@@ -19,7 +19,7 @@ class CheckPermission
         }
 
         if (Auth::check() && auth()->user()->is_active != 1) {
-            return response()->json(['a' => auth()->user()->is_active, 'code' => 404, 'message' => 'Usted ha sido inactivado'], 404);
+            return response()->json(['code' => 404, 'message' => 'Usted ha sido inactivado'], 404);
         }
 
         $user = Auth::user();
