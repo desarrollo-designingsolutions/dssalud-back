@@ -176,7 +176,7 @@ class InvoiceAuditRepository extends BaseRepository
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
                     
-                    // $query->orWhere('invoice_number', 'like', "%$value%");
+                    $query->orWhere('id', 'like', "%$value%");
 
                 }),
 

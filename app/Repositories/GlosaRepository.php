@@ -2,13 +2,39 @@
 
 namespace App\Repositories;
 
+use App\Helpers\Constants;
 use App\Models\Glosa;
+use App\QueryBuilder\Filters\QueryFilters;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class GlosaRepository extends BaseRepository
 {
     public function __construct(Glosa $modelo)
     {
         parent::__construct($modelo);
+    }
+
+    public function paginate($request = [])
+    {
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
+        // return $this->cacheService->remember($cacheKey, function () {
+
+        $query = QueryBuilder::for($this->model->query())
+            ->allowedFilters([
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {}),
+            ])
+            ->allowedSorts([])
+            ->where(function ($query) use ($request) {
+                if (isset($request['service_id']) && ! empty($request['service_id'])) {
+                    $query->orWhere('service_id', $request['service_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        return $query;
+        // }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
@@ -23,7 +49,7 @@ class GlosaRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                 }
             });
 
