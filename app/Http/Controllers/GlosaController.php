@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\Constants;
-use App\Http\Requests\Company\CompanyStoreRequest;
+use App\Http\Requests\Glosa\GlosaStoreRequest;
 use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
-use App\Http\Resources\Company\CompanyFormResource;
-use App\Http\Resources\Company\CompanyPaginateResource;
+use App\Http\Resources\Glosa\GlosaFormResource;
+use App\Http\Resources\Glosa\GlosaPaginateResource;
 use App\Imports\GlosaImport;
-use App\Repositories\CompanyRepository;
 use App\Repositories\GlosaRepository;
+use App\Repositories\ServiceRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,16 +21,16 @@ class GlosaController extends Controller
     use HttpResponseTrait;
 
     public function __construct(
-        protected CompanyRepository $companyRepository,
-        protected QueryController $queryController,
         protected GlosaRepository $glosaRepository,
+        protected QueryController $queryController,
+        protected ServiceRepository $serviceRepository,
     ) {}
 
     public function paginate(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $data = $this->companyRepository->paginate($request->all());
-            $tableData = CompanyPaginateResource::collection($data);
+            $data = $this->glosaRepository->paginate($request->all());
+            $tableData = GlosaPaginateResource::collection($data);
 
             return [
                 'code' => 200,
@@ -46,73 +46,51 @@ class GlosaController extends Controller
     public function create()
     {
         return $this->execute(function () {
-            $selectInfiniteCodeGlosas = $this->queryController->selectInfiniteCodeGlosa(request());
 
             return [
                 'code' => 200,
-                ...$selectInfiniteCodeGlosas,
             ];
         });
     }
 
-    public function store(Request $request)
+    public function store(GlosaStoreRequest $request)
     {
 
         return $this->runTransaction(function () use ($request) {
 
-            foreach($request->input('servicesIds') as $key => $service){
-                foreach ($request->input('glosas') as $key => $value) {
-                    unset($value['codeGlosa']);
-                    $value['glosa_value'] = $value['partialValue'];
-                    unset($value['partialValue']);
-                    unset($value['typeGlosa']);
-                    $value['service_id'] = $service;
-                    $this->glosaRepository->store($value);
-                }
-            }
-
+            $data = $this->glosaRepository->store($request->all());
 
             return [
                 'code' => 200,
-                'message' => 'Glosa/s agregada/s correctamente',
+                'message' => 'Glosa agregada correctamente',
             ];
         });
     }
-
+    
     public function edit($id)
     {
         return $this->execute(function () use ($id) {
-            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
 
-            $company = $this->companyRepository->find($id);
-            $form = new CompanyFormResource($company);
+            $glosa = $this->glosaRepository->find($id);
+            $form = new GlosaFormResource($glosa);
 
             return [
                 'code' => 200,
                 'form' => $form,
-                ...$selectInfiniteCountries,
             ];
         });
     }
 
-    public function update(CompanyStoreRequest $request, $id)
+    public function update(GlosaStoreRequest $request, $id)
     {
         return $this->runTransaction(function () use ($request, $id) {
-            $post = $request->except(['start_date']);
+            $post = $request->except([]);
 
-            $company = $this->companyRepository->store($post, $id);
-
-            if ($request->file('logo')) {
-                $file = $request->file('logo');
-                $ruta = 'companies/company_' . $company->id . $request->input('logo');
-                $logo = $file->store($ruta, Constants::DISK_FILES);
-                $company->logo = $logo;
-                $company->save();
-            }
+            $glosa = $this->glosaRepository->store($post);
 
             return [
                 'code' => 200,
-                'message' => 'Compañia modificada correctamente',
+                'message' => 'Glosa modificada correctamente',
             ];
         });
     }
@@ -120,16 +98,10 @@ class GlosaController extends Controller
     public function delete($id)
     {
         return $this->runTransaction(function () use ($id) {
-            $company = $this->companyRepository->find($id);
-            if ($company) {
-                // Verificar si hay registros relacionados
-                if ($company->users()->exists()) {
-                    throw new \Exception(json_encode([
-                        'message' => 'No se puede eliminar la compañía, porque tiene relación de datos en otros módulos',
-                    ]));
-                }
+            $glosa = $this->glosaRepository->find($id);
+            if ($glosa) {
 
-                $company->deletex();
+                $glosa->delete();
                 $msg = 'Registro eliminado correctamente';
             } else {
                 $msg = 'El registro no existe';
@@ -143,22 +115,6 @@ class GlosaController extends Controller
         }, 200);
     }
 
-    public function changeStatus(Request $request)
-    {
-        return $this->runTransaction(function () use ($request) {
-            $model = $this->companyRepository->changeState($request->input('id'), strval($request->input('value')), $request->input('field'));
-
-            ($model->is_active == 1) ? $msg = 'habilitada' : $msg = 'inhabilitada';
-
-            DB::commit();
-
-            return [
-                'code' => 200,
-                'message' => 'Compañia ' . $msg . ' con éxito',
-            ];
-        });
-    }
-
     public function uploadCsvGlosa(GlosaUploadCsvRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
@@ -170,6 +126,47 @@ class GlosaController extends Controller
             return [
                 'request' => $request->all(),
                 'csv' => $csv,
+            ];
+        });
+    }
+    public function createMasive()
+    {
+        return $this->execute(function () {
+            $selectInfiniteCodeGlosas = $this->queryController->selectInfiniteCodeGlosa(request());
+
+            return [
+                'code' => 200,
+                ...$selectInfiniteCodeGlosas,
+            ];
+        });
+    }
+
+    public function storeMasive(Request $request)
+    {
+
+        return $this->runTransaction(function () use ($request) {
+
+            $servicesIDs = $request->input('servicesIds');
+
+            foreach($servicesIDs as $key => $serviceId){
+                $service = $this->serviceRepository->find($serviceId);
+
+                foreach ($request->input('glosas') as $key => $value) {
+                    $data = [
+                        'user_id' => $value['user_id'],
+                        'service_id' => $service->id,
+                        'code_glosa_id' => $value['code_glosa_id'],
+                        'glosa_value' => $value['partialValue'] * $service->total_value/100,
+                        'observation' => $value['observation'],
+                    ];
+                    $this->glosaRepository->store($data);
+                }
+            }
+
+
+            return [
+                'code' => 200,
+                'message' => 'Glosa/s agregada/s correctamente',
             ];
         });
     }

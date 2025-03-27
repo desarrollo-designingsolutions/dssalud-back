@@ -26,6 +26,7 @@ class InvoiceAuditPaginateServiceResource extends JsonResource
             'unit_value' => formatNumber($this->unit_value),
             'moderator_value' => '???',
             'total_value' => formatNumber($this->total_value),
+            'total_value_origin' => $this->total_value,
         ];
     }
 }

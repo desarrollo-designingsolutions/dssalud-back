@@ -3,14 +3,14 @@
 namespace App\Repositories;
 
 use App\Helpers\Constants;
-use App\Models\Glosa;
+use App\Models\Service;
 use App\QueryBuilder\Filters\QueryFilters;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class GlosaRepository extends BaseRepository
+class ServiceRepository extends BaseRepository
 {
-    public function __construct(Glosa $modelo)
+    public function __construct(Service $modelo)
     {
         parent::__construct($modelo);
     }
