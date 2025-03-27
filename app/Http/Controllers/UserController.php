@@ -32,6 +32,7 @@ class UserController extends Controller
             return [
                 'code' => 200,
                 'tableData' => $tableData,
+                'tableDatax' => $data,
                 'lastPage' => $data->lastPage(),
                 'totalData' => $data->total(),
                 'totalPage' => $data->perPage(),
