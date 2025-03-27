@@ -20,5 +20,7 @@ Route::middleware(['check.permission:menu.medical.bills'])->group(function () {
 
     Route::post('/assignment/uploadCsv', [AssignmentController::class, 'uploadCsv']);
 
+    Route::post('/assignment/AssignmentCount', [AssignmentController::class, 'AssignmentCount']);
+
 
 });

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Assignment\StatusAssignmentEnum;
 use App\Http\Requests\Assignment\AssignmentUploadCsvRequest;
 use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
 use App\Http\Resources\Assignment\AssignmentPaginatePatientResource;
 use App\Http\Resources\Assignment\AssignmentPaginateThirdsResource;
 use App\Imports\AssingmentImport;
+use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\CompanyRepository;
 use App\Repositories\AssignmentRepository;
 use App\Traits\HttpResponseTrait;
@@ -21,7 +23,9 @@ class AssignmentController extends Controller
         protected QueryController $queryController,
         protected AssignmentRepository $assignmentRepository,
         protected CompanyRepository $companyRepository,
-    ) {}
+        protected AssignmentBatcheRepository $assignmentBatcheRepository,
+    ) {
+    }
 
     public function paginateThirds(Request $request, $assignment_batche_id)
     {
@@ -47,7 +51,7 @@ class AssignmentController extends Controller
     {
         return $this->execute(function () use ($request, $assignment_batche_id, $third_id) {
 
-            $request['assignment_batche_id'] = $assignment_batche_id;
+            $request['assignment_batch_id'] = $assignment_batche_id;
 
             $request['third_id'] = $third_id;
 
@@ -105,5 +109,39 @@ class AssignmentController extends Controller
         });
     }
 
+    public function AssignmentCount(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $countNumberProviders = $this->assignmentRepository->countNumberProviders($request->all());
+
+            $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
+                'status' => StatusAssignmentEnum::ASSIGNMENT_EST_001,
+                'assignment_batch_id' => $request['assignment_batch_id'],
+                'third_id' => $request['third_id'],
+            ]);
+
+            $finalizedInvoices = $this->assignmentRepository->countNumberProviders([
+                'status' => StatusAssignmentEnum::ASSIGNMENT_EST_003,
+                'assignment_batch_id' => $request['assignment_batch_id'],
+                'third_id' => $request['third_id'],
+            ]);
+
+            $allInvoices = $this->assignmentRepository->countNumberProviders([
+                'assignment_batch_id' => $request['assignment_batch_id'],
+                'third_id' => $request['third_id'],
+            ]);
+
+            $percentageProgress = $allInvoices > 0 ? round(($finalizedInvoices / $allInvoices) * 100, 2) : 0;
+
+            return [
+                'code' => 200,
+                'countNumberProviders' => $countNumberProviders,
+                'outstandingInvoices' => $outstandingInvoices,
+                'finalizedInvoices' => $finalizedInvoices,
+                'allInvoices' => $allInvoices,
+                'percentageProgress' => $percentageProgress
+            ];
+        });
+    }
 
 }

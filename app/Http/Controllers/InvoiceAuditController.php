@@ -89,7 +89,7 @@ class InvoiceAuditController extends Controller
     {
         return $this->execute(function () use ($request, $assignment_batche_id, $third_id) {
 
-            $request['assignment_batche_id'] = $assignment_batche_id;
+            $request['assignment_batch_id'] = $assignment_batche_id;
 
             $request['third_id'] = $third_id;
 

@@ -30,7 +30,7 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
     {
         return [
             $this->createSheet('Servicios', $this->services, 'Exports.InvoiceAudit.InvoiceAuditExcelServicesExport'),
-            $this->createSheet('Glosas', $this->glosses, 'Exports.InvoiceAudit.InvoiceAuditExcelGlossesExport'),
+            $this->createSheet('Codigo de Glosas', $this->glosses, 'Exports.InvoiceAudit.InvoiceAuditExcelGlossesExport'),
             $this->createSheet('Datos Anexos', $this->attachedData, 'Exports.InvoiceAudit.InvoiceAuditExcelAttachedDataExport'),
         ];
     }
