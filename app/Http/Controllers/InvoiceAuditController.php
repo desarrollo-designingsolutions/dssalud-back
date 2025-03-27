@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InvoiceAudit\InvoiceAuditExcelExport;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditListResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateBatcheResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
+use App\Repositories\CodeGlosaRepository;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
 use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InvoiceAuditController extends Controller
 {
@@ -22,7 +25,9 @@ class InvoiceAuditController extends Controller
         protected InvoiceAuditRepository $invoiceAuditRepository,
         protected ThirdRepository $thirdRepository,
         protected PatientRepository $patientRepository,
-    ) {}
+        protected CodeGlosaRepository $codeGlosaRepository,
+    ) {
+    }
 
     public function list(Request $request)
     {
@@ -165,6 +170,34 @@ class InvoiceAuditController extends Controller
                 'totalData' => $data->total(),
                 'totalPage' => $data->perPage(),
                 'currentPage' => $data->currentPage(),
+            ];
+        });
+    }
+
+    public function exportServices(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            // $data = $this->invoiceAuditRepository->paginateServices($request->all());
+            $services = $this->invoiceAuditRepository->paginateServices($request->all());
+            $glosses = $this->codeGlosaRepository->list(
+                [
+                    'typeData' => 'all',
+                    'is_active' => 1,
+                ]
+            );
+            $attachedData = [
+                [
+                    "id" => auth()->user()->id,
+                ]
+            ];
+
+            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
             ];
         });
     }
