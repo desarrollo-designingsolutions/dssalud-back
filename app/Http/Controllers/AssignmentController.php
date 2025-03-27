@@ -129,6 +129,7 @@ class AssignmentController extends Controller
             $allInvoices = $this->assignmentRepository->countNumberProviders([
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
+                'user_id' => $request['user_id'],
             ]);
 
             $percentageProgress = $allInvoices > 0 ? round(($finalizedInvoices / $allInvoices) * 100, 2) : 0;
