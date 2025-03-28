@@ -24,7 +24,7 @@ class CompanyRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () {
 
             $query = QueryBuilder::for($this->model->query())
-                ->select(['id', 'name', 'nit', 'email', 'phone', 'is_active'])
+                ->select(['id', 'name', 'nit', 'email', 'phone', 'is_active',"logo"])
                 ->allowedFilters([
                     'name',
                     'is_active',
