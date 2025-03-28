@@ -84,7 +84,7 @@ class FilingRepository extends BaseRepository
             }
 
 
-            if (!empty($request["company_id"])) {
+            if (!empty($filter["company_id"])) {
                 $query = $query->where("company_id", $filter["company_id"]);
             }
 
