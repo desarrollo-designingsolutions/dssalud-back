@@ -82,6 +82,12 @@ class FilingRepository extends BaseRepository
             if (isset($filter['filing_invoice_pre_radicated_count']) && is_numeric($filter['filing_invoice_pre_radicated_count'])) {
                 $query->having('filing_invoice_pre_radicated_count', '=', $filter['filing_invoice_pre_radicated_count']);
             }
+
+
+            if (!empty($request["company_id"])) {
+                $query = $query->where("company_id", $filter["company_id"]);
+            }
+
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
