@@ -33,7 +33,7 @@ class AssignmentBatche extends Model
     }
 
     // Método para obtener facturas por estado
-    public function countInvoiceByFilter(Array $filter = [])
+    public function countInvoiceByFilter(array $filter = [])
     {
         $query = $this->invoices();
 
@@ -42,7 +42,9 @@ class AssignmentBatche extends Model
         }
 
         if (!empty($filter['user_id'])) {
-            $query->where('assignments.user_id', $filter['user_id']);
+            $query->whereHas('third.user', function ($subQuery) use ($filter) {
+                $subQuery->where('id', $filter['user_id']);
+            });
         }
         return $query->count();
     }

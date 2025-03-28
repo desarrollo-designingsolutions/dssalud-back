@@ -53,6 +53,19 @@ class InvoiceAuditRepository extends BaseRepository
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
         $query = QueryBuilder::for(AssignmentBatche::query())
+        ->with([
+            // 'invoices' => function ($subQuery) use ($request) {
+            //     $subQuery->where('user_id', $request['user_id']);
+            //     $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
+            // }
+            'invoices' => function ($query) use ($request) {
+                    $query->whereHas('third', function ($subQuery) use ($request) {
+                        $subQuery->whereHas('user', function ($subQuery) use ($request) {
+                            $subQuery->where('id', $request['user_id']);
+                        });
+                    });
+                },
+        ])
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
@@ -64,9 +77,13 @@ class InvoiceAuditRepository extends BaseRepository
             ->allowedSorts([
                 'description',
             ])->where(function ($query) use ($request) {
-                $query->whereHas('assignments', function ($subQuery) use ($request) {
-                    $subQuery->where('user_id', $request['user_id']);
-                    $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
+                // $query->whereHas('assignments', function ($subQuery) use ($request) {
+                //     $subQuery->where('user_id', $request['user_id']);
+                //     $subQuery->where('status', '!=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
+                // });
+
+                $query->whereHas('invoices.third.user', function ($subQuery) use ($request) {
+                    $subQuery->where('id', $request['user_id']);
                 });
 
                 if (!empty($request['company_id'])) {
@@ -85,11 +102,23 @@ class InvoiceAuditRepository extends BaseRepository
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
         $query = QueryBuilder::for(Third::query())
+            ->withCount(['invoiceAudits as filtered_count' => function ($query) use ($request) {
+                $query->whereHas('assignment', function ($subQuery) use ($request) {
+                    $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
+                    $subQuery->where('user_id', $request['user_id']);
+                });
+            }])
             ->with([
-                'invoiceAudits.assignment' => function ($query) use ($request) {
-                    $query->where('assignment_batch_id', $request['assignment_batche_id']);
+                'invoiceAudits' => function ($query) use ($request) {
+                    $query->whereHas('assignment', function ($subQuery) use ($request) {
+                        $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
+                        $subQuery->where('user_id', $request['user_id']);
+                    });
+                },
+                'user' => function ($query) use ($request) {
+                    $query->where('id', $request['user_id']);
                 }
-            ])->withCount(['assignedInvoiceAudits'])
+            ])
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
@@ -105,48 +134,23 @@ class InvoiceAuditRepository extends BaseRepository
                 'name',
             ])->where(function ($query) use ($request) {
 
-                $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
-                    $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
-                    $subQuery->where('user_id', $request['user_id']);
+                $query->whereHas('invoiceAudits', function ($subQuery) use ($request) {
+                    $subQuery->whereHas('assignment', function ($subQuery2) use ($request) {
+                        $subQuery2->where('assignment_batch_id', $request['assignment_batche_id']);
+                        $subQuery2->where('user_id', $request['user_id']);
+                    });
+                });
+
+                $query->whereHas('user', function ($subQuery) use ($request) {
+                    $subQuery->where('id', $request['user_id']);
                 });
 
                 if (!empty($request['company_id'])) {
                     $query->where('company_id', $request['company_id']);
                 }
             })
+            // ->toRawSql();
             ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-
-        // $query = QueryBuilder::for(Third::query())
-        //     ->with([
-        //         'invoiceAudits.assignment' => function ($query) use ($request) {
-        //             $query->where('assignment_batch_id', $request['assignment_batche_id']);
-        //         }
-        //     ])->withCount(['assignedInvoiceAudits'])
-        //     ->allowedFilters([
-
-        //         AllowedFilter::callback('inputGeneral', function ($query, $value) {
-
-        //             $query->orWhere('nit', 'like', "%$value%");
-        //             $query->orWhere('name', 'like', "%$value%");
-
-        //         }),
-
-        //     ])
-        //     ->allowedSorts([
-        //         'nit',
-        //         'name',
-        //     ])->where(function ($query) use ($request) {
-
-        //         $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
-        //             $subQuery->where('assignment_batch_id', $request['assignment_batche_id']);
-        //             $subQuery->where('user_id', $request['user_id']);
-        //         });
-
-        //         if (! empty($request['company_id'])) {
-        //             $query->where('company_id', $request['company_id']);
-        //         }
-        //     })
-        //     ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
         return $query;
         // }, Constants::REDIS_TTL);
@@ -165,7 +169,6 @@ class InvoiceAuditRepository extends BaseRepository
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
 
                     $query->orWhere('invoice_number', 'like', "%$value%");
-
                 }),
 
             ])
@@ -204,7 +207,7 @@ class InvoiceAuditRepository extends BaseRepository
             ->allowedFilters([
 
                 AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                    
+
                     $query->orWhere('id', 'like', "%$value%");
                     $query->orWhere('detail_code', 'like', "%$value%");
                     $query->orWhere('description', 'like', "%$value%");
@@ -214,7 +217,6 @@ class InvoiceAuditRepository extends BaseRepository
                         $subQuery->orWhere('unit_value', 'like', "%$normalizedValue%");
                         $subQuery->orWhere('total_value', 'like', "%$normalizedValue%");
                     });
-
                 }),
 
             ])
