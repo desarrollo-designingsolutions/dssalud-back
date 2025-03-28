@@ -302,7 +302,6 @@ class AssignmentRepository extends BaseRepository
         })->count();
 
         return $data;
-
     }
 
     /**

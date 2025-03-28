@@ -11,6 +11,7 @@ use App\Imports\AssingmentImport;
 use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\CompanyRepository;
 use App\Repositories\AssignmentRepository;
+use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,6 +25,7 @@ class AssignmentController extends Controller
         protected AssignmentRepository $assignmentRepository,
         protected CompanyRepository $companyRepository,
         protected AssignmentBatcheRepository $assignmentBatcheRepository,
+        protected ThirdRepository $thirdRepository,
     ) {
     }
 
@@ -112,7 +114,11 @@ class AssignmentController extends Controller
     public function AssignmentCount(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $countNumberProviders = $this->assignmentRepository->countNumberProviders($request->all());
+
+            // $request['user_id'] = '9e5aee4d-a846-4522-a3ad-c8d02c30e937';
+            // $request['assignment_batch_id'] = '59664323-0215-11f0-90a3-0e01e6063923';
+
+            $countNumberProviders = $this->thirdRepository->getTotalThirdsInAssignedAudits($request->all());
 
             $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
                 'status' => StatusAssignmentEnum::ASSIGNMENT_EST_001,
