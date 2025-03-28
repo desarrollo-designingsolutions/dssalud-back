@@ -48,6 +48,11 @@ trait Cacheable
         $table = $this->getTable();
 
         foreach ($this->getCachePrefixes() as $prefix) {
+
+            $project = env('KEY_REDIS_PROJECT');
+
+        $prefix = $project.$prefix;
+
             $usePattern = str_ends_with($prefix, '*');
             $cleanPrefix = $usePattern ? rtrim($prefix, '*') : $prefix;
 

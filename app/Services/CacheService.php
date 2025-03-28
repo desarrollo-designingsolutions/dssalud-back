@@ -16,7 +16,9 @@ class CacheService
     {
         $suffix = ! empty($params) ? '_'.md5(serialize($params)) : '';
 
-        return "{$type}:{$prefix}{$suffix}";
+        $project = env('KEY_REDIS_PROJECT');
+
+        return "{$project}{$type}:{$prefix}{$suffix}";
     }
 
     /**
