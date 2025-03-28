@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\InvoiceAudit\InvoiceAuditExcelExport;
+use App\Exports\Service\ServiceListExcelExport;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditListResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateBatcheResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
@@ -192,6 +193,23 @@ class InvoiceAuditController extends Controller
             ];
 
             $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function exportListServicesExcel(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            // $data = $this->invoiceAuditRepository->paginateServices($request->all());
+            $services = $this->invoiceAuditRepository->paginateServices($request->all());
+
+            $excel = Excel::raw(new ServiceListExcelExport($services), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
 

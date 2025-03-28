@@ -20,6 +20,11 @@ class Third extends Model
         return $this->hasMany(InvoiceAudit::class);
     }
 
+    public function user()
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function assignedInvoiceAudits()
     {
         return $this->hasMany(InvoiceAudit::class)
