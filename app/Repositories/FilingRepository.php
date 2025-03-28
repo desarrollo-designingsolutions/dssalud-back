@@ -35,11 +35,11 @@ class FilingRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($filter) {
+        return $this->cacheService->remember($cacheKey, function () use ($filter,$request) {
 
             $query = QueryBuilder::for($this->model->query())
                 ->with(['contract:id,name'])
-                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr'])
+                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr',"filings.company_id"])
                 ->withCount(['filingInvoicePreRadicated'])
                 ->allowedFilters([
                     'status',
@@ -83,9 +83,9 @@ class FilingRepository extends BaseRepository
                 $query->having('filing_invoice_pre_radicated_count', '=', $filter['filing_invoice_pre_radicated_count']);
             }
 
-
-            if (!empty($filter["company_id"])) {
-                $query = $query->where("company_id", $filter["company_id"]);
+ 
+            if (!empty($request["company_id"])) {
+                $query = $query->where("company_id", $request["company_id"]);
             }
 
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
