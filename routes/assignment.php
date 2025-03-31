@@ -12,11 +12,11 @@ Route::middleware(['check.permission:menu.medical.bills'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/assignment/paginateThirds/{assignment_batche_id}', [AssignmentController::class, 'paginateThirds']);
+    Route::get('/assignment/paginateThirds/{assignment_batch_id}', [AssignmentController::class, 'paginateThirds']);
 
-    Route::get('/assignment/paginateInvoiceAudit/{assignment_batche_id}/{third_id}', [AssignmentController::class, 'paginateInvoiceAudit']);
+    Route::get('/assignment/paginateInvoiceAudit/{assignment_batch_id}/{third_id}', [AssignmentController::class, 'paginateInvoiceAudit']);
 
-    Route::get('/assignment/paginatePatient/{assignment_batche_id}/{third_id}/{invoice_audit_id}', [AssignmentController::class, 'paginatePatient']);
+    Route::get('/assignment/paginatePatient/{assignment_batch_id}/{third_id}/{invoice_audit_id}', [AssignmentController::class, 'paginatePatient']);
 
     Route::post('/assignment/uploadCsv', [AssignmentController::class, 'uploadCsv']);
 

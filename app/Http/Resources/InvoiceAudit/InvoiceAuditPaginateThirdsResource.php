@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources\InvoiceAudit;
 
-use App\Enums\Assignment\StatusAssignmentEnum;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,10 +18,10 @@ class InvoiceAuditPaginateThirdsResource extends JsonResource
             'id' => $this->id,
             'nit' => $this->nit,
             'name' => $this->name,
-            'count_invoice_assignment' => $this->countInvoiceByFilter(),
-            'count_invoice_pending' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_002->value]),
-            'count_invoice_finish' => $this->countInvoiceByFilter(['status' => StatusAssignmentEnum::ASSIGNMENT_EST_003->value]),
-            'values' => formatNumber($this->sumInvoiceAuditsTotalValue()),
+            'count_invoice_total' => $this->count_invoice_total,
+            'count_invoice_pending' => $this->count_invoice_pending,
+            'count_invoice_finish' => $this->count_invoice_finish,
+            'values' => formatNumber($this->total_value_sum),
         ];
     }
 }

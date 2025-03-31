@@ -43,8 +43,8 @@ class Third extends Model
             if (!empty($filter['status'])) {
                 $query->where('status', $filter['status']);
             }
-            
+
         })->count(); // Filtramos por el campo status en Assignment
     }
-    
+
 }

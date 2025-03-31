@@ -2,17 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Enums\Assignment\StatusAssignmentEnum;
 use App\Helpers\Constants;
 use App\Models\AssignmentBatche;
-use App\QueryBuilder\Filters\DateRangeFilter;
-use App\QueryBuilder\Filters\QueryFilters;
-use App\QueryBuilder\Sort\IsActiveSort;
-use App\QueryBuilder\Sort\RelatedTableSort;
-use App\QueryBuilder\Sort\UserFullNameSort;
 use App\Traits\AuditMap;
 use Illuminate\Support\Facades\Auth;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class AssignmentBatcheRepository extends BaseRepository
@@ -28,25 +23,43 @@ class AssignmentBatcheRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
+        $data = request();
+
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for($this->model->query())
+                ->withCount([
+                    'assignments as count_invoice',
+                    'assignments as count_invoice_pending' => function ($query) {
+                        $query->where('status', '=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
+                        $query->orWhere('status', '=', StatusAssignmentEnum::ASSIGNMENT_EST_002);
+                    },
+                    'assignments as count_invoice_completed' => function ($query) {
+                        $query->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);
+                    },
+                ])
                 ->allowedFilters([
-
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                      $query->orWhere('description', 'like', "%$value%");
-                      $query->orWhere('status', 'like', "%$value%");
+                        $query->orWhere('description', 'like', "%$value%");
                     }),
-
                 ])
                 ->allowedSorts([
-                  'description',
-                ])->where(function ($query) use ($request) {
-                    if (! empty($request['company_id'])) {
+                    'description',
+                    'count_invoice',
+                    'count_invoice_pending',
+                    'count_invoice_completed',
+                ])
+                ->where(function ($query) use ($request) {
+                    if (!empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
-                })
-                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+                });
 
+            // if (isset($data['filter']['inputGeneral']) && is_numeric($data['filter']['inputGeneral'])) {
+            //     $value = $data['filter']['inputGeneral'];
+            //     $query->havingRaw("CAST(count_invoice AS CHAR) LIKE ?", ["%$value%"]);
+            // }
+
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
             return $query;
         }, Constants::REDIS_TTL);
     }

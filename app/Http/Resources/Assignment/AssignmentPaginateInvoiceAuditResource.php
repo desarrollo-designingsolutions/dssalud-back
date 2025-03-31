@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources\Assignment;
 
-use App\Enums\Assignment\StatusAssignmentEnum;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +19,7 @@ class AssignmentPaginateInvoiceAuditResource extends JsonResource
             'invoice_number' => $this->invoice_number,
             'count_patients' => $this->patients_count,
             'count_services' => $this->services_count,
-            'total_value_services' => formatNumber($this->sumServicesTotalValue()),
+            'total_value_services' => formatNumber($this->total_value_services),
             'glosas' => 0,
             'value_glosa' => 0,
             'spent' => 0,

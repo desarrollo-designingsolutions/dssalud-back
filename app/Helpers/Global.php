@@ -179,10 +179,10 @@ function truncate_text($text, $maxLength = 15)
     return $text;
 }
 
-function formatNumber($number, $currency_symbol = '$ ')
+function formatNumber($number, $currency_symbol = '$ ', $decimal = 2)
 {
     // Asegúrate de que el número es un número flotante
-    $formattedNumber = number_format((float) $number, 2, ',', '.');
+    $formattedNumber = number_format((float) $number, $decimal, ',', '.');
 
     return $currency_symbol . $formattedNumber;
 }

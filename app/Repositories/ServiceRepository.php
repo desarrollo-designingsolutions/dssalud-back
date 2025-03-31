@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\Service;
-use App\QueryBuilder\Filters\QueryFilters;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -19,7 +18,7 @@ class ServiceRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () {
+        return $this->cacheService->remember($cacheKey, function ()  use($request){
 
         $query = QueryBuilder::for($this->model->query())
             ->allowedFilters([
@@ -34,7 +33,7 @@ class ServiceRepository extends BaseRepository
             ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
         return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
