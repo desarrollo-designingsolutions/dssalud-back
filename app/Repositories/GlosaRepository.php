@@ -20,7 +20,7 @@ class GlosaRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function ()  use ($request) {
+        // return $this->cacheService->remember($cacheKey, function ()  use ($request) {
 
             $query = QueryBuilder::for($this->model->query())
                 ->join("users", "users.id", "=", "user_id")
@@ -28,10 +28,11 @@ class GlosaRepository extends BaseRepository
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
-                            $query->orWhere('observation', 'like', "%$value%");
+                            $query->orWhere('glosas.observation', 'like', "%$value%");
+
                             $query->orWhere(function ($subQuery) use ($value) {
                                 $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
-                                $subQuery->orWhere('glosa_value', 'like', "%$normalizedValue%");
+                                $subQuery->where('glosa_value', 'like', "%$normalizedValue%");
                             });
                             $query->orWhereHas('code_glosa', function ($subQuery) use ($value) {
                                 $subQuery->where('description', 'like', "%$value%");
@@ -40,7 +41,7 @@ class GlosaRepository extends BaseRepository
                                 $subQuery->where('description', 'like', "%$value%");
                             });
                             $query->orWhereHas('user', function ($subQuery) use ($value) {
-                                $subQuery->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
+                                $subQuery->whereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
                             });
                         });
                     }),
@@ -53,13 +54,13 @@ class GlosaRepository extends BaseRepository
                 ])
                 ->where(function ($query) use ($request) {
                     if (isset($request['service_id']) && ! empty($request['service_id'])) {
-                        $query->orWhere('service_id', $request['service_id']);
+                        $query->where('service_id', $request['service_id']);
                     }
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        }, Constants::REDIS_TTL);
+        // }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])

@@ -66,7 +66,7 @@ class GlosaController extends Controller
             ];
         });
     }
-    
+
     public function edit($id)
     {
         return $this->execute(function () use ($id) {
