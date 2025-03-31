@@ -34,17 +34,19 @@ class UserRepository extends BaseRepository
                 ->allowedFilters([
                     'is_active',
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
+                        $query->where(function ($query) use ($value) {
+                            $query->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
 
-                        $query->orWhereHas('role', function ($query) use ($value) {
-                            $query->where('description', 'like', "%$value%");
+                            $query->orWhereHas('role', function ($query) use ($value) {
+                                $query->where('description', 'like', "%$value%");
+                            });
+
+                            $query->orWhere('users.email', 'like', "%$value%");
+                            QueryFilters::filterByText($query, $value, 'is_active', [
+                                'activo' => 1,
+                                'inactivo' => 0,
+                            ]);
                         });
-
-                        $query->orWhere('users.email', 'like', "%$value%");
-                        QueryFilters::filterByText($query, $value, 'is_active', [
-                            'activo' => 1,
-                            'inactivo' => 0,
-                        ]);
                     }),
                 ])
                 ->allowedSorts([

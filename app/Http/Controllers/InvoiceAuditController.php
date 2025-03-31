@@ -27,8 +27,7 @@ class InvoiceAuditController extends Controller
         protected ThirdRepository $thirdRepository,
         protected PatientRepository $patientRepository,
         protected CodeGlosaRepository $codeGlosaRepository,
-    ) {
-    }
+    ) {}
 
     public function list(Request $request)
     {
@@ -138,9 +137,9 @@ class InvoiceAuditController extends Controller
 
             $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
             $third = $this->thirdRepository->find($third_id);
-            $patient = $this->patientRepository->list($patient_id);
+            $patient = $this->patientRepository->find($patient_id);
 
-            $patient = InvoiceAuditPaginatePatientResource::collection($patient)->first();
+            $patient = new InvoiceAuditPaginatePatientResource($patient);
 
             return [
                 'code' => 200,
