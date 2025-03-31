@@ -11,6 +11,7 @@ use App\Imports\AssingmentImport;
 use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\CompanyRepository;
 use App\Repositories\AssignmentRepository;
+use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,14 +25,14 @@ class AssignmentController extends Controller
         protected AssignmentRepository $assignmentRepository,
         protected CompanyRepository $companyRepository,
         protected AssignmentBatcheRepository $assignmentBatcheRepository,
-    ) {
-    }
+        protected ThirdRepository $thirdRepository,
+    ) {}
 
-    public function paginateThirds(Request $request, $assignment_batche_id)
+    public function paginateThirds(Request $request, $assignment_batch_id)
     {
-        return $this->execute(function () use ($request, $assignment_batche_id) {
+        return $this->execute(function () use ($request, $assignment_batch_id) {
 
-            $request['assignment_batche_id'] = $assignment_batche_id;
+            $request['assignment_batch_id'] = $assignment_batch_id;
 
             $data = $this->assignmentRepository->paginateThirds($request->all());
             $tableData = AssignmentPaginateThirdsResource::collection($data);
@@ -55,7 +56,7 @@ class AssignmentController extends Controller
 
             $request['third_id'] = $third_id;
 
-            $data = $this->assignmentRepository->paginateInvoiceAudit($request->all());
+             $data = $this->assignmentRepository->paginateInvoiceAudit($request->all());
             $tableData = AssignmentPaginateInvoiceAuditResource::collection($data);
 
             return [
@@ -112,16 +113,20 @@ class AssignmentController extends Controller
     public function AssignmentCount(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $countNumberProviders = $this->assignmentRepository->countNumberProviders($request->all());
 
-            $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
-                'status' => StatusAssignmentEnum::ASSIGNMENT_EST_001,
+            // $request['user_id'] = '9e5aee4d-a846-4522-a3ad-c8d02c30e937';
+            // $request['assignment_batch_id'] = '59664323-0215-11f0-90a3-0e01e6063923';
+
+            $countNumberProviders = $this->thirdRepository->getTotalThirdsInAssignedAudits($request->all());
+
+              $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
+                'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_001, StatusAssignmentEnum::ASSIGNMENT_EST_002],
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
             ]);
 
             $finalizedInvoices = $this->assignmentRepository->countNumberProviders([
-                'status' => StatusAssignmentEnum::ASSIGNMENT_EST_003,
+                'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_003],
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
             ]);
@@ -132,17 +137,18 @@ class AssignmentController extends Controller
                 'user_id' => $request['user_id'],
             ]);
 
-            $percentageProgress = $allInvoices > 0 ? round(($finalizedInvoices / $allInvoices) * 100, 2) : 0;
+
+            $percentageProgress = $allInvoices > 0 ? floor(($finalizedInvoices / $allInvoices) * 100 * 100) / 100 : 0;
+
 
             return [
                 'code' => 200,
-                'countNumberProviders' => $countNumberProviders,
-                'outstandingInvoices' => $outstandingInvoices,
-                'finalizedInvoices' => $finalizedInvoices,
-                'allInvoices' => $allInvoices,
-                'percentageProgress' => $percentageProgress
+                'countNumberProviders' => formatNumber($countNumberProviders,"",0),
+                'outstandingInvoices' => formatNumber($outstandingInvoices,"",0),
+                'finalizedInvoices' => formatNumber($finalizedInvoices,"",0),
+                'allInvoices' => formatNumber($allInvoices,"",0),
+                'percentageProgress' => formatNumber($percentageProgress,""),
             ];
         });
     }
-
 }

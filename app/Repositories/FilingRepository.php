@@ -83,7 +83,7 @@ class FilingRepository extends BaseRepository
                 $query->having('filing_invoice_pre_radicated_count', '=', $filter['filing_invoice_pre_radicated_count']);
             }
 
- 
+
             if (!empty($request["company_id"])) {
                 $query = $query->where("company_id", $request["company_id"]);
             }

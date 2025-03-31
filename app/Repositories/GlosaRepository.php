@@ -4,8 +4,9 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\Glosa;
-use App\QueryBuilder\Filters\QueryFilters;
+use App\QueryBuilder\Sort\DynamicConcatSort;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class GlosaRepository extends BaseRepository
@@ -19,22 +20,46 @@ class GlosaRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () {
+        return $this->cacheService->remember($cacheKey, function ()  use ($request) {
 
-        $query = QueryBuilder::for($this->model->query())
-            ->allowedFilters([
-                AllowedFilter::callback('inputGeneral', function ($query, $value) {}),
-            ])
-            ->allowedSorts([])
-            ->where(function ($query) use ($request) {
-                if (isset($request['service_id']) && ! empty($request['service_id'])) {
-                    $query->orWhere('service_id', $request['service_id']);
-                }
-            })
-            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            $query = QueryBuilder::for($this->model->query())
+                ->join("users", "users.id", "=", "user_id")
+                ->join("services", "services.id", "=", "service_id")
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($query) use ($value) {
+                            $query->orWhere('observation', 'like', "%$value%");
+                            $query->orWhere(function ($subQuery) use ($value) {
+                                $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                                $subQuery->orWhere('glosa_value', 'like', "%$normalizedValue%");
+                            });
+                            $query->orWhereHas('code_glosa', function ($subQuery) use ($value) {
+                                $subQuery->where('description', 'like', "%$value%");
+                            });
+                            $query->orWhereHas('service', function ($subQuery) use ($value) {
+                                $subQuery->where('description', 'like', "%$value%");
+                            });
+                            $query->orWhereHas('user', function ($subQuery) use ($value) {
+                                $subQuery->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);
+                            });
+                        });
+                    }),
+                ])
+                ->allowedSorts([
+                    "observation",
+                    "glosa_value",
+                    AllowedSort::custom('user_full_name', new DynamicConcatSort("users.name, ' ', users.surname")),
+                    AllowedSort::custom('service_description', new DynamicConcatSort("services.description")),
+                ])
+                ->where(function ($query) use ($request) {
+                    if (isset($request['service_id']) && ! empty($request['service_id'])) {
+                        $query->orWhere('service_id', $request['service_id']);
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-        return $query;
-        // }, Constants::REDIS_TTL);
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
