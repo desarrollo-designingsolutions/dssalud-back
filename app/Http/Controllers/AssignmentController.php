@@ -15,6 +15,9 @@ use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\CacheService;
+use App\Helpers\Constants;
+
 
 class AssignmentController extends Controller
 {
@@ -26,6 +29,7 @@ class AssignmentController extends Controller
         protected CompanyRepository $companyRepository,
         protected AssignmentBatcheRepository $assignmentBatcheRepository,
         protected ThirdRepository $thirdRepository,
+        protected CacheService $cacheService,
     ) {}
 
     public function paginateThirds(Request $request, $assignment_batch_id)
@@ -114,33 +118,35 @@ class AssignmentController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-            // $request['user_id'] = '9e5aee4d-a846-4522-a3ad-c8d02c30e937';
-            // $request['assignment_batch_id'] = '59664323-0215-11f0-90a3-0e01e6063923';
+            $cacheKey = $this->cacheService->generateKey("assignments_paginate_count_all_data", $request->all(), 'string');
 
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
+
+            
             $countNumberProviders = $this->thirdRepository->getTotalThirdsInAssignedAudits($request->all());
-
-              $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
+            
+            $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
                 'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_001, StatusAssignmentEnum::ASSIGNMENT_EST_002],
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
             ]);
-
+            
             $finalizedInvoices = $this->assignmentRepository->countNumberProviders([
                 'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_003],
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
             ]);
-
+            
             $allInvoices = $this->assignmentRepository->countNumberProviders([
                 'assignment_batch_id' => $request['assignment_batch_id'],
                 'third_id' => $request['third_id'],
                 'user_id' => $request['user_id'],
             ]);
-
-
+            
+            
             $percentageProgress = $allInvoices > 0 ? floor(($finalizedInvoices / $allInvoices) * 100 * 100) / 100 : 0;
-
-
+            
+            
             return [
                 'code' => 200,
                 'countNumberProviders' => formatNumber($countNumberProviders,"",0),
@@ -149,6 +155,7 @@ class AssignmentController extends Controller
                 'allInvoices' => formatNumber($allInvoices,"",0),
                 'percentageProgress' => formatNumber($percentageProgress,""),
             ];
+        }, Constants::REDIS_TTL);
         });
     }
 }
