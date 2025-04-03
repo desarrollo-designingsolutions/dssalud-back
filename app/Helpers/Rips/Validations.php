@@ -1330,11 +1330,11 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
         if ($cie10->extra_X == 'A' || ($cie10->extra_X == $value2['codSexo'])) {
             $error = false;
         } else {
-            $error = truse;
+            $error = true;
         }
     }
 
-    if ($error && !empty($dataTxt[$key])) {
+    if ($error) {
         $errorMessages[] = [
             'validacion' => 'RVC028',
             'validacion_type_Y' => 'N',
@@ -1348,10 +1348,6 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
 
         $validation = false;
     }
-
-    logMessage("se ejecuto la validacion RVC028");
-
-    logMessage(!empty($dataTxt[$key]));
 
     return [
         'validacion_type_Y' => 'N',
