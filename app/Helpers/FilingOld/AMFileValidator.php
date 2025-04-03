@@ -71,8 +71,8 @@ class AMFileValidator
 
         // 3. Tipo de identificación del usuario (columna 3)
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["CC", "CE", "CD", "PA", "SC", "PE", "RE", "RC", "TI", "CN", "AS", "MS"];
-        if (!in_array($rowData[3], $allowedPrefixes)) {
+        $allowedPrefixes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
+        if (!in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AM_ERROR_003',
@@ -80,15 +80,15 @@ class AMFileValidator
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[3],
-                $rowData[3],
+                $titleColumn[2],
+                $rowData[2],
                 'El dato ingresado no es permitido'
             );
         }
 
         // 4. Tipo de medicamento (columna 7)
         // Valor obligatorio
-        if (empty($rowData[7])) {
+        if (empty($rowData[6])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AM_ERROR_004',
@@ -97,14 +97,14 @@ class AMFileValidator
                 $fileName,
                 $rowNumber,
                 $titleColumn[7],
-                $rowData[7],
+                $rowData[6],
                 'El dato registrado es obligatorio.'
             );
         }
 
         // Unicamente los valores permitidos
         $allowedPrefixes = ["1", "2"];
-        if (!in_array($rowData[7], $allowedPrefixes)) {
+        if (!in_array($rowData[6], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AM_ERROR_005',
@@ -113,7 +113,7 @@ class AMFileValidator
                 $fileName,
                 $rowNumber,
                 $titleColumn[7],
-                $rowData[7],
+                $rowData[6],
                 'El dato ingresado no es permitido'
             );
         }

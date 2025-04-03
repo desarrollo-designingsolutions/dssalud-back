@@ -71,7 +71,7 @@ class AUFileValidator
         }
 
         // VALIDAR Tipo de identificación del usuario
-        $allowedTypes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS'];
+        $allowedTypes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
         if (! in_array($rowData[2], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,

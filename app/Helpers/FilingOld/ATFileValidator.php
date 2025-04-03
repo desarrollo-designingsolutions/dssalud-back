@@ -39,7 +39,7 @@ class ATFileValidator
         if (empty($rowData[0])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AM_ERROR_001',
+                'FILE_AT_ERROR_001',
                 'R',
                 null,
                 $fileName,
@@ -55,7 +55,7 @@ class ATFileValidator
         if (empty($rowData[1])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AM_ERROR_002',
+                'FILE_AT_ERROR_002',
                 'R',
                 null,
                 $fileName,
@@ -68,27 +68,30 @@ class ATFileValidator
 
         // 3. Tipo de identificación del usuario (columna 3)
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["CC", "CE", "CD", "PA", "SC", "PE", "RE", "RC", "TI", "CN", "AS", "MS"];
-        if (!in_array($rowData[3], $allowedPrefixes)) {
+        $allowedPrefixes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
+        if (!in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AM_ERROR_003',
+                'FILE_AT_ERROR_003',
                 'R',
                 null,
                 $fileName,
                 $rowNumber,
-                $titleColumn[3],
-                $rowData[3],
+                $titleColumn[2],
+                $rowData[2],
                 'El dato ingresado no es permitido'
             );
         }
+
+        logMessage($rowData[2]);
+        logMessage($titleColumn[2]);
 
         // 4. Tipo de servicio (columna 5)
         // Valor obligatorio
         if (empty($rowData[5])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AM_ERROR_004',
+                'FILE_AT_ERROR_004',
                 'R',
                 null,
                 $fileName,
@@ -104,7 +107,7 @@ class ATFileValidator
         if (empty($rowData[7])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
-                'FILE_AM_ERROR_005',
+                'FILE_AT_ERROR_005',
                 'R',
                 null,
                 $fileName,

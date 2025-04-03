@@ -222,10 +222,10 @@ class CTFileValidator
         if (empty($filePath)) {
             return null;
         }
- 
+
         $handle = self::openTextFile($filePath); // Llamada estática corregida
         if (! $handle) {
-            return null; 
+            return null;
         }
 
         $count = 0;

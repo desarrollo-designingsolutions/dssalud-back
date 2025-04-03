@@ -40,7 +40,7 @@ class USFileValidator
         ];
 
         // Validar columna 0: Tipo de identificación del usuario
-        $allowedTypes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS'];
+        $allowedTypes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
         $typeId = trim($rowData[0] ?? '');
         $idNumber = trim($rowData[1] ?? ''); // Columna 2: Número de identificación
         $ageUnit = trim($rowData[9] ?? ''); // Columna 10: Unidad de medida

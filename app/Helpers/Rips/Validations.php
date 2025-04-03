@@ -234,7 +234,7 @@ function RVC006($dataTxt, &$errorMessages)
 
     $validation = true;
 
-    if (! empty($dataTxt['fechaNacimiento'])) {
+    if (!empty($dataTxt['fechaNacimiento'])) {
         $fechaNacimiento = parseDate($dataTxt['fechaNacimiento']);
         $value2 = Carbon::now()->format('Y-m-d');
         // echo ($fechaNacimiento);
@@ -303,7 +303,7 @@ function RVC007($dataTxt, &$errorMessages, $dataExtra = null)
         $exito = true;
     }
 
-    if (! $exito) {
+    if (!$exito) {
         $errorMessages[] = [
             'validacion' => 'RVC007',
             'validacion_type_Y' => 'R',
@@ -312,7 +312,7 @@ function RVC007($dataTxt, &$errorMessages, $dataExtra = null)
             'row' => $dataTxt['row'] ?? null,
             'column' => 'fechaNacimiento',
             'data' => $dataTxt['tipoDocumentoIdentificacion'],
-            'error' => 'El tipo de documento informado no es válido para la edad del usuario. Fecha de nacimiento: '.$dataTxt['fechaNacimiento'].', edad: '.$edad,
+            'error' => 'El tipo de documento informado no es válido para la edad del usuario. Fecha de nacimiento: ' . $dataTxt['fechaNacimiento'] . ', edad: ' . $edad,
         ];
 
         $validation = false;
@@ -404,7 +404,7 @@ function RVC010($dataTxt, $value2, &$errorMessages)
 function U06($dataTxt, &$errorMessages)
 {
     $pais = Pais::where('codigo', $dataTxt['codPaisResidencia'])->first();
-    if (! $pais) {
+    if (!$pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -422,7 +422,7 @@ function U06($dataTxt, &$errorMessages)
 function U07($dataTxt, &$errorMessages)
 {
     $pais = Municipio::where('codigo', $dataTxt['codMunicipioResidencia'])->first();
-    if (! $pais) {
+    if (!$pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -440,7 +440,7 @@ function U07($dataTxt, &$errorMessages)
 function U08($dataTxt, &$errorMessages)
 {
     $pais = ZonaVersion2::where('codigo', $dataTxt['codZonaTerritorialResidencia'])->first();
-    if (! $pais) {
+    if (!$pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -458,7 +458,7 @@ function U08($dataTxt, &$errorMessages)
 function U09($dataTxt, &$errorMessages)
 {
     $data = LstSiNo::where('codigo', $dataTxt['incapacidad'])->first();
-    if (! $data) {
+    if (!$data) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -475,7 +475,7 @@ function U09($dataTxt, &$errorMessages)
 }
 function U10($dataTxt, &$errorMessages)
 {
-    if (! $dataTxt['consecutivo']) {
+    if (!$dataTxt['consecutivo']) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -503,7 +503,7 @@ function RVC011($dataTxt, $key, &$errorMessages)
         $query->where('codigo', $dataTxt[$key]);
     })->first();
 
-    if (! $ipsCodHabilitacion && ! $ipsNoReps) {
+    if (!$ipsCodHabilitacion && !$ipsNoReps) {
         $errorMessages[] = [
             'validacion' => 'RVC011',
             'validacion_type_Y' => 'R',
@@ -692,7 +692,7 @@ function RVC015($dataTxt, $key, $value2, &$errorMessages)
         $query->where('codigo', $dataTxt[$key]);
     })->first();
 
-    if (! $cupsRips || $cupsRips->extra_I != 'AC') {
+    if (!$cupsRips || $cupsRips->extra_I != 'AC') {
         if ($dataTxt[$key]) {
             $errorMessages[] = [
                 'validacion' => 'RVC015',
@@ -723,7 +723,7 @@ function RVC016($dataTxt, $key, $value2, &$errorMessages)
     })->first();
 
     $error = false;
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $error = true;
     } else {
         if ($cupsRips->extra_VI != 'Z' && $cupsRips->extra_VI != $value2['codSexo']) {
@@ -831,7 +831,7 @@ function RVC019($dataTxt, $key, &$errorMessages)
     })->first();
 
     $error = false;
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $error = true;
     } elseif ($cupsRips->extra_V == 'S') {
 
@@ -842,7 +842,7 @@ function RVC019($dataTxt, $key, &$errorMessages)
                 $query->where('codigo', strval($dataTxt['codDiagnosticoPrincipal']));
             })->first();
 
-            if (! $cie10) {
+            if (!$cie10) {
                 $error = true;
             } else {
                 $error = false;
@@ -880,7 +880,7 @@ function RVC027($dataTxt, $key, $value2, &$errorMessages)
 
     $error = false;
 
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $error = true;
     } elseif ($cupsRips->Interconsultas == 'S' && count($value2['servicios']['hospitalizacion']) == 0 && count($value2['servicios']['urgencias']) == 0) {
         $error = true;
@@ -1324,17 +1324,17 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
     })->first();
 
     $error = false;
-    if (! $cie10) {
+    if (!$cie10) {
         $error = true;
     } else {
         if ($cie10->extra_X == 'A' || ($cie10->extra_X == $value2['codSexo'])) {
             $error = false;
         } else {
-            $error = true;
+            $error = truse;
         }
     }
 
-    if ($error) {
+    if ($error && !empty($dataTxt[$key])) {
         $errorMessages[] = [
             'validacion' => 'RVC028',
             'validacion_type_Y' => 'N',
@@ -1348,6 +1348,10 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
 
         $validation = false;
     }
+
+    logMessage("se ejecuto la validacion RVC028");
+
+    logMessage(!empty($dataTxt[$key]));
 
     return [
         'validacion_type_Y' => 'N',
@@ -1718,7 +1722,7 @@ function RVC020($dataTxt, &$errorMessages)
         $query->where('codigo', strval($dataTxt['codProcedimiento']));
     })->first();
 
-    if (! $cupsRips || $cupsRips->extra_I != 'AP') {
+    if (!$cupsRips || $cupsRips->extra_I != 'AP') {
         $errorMessages[] = [
             'validacion' => 'RVC020',
             'validacion_type_Y' => 'N',
@@ -1748,7 +1752,7 @@ function RVC021($dataTxt, $value2, &$errorMessages)
 
     $error = false;
 
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $error = true;
     } elseif ($cupsRips->extra_VIII == 'E' && count($value2['servicios']['hospitalizacion']) > 0) {
         $error = false;
@@ -1836,7 +1840,7 @@ function RVC024($dataTxt, &$errorMessages)
         $query->where('codigo', $dataTxt['codTecnologiaSalud']);
     })->first();
 
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $errorMessages[] = [
             'validacion' => 'RVC024',
             'validacion_type_Y' => 'R',
@@ -1890,7 +1894,7 @@ function RVC026($dataTxt, &$errorMessages)
 
     $error = false;
 
-    if (! $cupsRips) {
+    if (!$cupsRips) {
         $error = true;
     } else {
         if ($cupsRips->extra_I == 'AT') {
@@ -2725,10 +2729,10 @@ function validationFormatDate($dataTxt, $key, &$errorMessages, $dataExtra = null
 
     $dataTxt[$key] = trim($dataTxt[$key]);
     $error = true;
-    if (! empty($dataTxt[$key])) {
+    if (!empty($dataTxt[$key])) {
         $error = false;
         $preg = preg_match($format, $dataTxt[$key]);
-        if (! $preg) {
+        if (!$preg) {
             $error = true;
         }
     }
@@ -2754,7 +2758,7 @@ function validationFormatDate($dataTxt, $key, &$errorMessages, $dataExtra = null
 function onlyNumbers($dataTxt, $key, &$errorMessages, $dataExtra = null, $validacion_type_Y = 'R')
 {
 
-    if (! is_numeric($dataTxt[$key])) {
+    if (!is_numeric($dataTxt[$key])) {
         $errorMessages[] = [
             'validacion' => 'onlyNumbers',
             'validacion_type_Y' => $validacion_type_Y,
@@ -2816,18 +2820,164 @@ function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
             break;
         case 'codServicio':
             $arrayPersonalized = [
-                '105', '106', '107', '108', '109', '110', '159', '1101', '1102', '1103', '1104', '1105',
-                '120', '129', '130', '131', '132', '133', '134', '135', '138',
-                '201', '202', '203', '204', '205', '207', '208', '209', '210', '211', '212', '213', '214', '215', '217', '218',
-                '227', '231', '232', '233', '234', '235', '237', '245',
-                '301', '302', '303', '304', '306', '308', '309', '310', '311', '312', '313', '316', '317', '318', '320', '321',
-                '323', '324', '325', '326', '327', '328', '329', '330', '331', '332', '333', '334', '335', '336', '337', '338',
-                '339', '340', '342', '343', '344', '345', '346', '347', '348',
-                '354', '355', '356', '361', '362', '363', '364', '365', '366', '367', '368', '369', '370', '371', '372', '373',
-                '374', '375', '377', '379', '383', '384', '385', '386', '387', '388', '390', '391', '393', '395', '396', '397',
-                '406', '407', '408', '409', '410', '411', '412', '413', '414', '415', '416', '417', '418', '419', '420', '421',
-                '422', '423', '706', '709', '711', '712', '714', '715', '717', '728', '729', '731', '733', '734', '739', '740',
-                '742', '743', '744', '745', '746', '747', '748', '749',
+                '105',
+                '106',
+                '107',
+                '108',
+                '109',
+                '110',
+                '159',
+                '1101',
+                '1102',
+                '1103',
+                '1104',
+                '1105',
+                '120',
+                '129',
+                '130',
+                '131',
+                '132',
+                '133',
+                '134',
+                '135',
+                '138',
+                '201',
+                '202',
+                '203',
+                '204',
+                '205',
+                '207',
+                '208',
+                '209',
+                '210',
+                '211',
+                '212',
+                '213',
+                '214',
+                '215',
+                '217',
+                '218',
+                '227',
+                '231',
+                '232',
+                '233',
+                '234',
+                '235',
+                '237',
+                '245',
+                '301',
+                '302',
+                '303',
+                '304',
+                '306',
+                '308',
+                '309',
+                '310',
+                '311',
+                '312',
+                '313',
+                '316',
+                '317',
+                '318',
+                '320',
+                '321',
+                '323',
+                '324',
+                '325',
+                '326',
+                '327',
+                '328',
+                '329',
+                '330',
+                '331',
+                '332',
+                '333',
+                '334',
+                '335',
+                '336',
+                '337',
+                '338',
+                '339',
+                '340',
+                '342',
+                '343',
+                '344',
+                '345',
+                '346',
+                '347',
+                '348',
+                '354',
+                '355',
+                '356',
+                '361',
+                '362',
+                '363',
+                '364',
+                '365',
+                '366',
+                '367',
+                '368',
+                '369',
+                '370',
+                '371',
+                '372',
+                '373',
+                '374',
+                '375',
+                '377',
+                '379',
+                '383',
+                '384',
+                '385',
+                '386',
+                '387',
+                '388',
+                '390',
+                '391',
+                '393',
+                '395',
+                '396',
+                '397',
+                '406',
+                '407',
+                '408',
+                '409',
+                '410',
+                '411',
+                '412',
+                '413',
+                '414',
+                '415',
+                '416',
+                '417',
+                '418',
+                '419',
+                '420',
+                '421',
+                '422',
+                '423',
+                '706',
+                '709',
+                '711',
+                '712',
+                '714',
+                '715',
+                '717',
+                '728',
+                '729',
+                '731',
+                '733',
+                '734',
+                '739',
+                '740',
+                '742',
+                '743',
+                '744',
+                '745',
+                '746',
+                '747',
+                '748',
+                '749',
             ];
             $msg = '';
             break;
@@ -2842,7 +2992,7 @@ function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
         $arrayEnd = $arrayPersonalized;
     }
 
-    if (! in_array($dataTxt[$key], $arrayEnd, 1)) {
+    if (!in_array($dataTxt[$key], $arrayEnd, 1)) {
 
         $array = implode(', ', $arrayEnd);
 
@@ -2888,7 +3038,7 @@ function validateStringRange($dataTxt, $key, &$errorMessages, $min = 0, $max = 9
 {
     $length = mb_strlen(strval($dataTxt[$key]), 'UTF-8');
 
-    if (! ($length >= $min && $length <= $max)) {
+    if (!($length >= $min && $length <= $max)) {
         $errorMessages[] = [
             'validacion' => 'validateStringRange',
             'validacion_type_Y' => $validacion_type_Y,
@@ -2911,7 +3061,7 @@ function validateField_codPais($dataTxt, $key, &$errorMessages, $dataExtra = nul
 
     $country = Pais::where('codigo', $dataTxt[$key])->first();
 
-    if (! $country) {
+    if (!$country) {
         $errorMessages[] = [
             'validacion' => 'validateField_codPaisOrigen',
             'validacion_type_Y' => $validacion_type_Y,
