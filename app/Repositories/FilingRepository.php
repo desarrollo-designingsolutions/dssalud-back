@@ -135,10 +135,15 @@ class FilingRepository extends BaseRepository
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
 
+        $type = "JSON";
+        if($data->type == TypeFilingEnum::FILING_TYPE_001){
+            $type = "TXT";
+        }
+
         // Definir las validaciones
         $validations = [
             ['key' => 'validationZip', 'type' => 'ZIP'],
-            ['key' => 'validationTxt', 'type' => 'TXT'],
+            ['key' => 'validationTxt', 'type' => $type],
             // Agrega más objetos de validación aquí según sea necesario
         ];
 

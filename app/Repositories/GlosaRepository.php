@@ -20,11 +20,12 @@ class GlosaRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function ()  use ($request) {
+        // return $this->cacheService->remember($cacheKey, function ()  use ($request) {
 
             $query = QueryBuilder::for($this->model->query())
-                ->join("users", "users.id", "=", "user_id")
-                ->join("services", "services.id", "=", "service_id")
+                ->select("glosas.*")
+                // ->join("users", "users.id", "=", "user_id")
+                // ->join("services", "services.id", "=", "service_id")
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
@@ -60,7 +61,7 @@ class GlosaRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        }, Constants::REDIS_TTL);
+        // }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])

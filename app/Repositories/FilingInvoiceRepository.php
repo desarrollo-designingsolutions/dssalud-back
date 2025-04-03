@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Enums\Filing\TypeFilingEnum;
 use App\Helpers\Constants;
 use App\Models\FilingInvoice;
 use App\QueryBuilder\Filters\DataSelectFilter;
@@ -202,10 +203,14 @@ class FilingInvoiceRepository extends BaseRepository
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
 
+        $type = "JSON";
+        if($data->filing->type == TypeFilingEnum::FILING_TYPE_001){
+            $type = "TXT";
+        }
         // Definir las validaciones
         $validations = [
             ['key' => 'validationXml', 'type' => 'XML'],
-            ['key' => 'validationTxt', 'type' => 'TXT'],
+            ['key' => 'validationTxt', 'type' => $type],
             // Agrega más objetos de validación aquí según sea necesario
         ];
 

@@ -33,6 +33,8 @@ class UserRepository extends BaseRepository
                 ->select(['users.id', 'users.name', 'users.surname', 'users.email', 'users.is_active', 'users.role_id'])
                 ->allowedFilters([
                     'is_active',
+                    'email',
+                    'name',
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
                             $query->orWhereRaw("CONCAT(users.name, ' ', users.surname) LIKE ?", ["%{$value}%"]);

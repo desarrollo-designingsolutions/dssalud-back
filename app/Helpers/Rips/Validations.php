@@ -1323,9 +1323,20 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
         $query->where('codigo', strval($dataTxt[$key]));
     })->first();
 
+
     $error = false;
     if (!$cie10) {
-        $error = true;
+        $errorMessages[] = [
+            'validacion' => 'RVC028',
+            'validacion_type_Y' => 'N',
+            'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
+            'file' => $dataTxt['file_name'] ?? null,
+            'row' => $dataTxt['row'] ?? null,
+            'column' => $key,
+            'data' => $dataTxt[$key],
+            'error' => 'No se evidencia el diagnostico del paciente.',
+        ];
+        $validation = false;
     } else {
         if ($cie10->extra_X == 'A' || ($cie10->extra_X == $value2['codSexo'])) {
             $error = false;
@@ -1334,7 +1345,7 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
         }
     }
 
-    if ($error && !empty($dataTxt[$key])) {
+    if ($error) {
         $errorMessages[] = [
             'validacion' => 'RVC028',
             'validacion_type_Y' => 'N',
@@ -1348,10 +1359,6 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
 
         $validation = false;
     }
-
-    logMessage("se ejecuto la validacion RVC028");
-
-    logMessage(!empty($dataTxt[$key]));
 
     return [
         'validacion_type_Y' => 'N',
