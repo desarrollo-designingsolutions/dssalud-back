@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\Constants;
 use App\Http\Requests\Authentication\PassportAuthLoginRequest;
+use App\Http\Requests\Authentication\PassportAuthPasswordResetLinkRequest;
 use App\Http\Requests\Authentication\PassportAuthSendResetLinkRequest;
 use App\Jobs\BrevoProcessSendEmail;
 use App\Models\Role;
@@ -220,15 +221,9 @@ class PassportAuthController extends Controller
         });
     }
 
-    public function passwordReset(Request $request)
+    public function passwordReset(PassportAuthPasswordResetLinkRequest $request)
     {
         return $this->execute(function () use ($request) {
-            // Validar los datos recibidos
-            $request->validate([
-                'token' => 'required',
-                'email' => 'required|email',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
 
             $response = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
