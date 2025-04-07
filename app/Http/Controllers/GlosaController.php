@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\Constants;
+use App\Http\Requests\Glosa\GlosaMasiveStoreRequest;
 use App\Http\Requests\Glosa\GlosaStoreRequest;
 use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
 use App\Http\Resources\Glosa\GlosaFormResource;
@@ -14,6 +15,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Repositories\GlosaRepository;
 use App\Repositories\ServiceRepository;
+use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -30,6 +32,7 @@ class GlosaController extends Controller
         protected GlosaRepository $glosaRepository,
         protected QueryController $queryController,
         protected ServiceRepository $serviceRepository,
+        protected CacheService $cacheService,
     ) {}
 
     public function paginate(Request $request)
@@ -64,7 +67,11 @@ class GlosaController extends Controller
 
         return $this->runTransaction(function () use ($request) {
 
-            $data = $this->glosaRepository->store($request->all());
+            $glosa = $this->glosaRepository->store($request->all());
+
+            changeServiceData($glosa->service_id);
+
+            $this->cacheService->clearByPrefix('string:glosas*');
 
             return [
                 'code' => 200,
@@ -94,6 +101,10 @@ class GlosaController extends Controller
 
             $glosa = $this->glosaRepository->store($post);
 
+            changeServiceData($glosa->service_id);
+
+            $this->cacheService->clearByPrefix('string:glosas*');
+
             return [
                 'code' => 200,
                 'message' => 'Glosa modificada correctamente',
@@ -107,7 +118,14 @@ class GlosaController extends Controller
             $glosa = $this->glosaRepository->find($id);
             if ($glosa) {
 
+                $service_id = $glosa->service_id;
+
                 $glosa->delete();
+
+                changeServiceData($service_id);
+
+                $this->cacheService->clearByPrefix('string:glosas*');
+
                 $msg = 'Registro eliminado correctamente';
             } else {
                 $msg = 'El registro no existe';
@@ -159,7 +177,7 @@ class GlosaController extends Controller
         });
     }
 
-    public function storeMasive(Request $request)
+    public function storeMasive(GlosaMasiveStoreRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
 
@@ -178,7 +196,12 @@ class GlosaController extends Controller
                     ];
                     $this->glosaRepository->store($data);
                 }
+
+                changeServiceData($serviceId);
             }
+
+            $this->cacheService->clearByPrefix('string:glosas*');
+
             return [
                 'code' => 200,
                 'message' => 'Glosa/s agregada/s correctamente',

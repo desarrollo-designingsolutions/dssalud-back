@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Glosa extends Model
 {
-    use HasFactory, HasUuids, Cacheable, Searchable;
+    use HasFactory, HasUuids, Searchable;
 
     protected $guarded = [];
 

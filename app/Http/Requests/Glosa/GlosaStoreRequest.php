@@ -31,7 +31,7 @@ class GlosaStoreRequest extends FormRequest
             'user_id' => 'required',
             'service_id' => 'required',
             'code_glosa_id' => 'required',
-            'glosa_value' => 'required',
+            'glosa_value' => 'required|numeric|gt:0',
             'observation' => 'required',
         ];
 
@@ -45,6 +45,8 @@ class GlosaStoreRequest extends FormRequest
             'service_id.required' => 'El campo es obligatorio',
             'code_glosa_id.required' => 'El campo es obligatorio',
             'glosa_value.required' => 'El campo es obligatorio',
+            'glosa_value.numeric' => 'El valor debe ser numérico',
+            'glosa_value.gt' => 'El valor debe ser mayor que cero',
             'observation.required' => 'El campo es obligatorio',
         ];
     }
@@ -52,7 +54,8 @@ class GlosaStoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'code_glosa_id' => isArray($this->code_glosa_id) ? $this->code_glosa_id['value'] : $this->code_glosa_id 
+            'code_glosa_id' => isArray($this->code_glosa_id) ? $this->code_glosa_id['value'] : $this->code_glosa_id,
+            'glosa_value' => !is_numeric($this->glosa_value) ? floatval($this->glosa_value) : $this->glosa_value,
         ]);
     }
 
