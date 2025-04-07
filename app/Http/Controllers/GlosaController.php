@@ -41,8 +41,6 @@ class GlosaController extends Controller
             $data = $this->glosaRepository->paginate($request->all());
             $tableData = GlosaPaginateResource::collection($data);
 
-            $this->cacheService->clearByPrefix(':string:glosas*');
-
             return [
                 'code' => 200,
                 'tableData' => $tableData,
@@ -73,7 +71,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix(':string:glosas*');
+            $this->cacheService->clearByPrefix('string:glosas*');
 
             return [
                 'code' => 200,
@@ -105,7 +103,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix(':string:glosas*');
+            $this->cacheService->clearByPrefix('string:glosas*');
 
             return [
                 'code' => 200,
@@ -126,7 +124,7 @@ class GlosaController extends Controller
 
                 changeServiceData($service_id);
 
-                $this->cacheService->clearByPrefix(':string:glosas*');
+                $this->cacheService->clearByPrefix('string:glosas*');
 
                 $msg = 'Registro eliminado correctamente';
             } else {
@@ -202,7 +200,7 @@ class GlosaController extends Controller
                 changeServiceData($serviceId);
             }
 
-            $this->cacheService->clearByPrefix(':string:glosas*');
+            $this->cacheService->clearByPrefix('string:glosas*');
 
             return [
                 'code' => 200,
