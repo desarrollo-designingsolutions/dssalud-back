@@ -41,6 +41,8 @@ class GlosaController extends Controller
             $data = $this->glosaRepository->paginate($request->all());
             $tableData = GlosaPaginateResource::collection($data);
 
+            $this->cacheService->clearByPrefix('string:glosas*');
+
             return [
                 'code' => 200,
                 'tableData' => $tableData,
