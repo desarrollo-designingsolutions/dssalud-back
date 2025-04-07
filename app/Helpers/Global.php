@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\Constants;
+use App\Models\Service;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -493,4 +494,23 @@ function sumVrServicio($valueJsonInvoice)
     }
 
     return $sumVrInvoice;
+}
+
+
+function changeServiceData($service_id)
+{
+    $service = Service::find($service_id);
+
+    $value_glosa = $service->glosas->sum("glosa_value");
+
+    if ($value_glosa > $service->total_value) {
+        $value_glosa = $service->total_value;
+    }
+
+    $value_approved =  $service->total_value - $value_glosa;
+
+    $service->update([
+        'value_glosa' => $value_glosa,
+        'value_approved' => $value_approved,
+    ]);
 }
