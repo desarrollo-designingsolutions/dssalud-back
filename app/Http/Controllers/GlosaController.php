@@ -161,7 +161,6 @@ class GlosaController extends Controller
 
     public function storeMasive(Request $request)
     {
-
         return $this->runTransaction(function () use ($request) {
 
             $servicesIDs = $request->input('servicesIds');
@@ -180,8 +179,6 @@ class GlosaController extends Controller
                     $this->glosaRepository->store($data);
                 }
             }
-
-
             return [
                 'code' => 200,
                 'message' => 'Glosa/s agregada/s correctamente',
