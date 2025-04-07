@@ -499,6 +499,11 @@ function sumVrServicio($valueJsonInvoice)
 function changeServiceData($service_id)
 {
     // logMessage('Cambiar datos de servicio');
+    // logMessage('Cambiar datos de servicio');
+    // logMessage('Cambiar datos de servicio');
+    // logMessage('Cambiar datos de servicio');
+    // logMessage('Cambiar datos de servicio');
+    // logMessage('Cambiar datos de servicio');
     $service = Service::find($service_id);
 
     $value_glosa = $service->glosas->sum("glosa_value");
