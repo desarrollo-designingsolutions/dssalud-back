@@ -496,6 +496,9 @@ function sumVrServicio($valueJsonInvoice)
     return $sumVrInvoice;
 }
 
+
+
+
 function changeServiceData($service_id)
 {
     $service = Service::find($service_id);

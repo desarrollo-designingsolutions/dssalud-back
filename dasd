@@ -1,0 +1,238 @@
+* [33m9a95e7d[m[33m ([m[1;36mHEAD -> [m[1;32mfeature/ValidationsTxt[m[33m)[m Mover archivos grandes a Git LFS
+* [33m4634146[m Mover archivos grandes a Git LFS
+* [33m2695512[m cambios funcionales
+* [33md1a9859[m cambios funcionales
+*   [33m645b31f[m[33m ([m[1;31morigin/main[m[33m)[m Cambios
+[32m|[m[33m\[m  
+[32m|[m * [33m9b2e713[m[33m ([m[1;31morigin/feature/ValidationsTxt[m[33m)[m cambios funcionales
+[32m|[m * [33ma8b3063[m cambios funcionales
+* [33m|[m [33mf40e086[m cambios nuevos
+* [33m|[m [33m7f9fb2c[m Cambios
+* [33m|[m [33m34ad5c7[m cambios
+* [33m|[m [33m2d5aa23[m cambios nuevos
+[33m|[m[33m/[m  
+* [33m1b376c1[m cambios funcionales
+* [33ma8385e5[m cambios funcionales
+*   [33m71d052a[m Merge branch 'feature/ValidationsTxt' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[34m|[m[35m\[m  
+[34m|[m * [33m09aacea[m cambios funcionales
+[34m|[m *   [33mb052836[m Merge remote-tracking branch 'origin/main' into feature/ValidationsTxt
+[34m|[m [36m|[m[1;31m\[m  
+* [36m|[m [1;31m|[m [33m2527b3f[m Merge branch 'feature/ValidationsTxt' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[1;31m|[m[36m\[m[36m|[m [1;31m|[m 
+[1;31m|[m [36m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[36m|[m   
+[1;31m|[m * [33m1057115[m cambios funcionales
+* [1;33m|[m [33mba007e0[m Cambios
+* [1;33m|[m [33mb6a3d99[m Merge branch 'feature/ValidationsTxt' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[1;34m|[m[1;33m\[m[1;33m|[m 
+[1;34m|[m * [33m545e97a[m cambios funcionales
+[1;34m|[m *   [33m8220796[m Merge remote-tracking branch 'origin/feature/create-glosas-in-invoice-audit' into feature/ValidationsTxt
+[1;34m|[m [1;36m|[m[31m\[m  
+[1;34m|[m [1;36m|[m * [33m508f81d[m[33m ([m[1;31morigin/feature/create-glosas-in-invoice-audit[m[33m)[m Cambios
+* [1;36m|[m [31m|[m [33m3443a42[m Cambios
+[1;36m|[m[1;36m/[m [31m/[m  
+* [31m|[m [33me22a444[m Cambios
+* [31m|[m [33m3759516[m Merge branch 'feature/create-glosas-in-invoice-audit' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[32m|[m[31m\[m[31m|[m 
+[32m|[m * [33md28fd10[m Cambios
+* [33m|[m [33mdd0d9dc[m Cambios
+* [33m|[m [33ma17019b[m cambios funcionales
+* [33m|[m [33mee7c87f[m cambios funcionales
+* [33m|[m [33m3d19f6a[m cambios funcionales
+* [33m|[m   [33mbfc6ca2[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[33m|[m[35m\[m [33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+[33m|[m * [33m1351360[m[33m ([m[1;31morigin/feature/validationsFiles[m[33m)[m cambios nuevos
+* [35m|[m [33m5321379[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[36m|[m[35m\[m[35m|[m 
+[36m|[m * [33m8292cf8[m cambios nuevos
+* [1;31m|[m [33mdd80044[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[1;32m|[m[1;31m\[m[1;31m|[m 
+[1;32m|[m * [33m8b10a29[m cambios nuevos
+* [1;33m|[m   [33mcbce488[m Merge remote-tracking branch 'origin/feature/create-glosas-in-invoice-audit' into feature/ValidationsTxt
+[1;34m|[m[1;35m\[m [1;33m\[m  
+[1;34m|[m * [1;33m|[m [33m7568267[m Cambios
+[1;34m|[m * [1;33m|[m [33m03c73ad[m Cambios
+[1;34m|[m [1;36m|[m[1;33m\[m[1;33m|[m 
+[1;34m|[m * [1;33m|[m [33mcccb720[m Cambios
+* [31m|[m [1;33m|[m [33m36263f6[m cambios
+[1;33m|[m [31m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[31m|[m   
+* [31m|[m   [33m45f2d4a[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[31m|[m[33m\[m [31m\[m  
+[31m|[m [33m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m   
+[31m|[m * [33md81307c[m cambios nuevos
+[31m|[m *   [33m216f60e[m Merge remote-tracking branch 'origin/main' into feature/validationsFiles
+[31m|[m [34m|[m[35m\[m  
+[31m|[m * [35m\[m   [33m7eaf9e2[m Merge remote-tracking branch 'origin/feature/ValidationsTxt' into feature/validationsFiles
+[31m|[m [36m|[m[1;31m\[m [35m\[m  
+* [36m|[m [1;31m|[m [35m|[m [33m6e5710a[m cambios funcionales
+* [36m|[m [1;31m|[m [35m|[m   [33md439d51[m Merge remote-tracking branch 'origin/feature/create-glosas-in-invoice-audit' into feature/ValidationsTxt
+[1;32m|[m[1;33m\[m [36m\[m [1;31m\[m [35m\[m  
+[1;32m|[m * [36m|[m [1;31m|[m [35m|[m [33ma522417[m Se creo el apartado para la creacion de glosasa en las facturas del usuario
+[1;32m|[m [35m|[m [36m|[m[35m_[m[1;31m|[m[35m/[m  
+[1;32m|[m [35m|[m[35m/[m[36m|[m [1;31m|[m   
+* [35m|[m [36m|[m [1;31m|[m [33mbdf6f92[m Merge remote-tracking branch 'origin/main' into feature/ValidationsTxt
+[1;34m|[m[35m\[m[35m|[m [36m|[m [1;31m|[m 
+[1;34m|[m * [36m|[m [1;31m|[m [33maaaafdc[m Cambios
+* [1;35m|[m [36m|[m [1;31m|[m [33m35a5f65[m c
+[1;35m|[m[1;35m/[m [36m/[m [1;31m/[m  
+* [36m|[m [1;31m|[m [33m80b0186[m cambios funcionales
+* [36m|[m [1;31m|[m [33m3a267ad[m Cambios
+* [36m|[m [1;31m|[m   [33m145cb55[m cambios funcionales
+[1;36m|[m[31m\[m [36m\[m [1;31m\[m  
+[1;36m|[m * [36m|[m [1;31m|[m [33m80b8cb0[m cambios
+[1;36m|[m [1;31m|[m [36m|[m[1;31m/[m  
+[1;36m|[m [1;31m|[m[1;31m/[m[36m|[m   
+* [1;31m|[m [36m|[m   [33mf44cf2e[m Merge remote-tracking branch 'origin/feature/module-medical-bills' into feature/ValidationsTxt
+[1;31m|[m[33m\[m [1;31m\[m [36m\[m  
+[1;31m|[m [33m|[m[1;31m/[m [36m/[m  
+[1;31m|[m[1;31m/[m[33m|[m [36m|[m   
+[1;31m|[m * [36m|[m [33m1d6a5fb[m[33m ([m[1;31morigin/feature/module-medical-bills[m[33m)[m Cambios
+[1;31m|[m * [36m|[m [33m2cbcba7[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/module-medical-bills
+[1;31m|[m [34m|[m[36m\[m[36m|[m 
+[1;31m|[m [34m|[m * [33m8172685[m cambios nuevos
+[1;31m|[m [34m|[m * [33m037b7e7[m cambios nuevos
+[1;31m|[m * [35m|[m [33md5d837d[m Se agrego el modulo de Auditoria
+[1;31m|[m [35m|[m[35m/[m  
+* [35m/[m [33m3855b13[m cambios funcionales
+[35m|[m[35m/[m  
+*   [33mbd867b3[m Merge remote-tracking branch 'origin/feature/module-medical-bills' into feature/ValidationsTxt
+[36m|[m[1;31m\[m  
+[36m|[m * [33m587b8ac[m Se realizo el flujo de asignacion en la central medica
+[36m|[m * [33m6f2f720[m Cambios
+* [1;31m|[m [33me6024ca[m cambios funcionales
+[1;31m|[m[1;31m/[m  
+* [33mbef7638[m cambios funcionales
+*   [33mc7b0990[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m12aa0e4[m cambios
+* [1;33m|[m [33mc89dbd8[m cambios funcionales
+[1;33m|[m[1;33m/[m  
+* [33m20300d1[m cambios
+* [33m332aea5[m cambios funcionales
+* [33m5942d7c[m cambios funcionales
+*   [33md9b3063[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33mc88c3e5[m validaciones at
+* [1;35m|[m [33m4887c83[m cambios funcionales
+[1;35m|[m[1;35m/[m  
+* [33mb86da74[m cambios funcionales
+*   [33m3abde53[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m616dfeb[m validaciones ah
+* [31m|[m [33m9ec9860[m Merge remote-tracking branch 'origin/feature/validationsFiles' into feature/ValidationsTxt
+[32m|[m[31m\[m[31m|[m 
+[32m|[m * [33m4b1c727[m validaciones ah
+* [33m|[m [33m95283cc[m cambios
+[33m|[m[33m/[m  
+*   [33m1fc2d7d[m validaciones ap
+[34m|[m[35m\[m  
+[34m|[m *   [33ma3df9ed[m cambios
+[34m|[m [36m|[m[1;31m\[m  
+[34m|[m * [1;31m|[m [33mca41268[m c
+* [1;31m|[m [1;31m|[m [33md9ea8d1[m validaciones ap
+[1;31m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;31m|[m   
+* [1;31m|[m [33m1668eb0[m validations AF
+* [1;31m|[m [33m3464d33[m validaciones af
+[1;31m|[m[1;31m/[m  
+* [33mdd9f160[m cambios funcionales
+* [33m4d95086[m[33m ([m[1;31morigin/feature/TableFilter[m[33m, [m[1;32mfeature/TableFilter[m[33m)[m cambios funcionales
+* [33m37b205e[m cambios funcionales
+*   [33m8ccf3c0[m Merge remote-tracking branch 'origin/feature/TableFilterUpdate' into feature/TableFilter
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m045c96e[m[33m ([m[1;31morigin/feature/TableFilterUpdate[m[33m)[m cambios
+* [1;33m|[m [33m59472f4[m cambios funcionales
+* [1;33m|[m [33m9ba1b46[m cambios funcionales
+* [1;33m|[m [33mb14d4fa[m cambios funcionales
+[1;33m|[m[1;33m/[m  
+* [33m50bd9fc[m cambios funcionales
+* [33m70b1903[m cambios funcionales
+* [33m1a7972f[m[33m ([m[1;32mmain[m[33m, [m[1;32mfeature/filing[m[33m)[m Cambios
+* [33m264cae0[m Cambios realizados en el modulo de roles
+* [33m303b5a1[m Cambios realizados al modulo de roles
+*   [33mc038d1c[m Merge remote-tracking branch 'refs/remotes/origin/main'
+[1;34m|[m[1;35m\[m  
+[1;34m|[m *   [33m3c91415[m Merge branch 'feature/filing' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[1;34m|[m [1;36m|[m[31m\[m  
+[1;34m|[m [1;36m|[m * [33m1c13889[m[33m ([m[1;31morigin/feature/filing[m[33m)[m cambios funcionales
+[1;34m|[m * [31m|[m [33mb620c14[m Merge branch 'feature/filing' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[1;34m|[m [32m|[m[31m\[m[31m|[m 
+[1;34m|[m [32m|[m * [33m43c9e87[m cambios funcionales
+[1;34m|[m [32m|[m *   [33mc130208[m Merge remote-tracking branch 'origin/main' into feature/filing
+[1;34m|[m [32m|[m [34m|[m[35m\[m  
+[1;34m|[m * [34m|[m [35m|[m [33m06f4410[m Merge branch 'feature/filing' of https://github.com/desarrollo-designingsolutions/dssalud-back into main
+[1;34m|[m [35m|[m[34m\[m[34m|[m [35m|[m 
+[1;34m|[m [35m|[m [34m|[m[35m/[m  
+[1;34m|[m [35m|[m[35m/[m[34m|[m   
+[1;34m|[m [35m|[m * [33mce8b723[m cambios funcionales
+[1;34m|[m * [1;31m|[m [33m289c402[m Cambios
+* [1;31m|[m [1;31m|[m [33ma5c34ad[m Cambios
+[1;32m|[m[1;31m\[m[1;31m|[m [1;31m|[m 
+[1;32m|[m * [1;31m|[m [33me3bffb2[m cambios
+[1;32m|[m [1;31m|[m[1;31m/[m  
+[1;32m|[m * [33m5169da7[m cambios funcionales
+[1;32m|[m * [33m16d78b1[m cambios funcionales
+[1;32m|[m * [33m9023832[m[33m ([m[1;31morigin/feature/inconsistencies[m[33m)[m cambios
+[1;32m|[m *   [33m92556d9[m Merge remote-tracking branch 'origin/feature/filing' into feature/inconsistencies
+[1;32m|[m [1;34m|[m[1;35m\[m  
+[1;32m|[m [1;34m|[m * [33m039cc37[m cambios funcionales
+[1;32m|[m * [1;35m|[m [33m39bb39f[m cambios
+[1;32m|[m * [1;35m|[m [33mbbb57e3[m xml masivos
+[1;32m|[m [1;35m|[m[1;35m/[m  
+[1;32m|[m *   [33m32c5d6f[m xml masivos
+[1;32m|[m [1;36m|[m[31m\[m  
+[1;32m|[m [1;36m|[m * [33m24d23ac[m cambios funcionales
+[1;32m|[m * [31m|[m [33m1720344[m xml masivos
+[1;32m|[m * [31m|[m [33m6be677e[m cambios modulo
+[1;32m|[m [31m|[m[31m/[m  
+[1;32m|[m * [33me38dc74[m cambios modulo
+[1;32m|[m * [33m8293d4c[m cambios funcionales
+[1;32m|[m *   [33m4c9145c[m cambios funcionales
+[1;32m|[m [32m|[m[33m\[m  
+[1;32m|[m [32m|[m * [33m38c94a0[m cambios modulo
+[1;32m|[m [32m|[m *   [33m32db85a[m Merge remote-tracking branch 'origin/feature/filing' into fix/filing/support_list
+[1;32m|[m [32m|[m [34m|[m[35m\[m  
+[1;32m|[m [32m|[m * [35m|[m [33md4e0d09[m xml masivos
+[1;32m|[m * [35m|[m [35m|[m [33mf126373[m cambios funcionales
+[1;32m|[m * [35m|[m [35m|[m [33mba9f76d[m Merge remote-tracking branch 'origin/fix/filing/support_list' into feature/filing
+[1;32m|[m [35m|[m[35m\[m[35m|[m [35m|[m 
+[1;32m|[m [35m|[m [35m|[m[35m/[m  
+[1;32m|[m [35m|[m[35m/[m[35m|[m   
+[1;32m|[m [35m|[m * [33m6527e50[m[33m ([m[1;31morigin/fix/filing/support_list[m[33m)[m xml masivos
+[1;32m|[m * [1;31m|[m [33m677b204[m cambios funcionales
+[1;32m|[m [1;31m|[m[1;31m/[m  
+[1;32m|[m * [33m9c5cf42[m cambios funcionales
+[1;32m|[m * [33mf42f151[m cambios funcionales
+[1;32m|[m *   [33m2e70278[m Merge remote-tracking branch 'origin/fix/filing/support_list' into feature/filing
+[1;32m|[m [1;32m|[m[1;33m\[m  
+[1;32m|[m [1;32m|[m * [33ma2f3bd4[m xml cambios
+[1;32m|[m * [1;33m|[m [33mdf63e79[m[33m ([m[1;31morigin/feature/thirds-module[m[33m)[m Merge remote-tracking branch 'origin/fix/filing/support_list' into feature/thirds-module
+[1;32m|[m [1;34m|[m[1;33m\[m[1;33m|[m 
+[1;32m|[m [1;34m|[m * [33m95a5829[m xml cambios
+[1;32m|[m [1;34m|[m * [33m79499fb[m cambiso xml
+[1;32m|[m [1;34m|[m *   [33m3835fae[m cambios
+[1;32m|[m [1;34m|[m [1;36m|[m[31m\[m  
+[1;32m|[m [1;34m|[m [1;36m|[m * [33m9ee0677[m cambios funcionales
+[1;32m|[m [1;34m|[m * [31m|[m [33m1acaebc[m cambios
+[1;32m|[m [1;34m|[m * [31m|[m [33m775b9eb[m tabla y opcion de eliminar con websockets
+[1;32m|[m [1;34m|[m [32m|[m[31m\[m[31m|[m 
+[1;32m|[m [1;34m|[m [32m|[m * [33mce3c9ce[m cambios funcionales
+[1;32m|[m [1;34m|[m [32m|[m * [33m4cebc19[m cambios funcionales
+[1;32m|[m [1;34m|[m * [33m|[m [33m4025fc0[m tabla y opcion de eliminar con websockets
+[1;32m|[m [1;34m|[m [33m|[m[33m/[m  
+[1;32m|[m [1;34m|[m * [33m78ca658[m cambios funcionales
+[1;32m|[m [1;34m|[m * [33me0968a5[m cambios funcionales
+[1;32m|[m [1;34m|[m * [33m4cb1878[m cambios funcionales
+[1;32m|[m [1;34m|[m * [33m7f5e74c[m cambios funcionales
+[1;32m|[m [1;34m|[m * [33m5cf7710[m[33m ([m[1;31morigin/feature/ripsAutomatic[m[33m, [m[1;32mfeature/ripsAutomatic[m[33m)[m cambios funcionales
+[1;32m|[m * [33m|[m [33m4976484[m Cambios
+[1;32m|[m [33m|[m[33m/[m  
+* [33m|[m [33maa84aa0[m Cambios
+* [33m|[m [33mdc16335[m Cambios
+[33m|[m[33m/[m  
+* [33m55a9d13[m first commit
