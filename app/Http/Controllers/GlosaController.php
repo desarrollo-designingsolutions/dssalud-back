@@ -28,12 +28,16 @@ class GlosaController extends Controller
 {
     use HttpResponseTrait;
 
+    private $key_redis_project;
+
     public function __construct(
         protected GlosaRepository $glosaRepository,
         protected QueryController $queryController,
         protected ServiceRepository $serviceRepository,
         protected CacheService $cacheService,
-    ) {}
+    ) {
+        $this->key_redis_project = env('KEY_REDIS_PROJECT');
+    }
 
     public function paginate(Request $request)
     {
@@ -71,7 +75,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix('string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
 
             return [
                 'code' => 200,
@@ -103,7 +107,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix('string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
 
             return [
                 'code' => 200,
@@ -124,7 +128,7 @@ class GlosaController extends Controller
 
                 changeServiceData($service_id);
 
-                $this->cacheService->clearByPrefix('string:glosas*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
 
                 $msg = 'Registro eliminado correctamente';
             } else {
@@ -200,7 +204,7 @@ class GlosaController extends Controller
                 changeServiceData($serviceId);
             }
 
-            $this->cacheService->clearByPrefix('string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
 
             return [
                 'code' => 200,
