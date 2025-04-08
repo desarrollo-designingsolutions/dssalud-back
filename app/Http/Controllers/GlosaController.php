@@ -161,9 +161,9 @@ class GlosaController extends Controller
 
 
 
-            ProcessGlosasServiceJob2::dispatch();
+            // ProcessGlosasServiceJob2::dispatch();
 
-            // $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
+            $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
 
             return [
                 'code' => 200,
