@@ -259,6 +259,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
     {
         $normalizedValue = strtoupper($value);
         $key = "services:{$normalizedValue}";
+        
 
         // Verificamos si el hash existe
         if (Redis::exists($key)) {
