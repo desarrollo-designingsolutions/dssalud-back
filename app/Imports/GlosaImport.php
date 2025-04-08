@@ -118,34 +118,33 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         //     return null; // Omitir esta fila
         // }
 
-
-
+        
         Glosa::create($data);
         logMessage("creacion");
 
         // Usar un Set de Redis para almacenar solo service_id únicos
-        Redis::sadd("set:glosas_service_ids_{$this->user_id}", $row[1]);
+        // Redis::sadd("set:glosas_service_ids_{$this->user_id}", $row[1]);
 
 
         // Emitir evento de progreso
         ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
-        if ($progress >= 100) {
+        // if ($progress >= 100) {
 
-            // Obtener todos los service_id únicos como un array
-            $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
+        //     // Obtener todos los service_id únicos como un array
+        //     $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
 
-            // Convertir a colección si prefieres trabajar con Laravel Collections
-            $uniqueServiceIdsCollection = collect($uniqueServiceIds);
+        //     // Convertir a colección si prefieres trabajar con Laravel Collections
+        //     $uniqueServiceIdsCollection = collect($uniqueServiceIds);
 
 
-            foreach ($uniqueServiceIdsCollection as $serviceId) {
-                ProcessGlosasServiceJob::dispatch($serviceId);
-            }
+        //     foreach ($uniqueServiceIdsCollection as $serviceId) {
+        //         ProcessGlosasServiceJob::dispatch($serviceId);
+        //     }
 
-            // Opcional: Limpiar el Set de Redis después de usarlo
-            Redis::del("set:glosas_service_ids_{$this->user_id}");
-        }
+        //     // Opcional: Limpiar el Set de Redis después de usarlo
+        //     Redis::del("set:glosas_service_ids_{$this->user_id}");
+        // }
 
         return null;
         // });
