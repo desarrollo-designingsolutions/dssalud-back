@@ -46,8 +46,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
                 Redis::set("integer:glosas_import_total_{$this->user_id}", $totalRows);
                 Redis::set("integer:glosas_import_processed_{$this->user_id}", 0);
-
-                // Redis::del("list:glosas_import_errors_{$this->user_id}");
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
@@ -75,6 +73,9 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
                 // Emitir errores al front
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
+
+                // Limpiar errores
+                // Redis::del("list:glosas_import_errors_{$this->user_id}");
             }
         ];
     }
