@@ -2,16 +2,11 @@
 
 namespace App\Imports;
 
-// app/Imports/AssingmentImport.php
-
 use App\Events\ModalError;
 use App\Events\ProgressCircular;
 use App\Helpers\Constants;
 use App\Jobs\Glosa\ProcessGlosasServiceJob;
-use App\Models\CodeGlosa;
 use App\Models\Glosa;
-use App\Models\Service;
-use App\Models\User;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Events\AfterImport;
@@ -20,8 +15,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -49,7 +42,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
-
                 Redis::del("integer:glosas_import_total_{$this->user_id}");
                 Redis::del("integer:glosas_import_processed_{$this->user_id}");
 
@@ -58,105 +50,75 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
                 $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
                 $errorsFormatted = [];
 
-
                 if (!empty($errors)) {
-                    logger('Errores encontrados durante la importación:');
+                    // logger('Errores encontrados durante la importación:');
                     foreach ($errors as $index => $errorJson) {
-                        $errorData = json_decode($errorJson, true); // Decodificar el JSON
                         $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
-                        logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
+                        // logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
                     }
-                } else {
-                    logger('No se encontraron errores durante la importación.');
-                }
 
+                    // Limpiar errores
+                    Redis::del("list:glosas_import_errors_{$this->user_id}");
+                } else {
+                    // logger('No se encontraron errores durante la importación.');
+                }
 
                 // Emitir errores al front
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
-
-                // Limpiar errores
-                // Redis::del("list:glosas_import_errors_{$this->user_id}");
             }
         ];
     }
 
     public function model(array $row)
     {
-        // return DB::transaction(function () use ($row) {
+        return DB::transaction(function () use ($row) {
+            // Incrementar contador y calcular progreso
+            $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
+            $total = Redis::get("integer:glosas_import_total_{$this->user_id}") ?: 1;
+            $progress = ($processed / $total) * 100;
 
-        // Incrementar contador y calcular progreso
-        $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
-        $total = Redis::get("integer:glosas_import_total_{$this->user_id}") ?: 1;
-        $progress = ($processed / $total) * 100;
+            $data = [
+                'user_id' => $row[0],
+                'service_id' => $row[1],
+                'code_glosa_id' => $row[2],
+                'glosa_value' => $row[3],
+                'observation' => $row[4],
+            ];
 
-        $data = [
-            'user_id' => $row[0],
-            'service_id' => $row[1],
-            'code_glosa_id' => $row[2],
-            'glosa_value' => $row[3],
-            'observation' => $row[4],
-        ];
-        // logMessage($data);
+            // Validar los datos manualmente
+            if ($this->validations($row, $processed, $data)) {
+                // Emitir evento de progreso
+                ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
-        // Validar los datos manualmente
-
-        // $this->validations($row, $processed, $data);
-        // if ($this->validations($row, $processed, $data)) {
-        //     return null; // Si hay errores, omitir esta fila
-        // }
-
-
-        // $validator = Validator::make($data, $this->rules(), $this->customValidationMessages());
-        // logMessage($validator);
-
-        // if ($validator->fails()) {
-        //     // Guardar los errores en Redis como una lista
-        //     $errorData = [
-        //         'row' => $processed, // Número de fila
-        //         'data' => $data,     // Datos originales
-        //         'errors' => $validator->errors()->all(), // Mensajes de error
-        //     ];
-
-        //     logMessage($errorData);
-
-
-
-        //     Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-        //     return null; // Omitir esta fila
-        // }
-
-
-        Glosa::create($data);
-        logMessage("creacion");
-
-        // Usar un Set de Redis para almacenar solo service_id únicos
-        // Redis::sadd("set:glosas_service_ids_{$this->user_id}", $row[1]);
-
-
-        // Emitir evento de progreso
-        ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
-
-        if ($progress >= 100) {
-
-            logMessage("progreso 100");
-
-            // Obtener todos los service_id únicos como un array
-            $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
-
-            // Convertir a colección si prefieres trabajar con Laravel Collections
-            $uniqueServiceIdsCollection = collect($uniqueServiceIds);
-
-
-            foreach ($uniqueServiceIdsCollection as $serviceId) {
-                ProcessGlosasServiceJob::dispatch($serviceId);
+                return null; // Si hay errores, omitir esta fila
             }
 
-            // Opcional: Limpiar el Set de Redis después de usarlo
-            Redis::del("set:glosas_service_ids_{$this->user_id}");
-        }
+            Glosa::create($data);
 
-        return null;
-        // });
+            // Usar un Set de Redis para almacenar solo service_id únicos
+            Redis::sadd("set:glosas_service_ids_{$this->user_id}", $row[1]);
+
+            // Emitir evento de progreso
+            ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
+
+            if ($progress >= 100) {
+                // Obtener todos los service_id únicos como un array
+                $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
+
+                // Convertir a colección si prefieres trabajar con Laravel Collections
+                $uniqueServiceIdsCollection = collect($uniqueServiceIds);
+
+
+                foreach ($uniqueServiceIdsCollection as $serviceId) {
+                    ProcessGlosasServiceJob::dispatch($serviceId);
+                }
+
+                // Opcional: Limpiar el Set de Redis después de usarlo
+                Redis::del("set:glosas_service_ids_{$this->user_id}");
+            }
+
+            return null;
+        });
     }
 
     public function chunkSize(): int
@@ -256,13 +218,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
     public function codeGlosa($value, $field)
     {
-        // $data = CodeGlosa::chunk(10, function ($elements) use ($value, $field) {
-        //     return  collect($elements)->first(function ($element) use ($value, $field) {
-        //         return strtoupper($element->$field) === strtoupper($value);
-        //     });
-
-        // });
-
         $redisData = Redis::get('Redis_CodeGlosa');
         $cache = $redisData ? collect(json_decode($redisData, true)) : collect([]);
 

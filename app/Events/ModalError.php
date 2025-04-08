@@ -28,7 +28,7 @@ class ModalError implements ShouldBroadcastNow
     }
 
     public function broadcastWith()
-    { 
+    {
         return [
             'channel' => $this->channel,
             'errors' => $this->errors,
