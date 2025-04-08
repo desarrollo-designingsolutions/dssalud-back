@@ -182,7 +182,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
                 'column' => "2", // Número de columna
                 'row' => $processed, // Número de fila
                 'value' => $row[1],
-                'data' => $data,     // Datos originales
+                'data in' => $data,     // Datos originales
                 'errors' => "El ID del servicio no existe en la base de datos.", // Mensajes de error
             ];
 
