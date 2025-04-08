@@ -10,6 +10,7 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
+use App\Models\Service;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
@@ -177,8 +178,25 @@ class InvoiceAuditController extends Controller
     public function exportServices(Request $request)
     {
         return $this->execute(function () use ($request) {
-            // $data = $this->invoiceAuditRepository->paginateServices($request->all());
-            $services = $this->invoiceAuditRepository->paginateServices($request->all());
+
+            $services = Service::query();
+            $services->where(function ($query) use ($request) {
+
+                if (!empty($request['invoice_audit_id'])) {
+                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                }
+                if (!empty($request['patient_id'])) {
+                    $query->where('patient_id', $request['patient_id']);
+                }
+                if (!empty($request['third_id'])) {
+                    $query->where('third_id', $request['third_id']);
+                }
+                if (!empty($request['assignment_batch_id'])) {
+                    $query->where('assignment_batch_id', $request['assignment_batch_id']);
+                }
+            });
+            $services =  $services->get();
+
             $glosses = $this->codeGlosaRepository->list(
                 [
                     'typeData' => 'all',
@@ -205,10 +223,93 @@ class InvoiceAuditController extends Controller
     public function exportListServicesExcel(Request $request)
     {
         return $this->execute(function () use ($request) {
-            // $data = $this->invoiceAuditRepository->paginateServices($request->all());
             $services = $this->invoiceAuditRepository->paginateServices($request->all());
 
             $excel = Excel::raw(new ServiceListExcelExport($services), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function exportPatients(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            $services = Service::query()->with([
+                "patient" => function ($query) use ($request){
+                    if (!empty($request['patient_id'])) {
+                        $query->where('patient_id', $request['patient_id']);
+                    }
+                },
+                "invoice_audit" => function ($query) use ($request){
+                    if (!empty($request['invoice_audit_id'])) {
+                        $query->where('id', $request['invoice_audit_id']);
+                    }
+
+
+                    if (!empty($request['third_id'])) {
+                        $query->whereHas('third', function ($subQuery) use ($request) {
+                            if (!empty($request['third_id'])) {
+                                $subQuery->where('id', $request['third_id']);
+                            }
+                        });
+                    }
+
+                    $query->whereHas('assignment.assignmentBatche', function ($subQuery) use ($request) {
+                        if (!empty($request['assignment_batch_id'])) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        }
+                    });
+
+                },
+                // "invoice_audit.assignment.assignmentBatche"
+            ]);
+            $services->where(function ($query) use ($request) {
+
+                if (!empty($request['invoice_audit_id'])) {
+                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                }
+                if (!empty($request['patient_id'])) {
+                    $query->where('patient_id', $request['patient_id']);
+                }
+                if (!empty($request['third_id'])) {
+
+                    $query->whereHas('invoice_audit', function ($subQuery) use ($request) {
+                        if (!empty($request['third_id'])) {
+                            $subQuery->where('third_id', $request['third_id']);
+                        }
+                    });
+                }
+                if (!empty($request['assignment_batch_id'])) {
+
+                    $query->whereHas('invoice_audit.assignment.assignmentBatche', function ($subQuery) use ($request) {
+                        if (!empty($request['assignment_batch_id'])) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        }
+                    });
+                }
+            });
+            $services =  $services->get();
+
+
+            $glosses = $this->codeGlosaRepository->list(
+                [
+                    'typeData' => 'all',
+                    'is_active' => 1,
+                ]
+            );
+            $attachedData = [
+                [
+                    "id" => auth()->user()->id,
+                ]
+            ];
+
+            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
 

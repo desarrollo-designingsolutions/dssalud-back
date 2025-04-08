@@ -1,6 +1,12 @@
 <table>
     <thead>
         <tr>
+            {{-- <td>Paquete</td> --}}
+            <td>Tercero</td>
+            <td>Factura</td>
+            <td>Cedula</td>
+            <td>Nombre</td>
+
             <td>id</td>
             <td>invoice_audit_id</td>
             <td>patient_id</td>
@@ -14,6 +20,16 @@
     <tbody>
         @foreach ($data as $item)
             <tr>
+                {{-- <td> {{ $item["invoice_audit"]["assignment"]["assignmentBatche"]["name"] }}</td> --}}
+
+                <td> {{ $item["invoice_audit"]["third"]["name"] }}</td>
+
+                <td> {{ $item["invoice_audit"]["invoice_number"] }}</td>
+
+
+                <td> {{ $item['patient']["identification_number"] }}</td>
+                <td> {{ $item['patient']["first_name"] }}</td>
+
                 <td> {{ $item['id'] }}</td>
                 <td> {{ $item['invoice_audit_id'] }}</td>
                 <td> {{ $item['patient_id'] }}</td>

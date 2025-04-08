@@ -30,4 +30,5 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::post('/invoiceAudit/exportListServicesExcel', [InvoiceAuditController::class, 'exportListServicesExcel']);
 
+    Route::post('/invoiceAudit/exportPatients', [InvoiceAuditController::class, 'exportPatients']);
 });
