@@ -153,24 +153,28 @@ class GlosaController extends Controller
             Redis::set('Redis_User', User::select("id")->get());
             Redis::set('Redis_CodeGlosa', CodeGlosa::select("id")->get());
 
-
-            // $data = Service::select("id")->chunk(100, function ($elements)  {
-            //     return  $elements;
-            // });
-            // Redis::set('Redis_Service', $data);
-
-
-
-            // ProcessGlosasServiceJob2::dispatch();
+            // // Redis::del("list:glosas_import_errors_{$user_id}");
 
             $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
 
+            $errors = Redis::lrange("list:glosas_import_errors_{$user_id}", 0, -1);
+            $errorsFormatted = [];
+
+            if (!empty($errors)) {
+                foreach ($errors as $index => $errorJson) {
+                    $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
+                }
+            }
+
             return [
                 'code' => 200,
-                // 'csv' => $csv
+                'csv' => $csv,
+                'errors' => $errors,
+                'errorsFormatted' => $errorsFormatted
             ];
         });
     }
+
     public function createMasive()
     {
         return $this->execute(function () {

@@ -4,6 +4,7 @@ namespace App\Imports;
 
 // app/Imports/AssingmentImport.php
 
+use App\Events\ModalError;
 use App\Events\ProgressCircular;
 use App\Helpers\Constants;
 use App\Jobs\Glosa\ProcessGlosasServiceJob;
@@ -45,6 +46,8 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
                 Redis::set("integer:glosas_import_total_{$this->user_id}", $totalRows);
                 Redis::set("integer:glosas_import_processed_{$this->user_id}", 0);
+
+                // Redis::del("list:glosas_import_errors_{$this->user_id}");
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
@@ -52,20 +55,25 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
                 Redis::del("integer:glosas_import_total_{$this->user_id}");
                 Redis::del("integer:glosas_import_processed_{$this->user_id}");
 
-
                 // Recuperar y mostrar los errores almacenados en Redis
                 $errorListKey = "list:glosas_import_errors_{$this->user_id}";
                 $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+                $errorsFormatted = [];
+
 
                 if (!empty($errors)) {
                     logger('Errores encontrados durante la importación:');
                     foreach ($errors as $index => $errorJson) {
                         $errorData = json_decode($errorJson, true); // Decodificar el JSON
+                        $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
                         logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
                     }
                 } else {
                     logger('No se encontraron errores durante la importación.');
                 }
+
+                // Emitir errores al front
+                ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
             }
         ];
     }
@@ -75,7 +83,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         // return DB::transaction(function () use ($row) {
 
         // Incrementar contador y calcular progreso
-
         $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
         $total = Redis::get("integer:glosas_import_total_{$this->user_id}") ?: 1;
         $progress = ($processed / $total) * 100;
@@ -98,9 +105,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
 
         // $validator = Validator::make($data, $this->rules(), $this->customValidationMessages());
-
         // logMessage($validator);
-
 
         // if ($validator->fails()) {
         //     // Guardar los errores en Redis como una lista
@@ -118,7 +123,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         //     return null; // Omitir esta fila
         // }
 
-        
+
         Glosa::create($data);
         logMessage("creacion");
 
@@ -129,22 +134,22 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         // Emitir evento de progreso
         ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
-        // if ($progress >= 100) {
+        if ($progress >= 100) {
 
-        //     // Obtener todos los service_id únicos como un array
-        //     $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
+            // Obtener todos los service_id únicos como un array
+            $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
 
-        //     // Convertir a colección si prefieres trabajar con Laravel Collections
-        //     $uniqueServiceIdsCollection = collect($uniqueServiceIds);
+            // Convertir a colección si prefieres trabajar con Laravel Collections
+            $uniqueServiceIdsCollection = collect($uniqueServiceIds);
 
 
-        //     foreach ($uniqueServiceIdsCollection as $serviceId) {
-        //         ProcessGlosasServiceJob::dispatch($serviceId);
-        //     }
+            foreach ($uniqueServiceIdsCollection as $serviceId) {
+                ProcessGlosasServiceJob::dispatch($serviceId);
+            }
 
-        //     // Opcional: Limpiar el Set de Redis después de usarlo
-        //     Redis::del("set:glosas_service_ids_{$this->user_id}");
-        // }
+            // Opcional: Limpiar el Set de Redis después de usarlo
+            Redis::del("set:glosas_service_ids_{$this->user_id}");
+        }
 
         return null;
         // });
@@ -164,6 +169,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
             $errorData = [
                 'column' => "1",
                 'row' => $processed,
+                'value' => $row[0],
                 'data' => $row, // Cambié $data por $row ya que $data no está definida aquí
                 'errors' => "El ID de usuario no existe en la base de datos.",
             ];
@@ -173,8 +179,9 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
         if ($this->service($row[1], 'id') == null) {
             $errorData = [
-                'column' => "1", // Número de columna
+                'column' => "2", // Número de columna
                 'row' => $processed, // Número de fila
+                'value' => $row[1],
                 'data' => $data,     // Datos originales
                 'errors' => "El ID del servicio no existe en la base de datos.", // Mensajes de error
             ];
@@ -185,8 +192,9 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
         if ($this->codeGlosa($row[2], 'id') == null) {
             $errorData = [
-                'column' => "1", // Número de columna
+                'column' => "3", // Número de columna
                 'row' => $processed, // Número de fila
+                'value' => $row[2],
                 'data' => $data,     // Datos originales
                 'errors' => "El ID del código de glosa no existe en la base de datos.", // Mensajes de error
             ];
@@ -200,6 +208,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
             $errorData = [
                 'column' => "4",
                 'row' => $processed,
+                'value'  => $row[3],
                 'data' => $row,
                 'errors' => "El valor de la glosa debe ser un número válido sin letras.",
             ];
@@ -207,13 +216,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
             return true;
         }
 
-
-
-
-
-
         return false; // Omitir esta fila
-
     }
 
 
@@ -231,35 +234,11 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         return $data;
     }
 
-    // public function service($value, $field)
-    // {
-    //     $cache = collect(Redis::smembers('services:ids_set'));
-    //     logger('Service IDs cache count: ' . $cache->count());
-    //     logger('Service IDs: ' . json_encode($cache->all()));
-
-    //     $data = $cache->first(function ($item) use ($value) {
-    //         $match = strtoupper($item) === strtoupper($value);
-    //         logger("Checking service ID: {$item} vs Value: {$value} - Match: " . ($match ? 'yes' : 'no'));
-    //         return $match;
-    //     });
-
-    //     logger('Result of service(): ' . json_encode($data));
-    //     return $data;
-    // }
-
-    // public function service($value, $field)
-    // {
-    //     $normalizedValue = strtoupper($value);
-    //     $exists = Redis::sismember('services:ids_set', $normalizedValue);
-
-    //     return $exists;
-    // }
-
     public function service($value, $field)
     {
         $normalizedValue = strtoupper($value);
         $key = "services:{$normalizedValue}";
-        
+
 
         // Verificamos si el hash existe
         if (Redis::exists($key)) {
@@ -291,30 +270,29 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         return $data;
     }
 
+    public function rules(): array
+    {
+        return [
+            'user_id' => 'required|exists:users,id',
+            'service_id' => 'required|exists:services,id',
+            'code_glosa_id' => 'required|exists:code_glosas,id',
+            'glosa_value' => 'required|numeric|regex:/^\d+(\.\d+)?$/',
+            'observation' => 'nullable|string',
+        ];
+    }
 
-    // public function rules(): array
-    // {
-    //     return [
-    //         'user_id' => 'required|exists:users,id',
-    //         'service_id' => 'required|exists:services,id',
-    //         'code_glosa_id' => 'required|exists:code_glosas,id',
-    //         'glosa_value' => 'required|numeric|regex:/^\d+(\.\d+)?$/',
-    //         'observation' => 'nullable|string',
-    //     ];
-    // }
-
-    // public function customValidationMessages(): array
-    // {
-    //     return [
-    //         'user_id.required' => 'El ID de usuario es obligatorio.',
-    //         'user_id.exists' => 'El ID de usuario no existe en la base de datos.',
-    //         'service_id.required' => 'El ID del servicio es obligatorio.',
-    //         'service_id.exists' => 'El ID del servicio no existe en la base de datos.',
-    //         'code_glosa_id.required' => 'El ID del código de glosa es obligatorio.',
-    //         'code_glosa_id.exists' => 'El ID del código de glosa no existe en la base de datos.',
-    //         'glosa_value.required' => 'El valor de la glosa es obligatorio.',
-    //         'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
-    //         'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
-    //     ];
-    // }
+    public function customValidationMessages(): array
+    {
+        return [
+            'user_id.required' => 'El ID de usuario es obligatorio.',
+            'user_id.exists' => 'El ID de usuario no existe en la base de datos.',
+            'service_id.required' => 'El ID del servicio es obligatorio.',
+            'service_id.exists' => 'El ID del servicio no existe en la base de datos.',
+            'code_glosa_id.required' => 'El ID del código de glosa es obligatorio.',
+            'code_glosa_id.exists' => 'El ID del código de glosa no existe en la base de datos.',
+            'glosa_value.required' => 'El valor de la glosa es obligatorio.',
+            'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
+            'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
+        ];
+    }
 }
