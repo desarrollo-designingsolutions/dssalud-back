@@ -134,7 +134,7 @@ class GlosaController extends Controller
             } else {
                 $msg = 'El registro no existe';
             }
-            
+
             DB::commit();
 
             return [
@@ -166,7 +166,8 @@ class GlosaController extends Controller
             // $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
 
             return [
-                // 'csv' => $csv,
+                'code' => 200,
+                // 'csv' => $csv
             ];
         });
     }
