@@ -134,6 +134,7 @@ class GlosaController extends Controller
             } else {
                 $msg = 'El registro no existe';
             }
+            
             DB::commit();
 
             return [
