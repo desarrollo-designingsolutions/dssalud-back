@@ -28,15 +28,8 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
             }
         });
 
-
-        // Service::select("id")->chunk(100, function ($elements) {
-        //     foreach ($elements as $element) {
-        //         $idArray = ['id' => $element->id];
-
-        //         // Guardar solo el valor del ID como string en un set
-        //         Redis::sadd("services:ids_set", $element->id);
-        //     }
-        // });
+        // PARA CONTINUAR
+        // que solo siga agregando los nuevos registros
 
     }
 }
