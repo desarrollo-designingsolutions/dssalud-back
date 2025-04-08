@@ -1,11 +1,19 @@
 <table>
     <thead>
         <tr>
-            {{-- <td>Paquete</td> --}}
-            <td>Tercero</td>
-            <td>Factura</td>
-            <td>Cedula</td>
-            <td>Nombre</td>
+
+            @if (isset($request['third_id']))
+                <td>Tercero</td>
+            @endif
+
+            @if (isset($request['invoice_audit_id']))
+                <td>Factura</td>
+            @endif
+
+            @if (isset($request['patient_id']))
+                <td>Cedula</td>
+                <td>Nombre</td>
+            @endif
 
             <td>id</td>
             <td>invoice_audit_id</td>
@@ -20,15 +28,19 @@
     <tbody>
         @foreach ($data as $item)
             <tr>
-                {{-- <td> {{ $item["invoice_audit"]["assignment"]["assignmentBatche"]["name"] }}</td> --}}
 
-                <td> {{ $item["invoice_audit"]["third"]["name"] }}</td>
+                @if (isset($request['third_id']))
+                    <td> {{ $item['invoice_audit']['third']['name'] }}</td>
+                @endif
 
-                <td> {{ $item["invoice_audit"]["invoice_number"] }}</td>
+                @if (isset($request['invoice_audit_id']))
+                    <td> {{ $item['invoice_audit']['invoice_number'] }}</td>
+                @endif
 
-
-                <td> {{ $item['patient']["identification_number"] }}</td>
-                <td> {{ $item['patient']["first_name"] }}</td>
+                @if (isset($request['patient_id']))
+                    <td> {{ $item['patient']['identification_number'] }}</td>
+                    <td> {{ $item['patient']['first_name'] }}</td>
+                @endif
 
                 <td> {{ $item['id'] }}</td>
                 <td> {{ $item['invoice_audit_id'] }}</td>

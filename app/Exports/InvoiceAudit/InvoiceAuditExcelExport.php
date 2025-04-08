@@ -18,12 +18,14 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
     protected $services;
     protected $glosses;
     protected $attachedData;
+    protected $request;
 
-    public function __construct($services, $glosses, $attachedData)
+    public function __construct($services, $glosses, $attachedData, $request)
     {
         $this->services = $services;
         $this->glosses = $glosses;
         $this->attachedData = $attachedData;
+        $this->request = $request;
     }
 
     public function sheets(): array
@@ -37,21 +39,27 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
 
     protected function createSheet($title, $data, $view)
     {
-        return new class($title, $data, $view) implements FromView, ShouldAutoSize, WithEvents, WithTitle {
+        $request = $this->request;
+        return new class($title, $data, $view, $request) implements FromView, ShouldAutoSize, WithEvents, WithTitle {
             protected $title;
             protected $data;
             protected $view;
+            protected $request;
 
-            public function __construct($title, $data, $view)
+            public function __construct($title, $data, $view, $request)
             {
                 $this->title = $title;
                 $this->data = $data;
                 $this->view = $view;
+                $this->request = $request;
             }
 
             public function view(): View
             {
-                return \Illuminate\Support\Facades\View::make($this->view, ['data' => $this->data]);
+                return \Illuminate\Support\Facades\View::make($this->view, [
+                    'data' => $this->data,
+                    'request' => $this->request,
+                ]);
             }
 
             public function title(): string

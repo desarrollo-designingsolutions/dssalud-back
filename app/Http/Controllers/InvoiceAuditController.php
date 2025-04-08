@@ -138,9 +138,13 @@ class InvoiceAuditController extends Controller
 
             $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
             $third = $this->thirdRepository->find($third_id);
-            $patient = $this->patientRepository->find($patient_id);
 
+            $patient = $this->patientRepository->find($patient_id);
             $patient = new InvoiceAuditPaginatePatientResource($patient);
+
+
+            $value_glosa = $invoice_audit->services->sum("value_glosa");
+            $value_approved = $invoice_audit->services->sum("value_approved");
 
             return [
                 'code' => 200,
@@ -148,6 +152,8 @@ class InvoiceAuditController extends Controller
                     'invoice_audit' => $invoice_audit,
                     'third' => $third,
                     'patient' => $patient,
+                    'value_glosa' => $value_glosa,
+                    'value_approved' => $value_approved,
                 ],
             ];
         });
@@ -243,7 +249,7 @@ class InvoiceAuditController extends Controller
             $services = Service::query()->with([
                 "patient" => function ($query) use ($request){
                     if (!empty($request['patient_id'])) {
-                        $query->where('patient_id', $request['patient_id']);
+                        $query->where('id', $request['patient_id']);
                     }
                 },
                 "invoice_audit" => function ($query) use ($request){
@@ -309,7 +315,7 @@ class InvoiceAuditController extends Controller
                 ]
             ];
 
-            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData), \Maatwebsite\Excel\Excel::XLSX);
+            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData,$request->all()), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
 
