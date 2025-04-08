@@ -28,7 +28,8 @@ class ProgressCircular implements ShouldBroadcastNow
     }
 
     public function broadcastWith()
-    { 
+    {
+        logMessage("aaaaaaaaaaaaaaaaa");
         return [
             'channel' => $this->channel,
             'progress' => round($this->progress),

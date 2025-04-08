@@ -40,6 +40,9 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
     {
         return [
             BeforeImport::class => function (BeforeImport $event) {
+                logMessage("mmg -1");
+
+
                 // Obtener total de filas (ajusta si hay encabezados)
                 $totalRows = $event->getReader()->getTotalRows()['Worksheet'];
                 $totalRows = max($totalRows, 1);
@@ -50,6 +53,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
                 // Redis::del("list:glosas_import_errors_{$this->user_id}");
             },
             AfterImport::class => function (AfterImport $event) {
+                logMessage("mmg -2");
                 // Limpiar cache al finalizar
 
                 Redis::del("integer:glosas_import_total_{$this->user_id}");
@@ -62,16 +66,15 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
 
                 if (!empty($errors)) {
-                    logger('Errores encontrados durante la importación:');
+                    // logger('Errores encontrados durante la importación:');
                     foreach ($errors as $index => $errorJson) {
                         $errorData = json_decode($errorJson, true); // Decodificar el JSON
                         $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
-                        logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
+                        // logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
                     }
                 } else {
-                    logger('No se encontraron errores durante la importación.');
+                    // logger('No se encontraron errores durante la importación.');
                 }
-
 
                 // Emitir errores al front
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
@@ -81,6 +84,8 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
     public function model(array $row)
     {
+        logMessage("mmg 0");
+
         // return DB::transaction(function () use ($row) {
 
         // Incrementar contador y calcular progreso
@@ -133,11 +138,11 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
 
         // Emitir evento de progreso
+        logMessage("mmg 1");
+        logger("Progreso: {$progress}%");
         ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
         if ($progress >= 100) {
-
-            logMessage("progreso 100");
 
             // Obtener todos los service_id únicos como un array
             $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
