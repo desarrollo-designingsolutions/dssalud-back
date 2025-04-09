@@ -2,27 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\Constants;
 use App\Http\Requests\Glosa\GlosaMasiveStoreRequest;
 use App\Http\Requests\Glosa\GlosaStoreRequest;
 use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
 use App\Http\Resources\Glosa\GlosaFormResource;
 use App\Http\Resources\Glosa\GlosaPaginateResource;
 use App\Imports\GlosaImport;
-use App\Jobs\Glosa\ProcessGlosasServiceJob2;
 use App\Models\CodeGlosa;
-use App\Models\Service;
 use App\Models\User;
 use App\Repositories\GlosaRepository;
 use App\Repositories\ServiceRepository;
 use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class GlosaController extends Controller
 {
@@ -100,7 +95,7 @@ class GlosaController extends Controller
 
     public function update(GlosaStoreRequest $request, $id)
     {
-        return $this->runTransaction(function () use ($request, $id) {
+        return $this->runTransaction(function () use ($request) {
             $post = $request->except([]);
 
             $glosa = $this->glosaRepository->store($post);
@@ -150,14 +145,14 @@ class GlosaController extends Controller
 
             $user_id = $request->input('user_id');
 
-            Redis::set('Redis_User', User::select("id")->get());
-            Redis::set('Redis_CodeGlosa', CodeGlosa::select("id")->get());
+            Redis::set('Redis_User', User::select('id')->get());
+            Redis::set('Redis_CodeGlosa', CodeGlosa::select('id')->get());
 
             $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
 
             return [
                 'code' => 200,
-                'csv' => $csv
+                'csv' => $csv,
             ];
         });
     }

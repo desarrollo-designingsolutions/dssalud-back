@@ -26,10 +26,10 @@ class Constants
 
     public const NUMBER_CASE_INITIAL = 100;
 
+    // LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275
+    public const KEY_NUMFACT = 'numFactura';
 
+    public const KEY_NumDocumentoIdentificacion = 'numDocumentoIdentificacion';
 
-    //LLAVES PARA CONSTRUCCION Y VALIDACION DE RADICACIONES ANTIGUAS Y 2275
-    public const  KEY_NUMFACT = 'numFactura';
-    public const  KEY_NumDocumentoIdentificacion = 'numDocumentoIdentificacion';
-    public const  KEY_VrServicio = 'vrServicio';
+    public const KEY_VrServicio = 'vrServicio';
 }

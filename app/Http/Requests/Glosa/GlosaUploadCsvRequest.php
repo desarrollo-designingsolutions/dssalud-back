@@ -26,7 +26,7 @@ class GlosaUploadCsvRequest extends FormRequest
     {
 
         $rules = [
-                        'user_id' => 'required',
+            'user_id' => 'required',
             'archiveCsv' => 'required|file|extensions:csv',
         ];
 
@@ -36,7 +36,7 @@ class GlosaUploadCsvRequest extends FormRequest
     public function messages(): array
     {
         return [
-                        'user_id.required' => 'El campo es obligatorio',
+            'user_id.required' => 'El campo es obligatorio',
             'archiveCsv.extensions' => 'El campo es archvio solo permite archivo de tipo csv',
         ];
     }

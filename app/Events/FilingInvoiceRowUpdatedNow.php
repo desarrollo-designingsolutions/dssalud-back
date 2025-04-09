@@ -45,6 +45,7 @@ class FilingInvoiceRowUpdatedNow implements ShouldBroadcastNow
 
         logMessage('juan22222');
         logMessage($this->filingInvoice);
+
         return [
             'id' => $this->filingInvoice->id,
             'files_count' => $this->filingInvoice->files_count,

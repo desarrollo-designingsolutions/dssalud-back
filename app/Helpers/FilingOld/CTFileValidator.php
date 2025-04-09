@@ -191,7 +191,6 @@ class CTFileValidator
         return $dateTime > new \DateTime('today');
     }
 
-
     /**
      * Abre un archivo de texto con diferentes extensiones.
      */
@@ -201,7 +200,7 @@ class CTFileValidator
         $handle = null;
 
         foreach ($extensions as $ext) {
-            $fullPath = $filePath . $ext;
+            $fullPath = $filePath.$ext;
             if (file_exists($fullPath)) {
                 $handle = fopen($fullPath, 'r');
                 if ($handle !== false) {

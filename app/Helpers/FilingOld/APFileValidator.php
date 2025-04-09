@@ -9,33 +9,33 @@ class APFileValidator
     /**
      * Valida el archivo AP y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Número de la factura",
-            "columna 2: Código del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del usuario",
-            "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Fecha del procedimiento",
-            "columna 6: Numero de autorizacion",
-            "columna 7: Código del procedimiento",
-            "columna 8: Ambito de realización del procedimiento",
-            "columna 9: Finalidad del procedimiento",
-            "columna 10: Personal que atiende",
-            "columna 11: Diagnóstico principal",
-            "columna 12: Diagnostico relacionado",
-            "columna 13: Complicación",
-            "columna 14: Forma de realización del acto quirúrgico",
-            "columna 15: Valor del procedimiento"
+            'columna 1: Número de la factura',
+            'columna 2: Código del prestador de servicios de salud',
+            'columna 3: Tipo de identificación del usuario',
+            'columna 4: Número de identificación del usuario en el sistema',
+            'columna 5: Fecha del procedimiento',
+            'columna 6: Numero de autorizacion',
+            'columna 7: Código del procedimiento',
+            'columna 8: Ambito de realización del procedimiento',
+            'columna 9: Finalidad del procedimiento',
+            'columna 10: Personal que atiende',
+            'columna 11: Diagnóstico principal',
+            'columna 12: Diagnostico relacionado',
+            'columna 13: Complicación',
+            'columna 14: Forma de realización del acto quirúrgico',
+            'columna 15: Valor del procedimiento',
         ];
 
         // 1. Número de la factura (columna 0)
@@ -88,7 +88,7 @@ class APFileValidator
 
         // Unicamente los valores permitidos
         $allowedPrefixes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_004',

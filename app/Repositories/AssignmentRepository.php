@@ -82,7 +82,7 @@ class AssignmentRepository extends BaseRepository
                         $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                     });
 
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 })
@@ -114,23 +114,23 @@ class AssignmentRepository extends BaseRepository
                     'invoice_number',
                 ])->where(function ($query) use ($request) {
 
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->whereHas('third.company', function ($subQuery) use ($request) {
                             $subQuery->where('company_id', $request['company_id']);
                         });
                     }
 
-                    if (!empty($request['assignment_batch_id'])) {
+                    if (! empty($request['assignment_batch_id'])) {
                         $query->whereHas('assignment', function ($subQuery) use ($request) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         });
                     }
 
-                    if (!empty($request['third_id'])) {
+                    if (! empty($request['third_id'])) {
                         $query->where('third_id', $request['third_id']);
                     }
 
-                    if (!empty($request['user_id'])) {
+                    if (! empty($request['user_id'])) {
                         $query->where('user_id', $request['user_id']);
                     }
                 })
@@ -163,7 +163,7 @@ class AssignmentRepository extends BaseRepository
                     'gender',
                 ])->where(function ($query) use ($request) {
 
-                    if (!empty($request['invoice_audit_id'])) {
+                    if (! empty($request['invoice_audit_id'])) {
                         $query->where('invoice_audit_id', $request['invoice_audit_id']);
                     }
                 })
@@ -177,7 +177,7 @@ class AssignmentRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -213,7 +213,7 @@ class AssignmentRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
 
@@ -245,7 +245,7 @@ class AssignmentRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['status'])) {
+            if (! empty($request['status'])) {
                 $query->where('status', $request['status']);
             }
 
@@ -271,7 +271,7 @@ class AssignmentRepository extends BaseRepository
         // Cargar los datos con relaciones, incluyendo los eliminados
         $data = $this->model::find($request['auditable_id']);
 
-        if (!$data) {
+        if (! $data) {
             return collect(); // Si no hay datos, devolver una colección vacía
         }
 
@@ -293,25 +293,25 @@ class AssignmentRepository extends BaseRepository
         $data = $this->model::query()
             ->where(function ($query) use ($request) {
                 $query->whereHas('assignmentBatche', function ($subQuery) use ($request) {
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $subQuery->where('company_id', $request['company_id']);
                     }
                 });
                 $query->whereHas('invoiceAudit', function ($subQuery) use ($request) {
-                    if (!empty($request['third_id'])) {
+                    if (! empty($request['third_id'])) {
                         $subQuery->where('third_id', $request['third_id']);
                     }
                 });
 
-                if (!empty($request['user_id'])) {
+                if (! empty($request['user_id'])) {
                     $query->where('user_id', $request['user_id']);
                 }
 
-                if (!empty($request['status_iqual_to'])) {
+                if (! empty($request['status_iqual_to'])) {
                     $query->whereIn('status', $request['status_iqual_to']);
                 }
 
-                if (!empty($request['assignment_batch_id'])) {
+                if (! empty($request['assignment_batch_id'])) {
                     $query->where('assignment_batch_id', $request['assignment_batch_id']);
                 }
             })->count();

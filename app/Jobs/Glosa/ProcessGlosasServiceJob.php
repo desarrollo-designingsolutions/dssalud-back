@@ -14,7 +14,6 @@ class ProcessGlosasServiceJob implements ShouldQueue
 
     protected $service_id;
 
-
     public function __construct($service_id)
     {
         $this->service_id = $service_id;

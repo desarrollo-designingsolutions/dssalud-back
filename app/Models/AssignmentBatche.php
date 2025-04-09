@@ -3,16 +3,14 @@
 namespace App\Models;
 
 use App\Traits\Cacheable;
-use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class AssignmentBatche extends Model
 {
-    use HasUuids, Cacheable;
+    use Cacheable, HasUuids;
 
     public function assignments(): HasMany
     {
@@ -37,15 +35,16 @@ class AssignmentBatche extends Model
     {
         $query = $this->invoices();
 
-        if (!empty($filter['status'])) {
+        if (! empty($filter['status'])) {
             $query->where('assignments.status', $filter['status']);
         }
 
-        if (!empty($filter['user_id'])) {
+        if (! empty($filter['user_id'])) {
             $query->whereHas('third.user', function ($subQuery) use ($filter) {
                 $subQuery->where('id', $filter['user_id']);
             });
         }
+
         return $query->count();
     }
 }

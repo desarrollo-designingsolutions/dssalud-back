@@ -10,11 +10,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Patient extends Model
 {
-    use HasUuids, Searchable, SoftDeletes, HasFactory;
+    use HasFactory, HasUuids, Searchable, SoftDeletes;
 
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->second_name.' '.$this->first_surname.' '.$this->second_surname;
     }
-
 }

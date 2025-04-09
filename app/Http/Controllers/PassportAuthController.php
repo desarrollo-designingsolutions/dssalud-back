@@ -27,8 +27,7 @@ class PassportAuthController extends Controller
         protected UserRepository $userRepository,
         protected MenuRepository $menuRepository,
         protected MailService $mailService
-    ) {
-    }
+    ) {}
 
     public function register(Request $request)
     {
@@ -61,7 +60,7 @@ class PassportAuthController extends Controller
 
             Auth::attempt($data);
 
-            if (!Auth::attempt($data)) {
+            if (! Auth::attempt($data)) {
                 // Si las credenciales son incorrectas, lanzar una excepción
                 throw new \Exception(json_encode([
                     'message' => 'Credenciales incorrectas',
@@ -70,21 +69,21 @@ class PassportAuthController extends Controller
 
             $user = Auth::user();
             if ($user->company) {
-                if (!$user->company?->is_active) {
+                if (! $user->company?->is_active) {
                     return response()->json([
                         'code' => '401',
                         'error' => 'Not authorized',
                         'message' => 'La empresa a la cual usted pertenece se encuentra inactiva',
                     ], 401);
                 }
-                if (!$user->is_active) {
+                if (! $user->is_active) {
                     return response()->json([
                         'code' => '401',
                         'error' => 'Not authorized',
                         'message' => 'El usuario se encuentra inactivo',
                     ], 401);
                 }
-                if (!empty($user->company->final_date)) {
+                if (! empty($user->company->final_date)) {
                     $now = Carbon::now()->format('Y-m-d');
                     $compareDate = Carbon::parse($user->company->final_date)->format('Y-m-d');
                     if ($now >= $compareDate) {
@@ -141,12 +140,12 @@ class PassportAuthController extends Controller
                     $arrayMenu[$key]['to']['name'] = $value->to;
                     $arrayMenu[$key]['icon']['icon'] = $value->icon ?? 'mdi-arrow-right-thin-circle-outline';
 
-                    if (!empty($value['children'])) {
+                    if (! empty($value['children'])) {
                         foreach ($value['children'] as $key2 => $value2) {
                             $arrayMenu[$key]['children'][$key2]['title'] = $value2->title;
                             $arrayMenu[$key]['children'][$key2]['to'] = $value2->to;
                             // $arrayMenu[$key]["children"][$key2]["icon"]["icon"] = $value2->icon ?? "mdi-arrow-right-thin-circle-outline";
-                            if (!empty($value2['children'])) {
+                            if (! empty($value2['children'])) {
                                 foreach ($value2['children'] as $key3 => $value3) {
                                     if (in_array($value3->requiredPermission, $permisos->pluck('name')->toArray())) {
                                         $arrayMenu[$key]['children'][$key2]['children'][$key3]['title'] = $value3->title;
@@ -194,7 +193,7 @@ class PassportAuthController extends Controller
             // Generar el enlace de restablecimiento
             $token = Password::getRepository()->create($user);
 
-            $action_url = env('SYSTEM_URL_FRONT') . 'ResetPassword/' . $token . '?email=' . urlencode($request->input('email'));
+            $action_url = env('SYSTEM_URL_FRONT').'ResetPassword/'.$token.'?email='.urlencode($request->input('email'));
 
             // Enviar el correo usando el job de Brevo
             BrevoProcessSendEmail::dispatch(

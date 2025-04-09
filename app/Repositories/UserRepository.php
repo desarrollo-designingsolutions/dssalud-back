@@ -57,7 +57,7 @@ class UserRepository extends BaseRepository
                     AllowedSort::custom('role_description', new RelatedTableSort('users', 'roles', 'description', 'role_id')),
                     AllowedSort::custom('is_active', new IsActiveSort),
                 ])->where(function ($query) use ($request) {
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->where('users.company_id', $request['company_id']);
                     }
                 })
@@ -86,7 +86,7 @@ class UserRepository extends BaseRepository
             $data[$key] = is_array($request[$key]) ? $request[$key]['value'] : $request[$key];
         }
 
-        if (!empty($validatedData['password'])) {
+        if (! empty($validatedData['password'])) {
             $data->password = $validatedData['password'];
         } else {
             unset($data->password);
@@ -118,7 +118,7 @@ class UserRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
 
@@ -150,7 +150,7 @@ class UserRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['status'])) {
+            if (! empty($request['status'])) {
                 $query->where('status', $request['status']);
             }
 
@@ -176,7 +176,7 @@ class UserRepository extends BaseRepository
         // Cargar los datos con relaciones, incluyendo los eliminados
         $data = $this->model::find($request['auditable_id']);
 
-        if (!$data) {
+        if (! $data) {
             return collect(); // Si no hay datos, devolver una colección vacía
         }
 

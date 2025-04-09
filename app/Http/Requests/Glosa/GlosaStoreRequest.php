@@ -55,7 +55,7 @@ class GlosaStoreRequest extends FormRequest
     {
         $this->merge([
             'code_glosa_id' => isArray($this->code_glosa_id) ? $this->code_glosa_id['value'] : $this->code_glosa_id,
-            'glosa_value' => !is_numeric($this->glosa_value) ? floatval($this->glosa_value) : $this->glosa_value,
+            'glosa_value' => ! is_numeric($this->glosa_value) ? floatval($this->glosa_value) : $this->glosa_value,
         ]);
     }
 

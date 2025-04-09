@@ -7,8 +7,6 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-use function PHPUnit\Framework\isArray;
-
 class GlosaMasiveStoreRequest extends FormRequest
 {
     /**
@@ -66,7 +64,7 @@ class GlosaMasiveStoreRequest extends FormRequest
             }, $this->glosas);
 
             $this->merge([
-                'glosas' => $glosas
+                'glosas' => $glosas,
             ]);
         }
     }

@@ -23,7 +23,7 @@ class ThirdRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 
@@ -93,28 +93,28 @@ class ThirdRepository extends BaseRepository
             ->with([
                 'invoiceAudits' => function ($query) use ($request) {
                     $query->whereHas('assignment', function ($subQuery) use ($request) {
-                        if (!empty($request['user_id'])) {
+                        if (! empty($request['user_id'])) {
                             $subQuery->where('user_id', $request['user_id']);
                         }
-                        if (!empty($request['assignment_batch_id'])) {
+                        if (! empty($request['assignment_batch_id'])) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         }
                     });
-                }
+                },
             ])
             ->whereHas('invoiceAudits', function ($subQuery) use ($request) {
                 $subQuery->whereHas('assignment', function ($subQuery2) use ($request) {
-                    if (!empty($request['user_id'])) {
+                    if (! empty($request['user_id'])) {
                         $subQuery2->where('user_id', $request['user_id']);
                     }
-                    if (!empty($request['assignment_batch_id'])) {
+                    if (! empty($request['assignment_batch_id'])) {
                         $subQuery2->where('assignment_batch_id', $request['assignment_batch_id']);
                     }
                 });
             })
             ->where(
                 function ($query) use ($request) {
-                    if (!empty($request['third_id'])) {
+                    if (! empty($request['third_id'])) {
                         $query->where('id', $request['third_id']);
                     }
                 }

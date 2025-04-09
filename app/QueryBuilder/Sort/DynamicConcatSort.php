@@ -7,7 +7,7 @@ use Spatie\QueryBuilder\Sorts\Sort;
 
 class DynamicConcatSort implements Sort
 {
-    private string $concat;       
+    private string $concat;
 
     public function __construct(string $concat)
     {

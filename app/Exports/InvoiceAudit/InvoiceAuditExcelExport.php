@@ -16,8 +16,11 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
     use Exportable;
 
     protected $services;
+
     protected $glosses;
+
     protected $attachedData;
+
     protected $request;
 
     public function __construct($services, $glosses, $attachedData, $request)
@@ -40,10 +43,15 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
     protected function createSheet($title, $data, $view)
     {
         $request = $this->request;
-        return new class($title, $data, $view, $request) implements FromView, ShouldAutoSize, WithEvents, WithTitle {
+
+        return new class($title, $data, $view, $request) implements FromView, ShouldAutoSize, WithEvents, WithTitle
+        {
             protected $title;
+
             protected $data;
+
             protected $view;
+
             protected $request;
 
             public function __construct($title, $data, $view, $request)
@@ -74,7 +82,7 @@ class InvoiceAuditExcelExport implements WithMultipleSheets
                         $sheet = $event->sheet;
                         $highestColumn = $sheet->getHighestColumn();
                         $highestRow = $sheet->getHighestRow();
-                        $range = 'A1:' . $highestColumn . $highestRow;
+                        $range = 'A1:'.$highestColumn.$highestRow;
                         $sheet->setAutoFilter($range);
                     },
                 ];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\Constants;
 use App\Models\Cie10;
 use App\Models\CupsRips;
 use App\Models\GrupoServicio;
@@ -12,7 +13,6 @@ use App\Models\Servicio;
 use App\Models\TipoMedicamentoPosVersion2;
 use App\Models\ZonaVersion2;
 use Carbon\Carbon;
-use App\Helpers\Constants;
 
 // 'validacion_type_Y' => 'N' todas la vidaciones que tengan este valor, seran informativas
 // 31-01-2024 solicitud=> German
@@ -234,7 +234,7 @@ function RVC006($dataTxt, &$errorMessages)
 
     $validation = true;
 
-    if (!empty($dataTxt['fechaNacimiento'])) {
+    if (! empty($dataTxt['fechaNacimiento'])) {
         $fechaNacimiento = parseDate($dataTxt['fechaNacimiento']);
         $value2 = Carbon::now()->format('Y-m-d');
         // echo ($fechaNacimiento);
@@ -303,7 +303,7 @@ function RVC007($dataTxt, &$errorMessages, $dataExtra = null)
         $exito = true;
     }
 
-    if (!$exito) {
+    if (! $exito) {
         $errorMessages[] = [
             'validacion' => 'RVC007',
             'validacion_type_Y' => 'R',
@@ -312,7 +312,7 @@ function RVC007($dataTxt, &$errorMessages, $dataExtra = null)
             'row' => $dataTxt['row'] ?? null,
             'column' => 'fechaNacimiento',
             'data' => $dataTxt['tipoDocumentoIdentificacion'],
-            'error' => 'El tipo de documento informado no es válido para la edad del usuario. Fecha de nacimiento: ' . $dataTxt['fechaNacimiento'] . ', edad: ' . $edad,
+            'error' => 'El tipo de documento informado no es válido para la edad del usuario. Fecha de nacimiento: '.$dataTxt['fechaNacimiento'].', edad: '.$edad,
         ];
 
         $validation = false;
@@ -404,7 +404,7 @@ function RVC010($dataTxt, $value2, &$errorMessages)
 function U06($dataTxt, &$errorMessages)
 {
     $pais = Pais::where('codigo', $dataTxt['codPaisResidencia'])->first();
-    if (!$pais) {
+    if (! $pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -422,7 +422,7 @@ function U06($dataTxt, &$errorMessages)
 function U07($dataTxt, &$errorMessages)
 {
     $pais = Municipio::where('codigo', $dataTxt['codMunicipioResidencia'])->first();
-    if (!$pais) {
+    if (! $pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -440,7 +440,7 @@ function U07($dataTxt, &$errorMessages)
 function U08($dataTxt, &$errorMessages)
 {
     $pais = ZonaVersion2::where('codigo', $dataTxt['codZonaTerritorialResidencia'])->first();
-    if (!$pais) {
+    if (! $pais) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -458,7 +458,7 @@ function U08($dataTxt, &$errorMessages)
 function U09($dataTxt, &$errorMessages)
 {
     $data = LstSiNo::where('codigo', $dataTxt['incapacidad'])->first();
-    if (!$data) {
+    if (! $data) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -475,7 +475,7 @@ function U09($dataTxt, &$errorMessages)
 }
 function U10($dataTxt, &$errorMessages)
 {
-    if (!$dataTxt['consecutivo']) {
+    if (! $dataTxt['consecutivo']) {
         $errorMessages[] = [
             'num_invoice' => $dataTxt[Constants::KEY_NUMFACT] ?? $dataTxt['numFEVPagoModerador'] ?? null,
             'file' => $dataTxt['file_name'] ?? null,
@@ -503,7 +503,7 @@ function RVC011($dataTxt, $key, &$errorMessages)
         $query->where('codigo', $dataTxt[$key]);
     })->first();
 
-    if (!$ipsCodHabilitacion && !$ipsNoReps) {
+    if (! $ipsCodHabilitacion && ! $ipsNoReps) {
         $errorMessages[] = [
             'validacion' => 'RVC011',
             'validacion_type_Y' => 'R',
@@ -692,7 +692,7 @@ function RVC015($dataTxt, $key, $value2, &$errorMessages)
         $query->where('codigo', $dataTxt[$key]);
     })->first();
 
-    if (!$cupsRips || $cupsRips->extra_I != 'AC') {
+    if (! $cupsRips || $cupsRips->extra_I != 'AC') {
         if ($dataTxt[$key]) {
             $errorMessages[] = [
                 'validacion' => 'RVC015',
@@ -723,7 +723,7 @@ function RVC016($dataTxt, $key, $value2, &$errorMessages)
     })->first();
 
     $error = false;
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $error = true;
     } else {
         if ($cupsRips->extra_VI != 'Z' && $cupsRips->extra_VI != $value2['codSexo']) {
@@ -831,7 +831,7 @@ function RVC019($dataTxt, $key, &$errorMessages)
     })->first();
 
     $error = false;
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $error = true;
     } elseif ($cupsRips->extra_V == 'S') {
 
@@ -842,7 +842,7 @@ function RVC019($dataTxt, $key, &$errorMessages)
                 $query->where('codigo', strval($dataTxt['codDiagnosticoPrincipal']));
             })->first();
 
-            if (!$cie10) {
+            if (! $cie10) {
                 $error = true;
             } else {
                 $error = false;
@@ -880,7 +880,7 @@ function RVC027($dataTxt, $key, $value2, &$errorMessages)
 
     $error = false;
 
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $error = true;
     } elseif ($cupsRips->Interconsultas == 'S' && count($value2['servicios']['hospitalizacion']) == 0 && count($value2['servicios']['urgencias']) == 0) {
         $error = true;
@@ -1323,9 +1323,8 @@ function RVC028($dataTxt, $key, $value2, &$errorMessages)
         $query->where('codigo', strval($dataTxt[$key]));
     })->first();
 
-
     $error = false;
-    if (!$cie10) {
+    if (! $cie10) {
         $errorMessages[] = [
             'validacion' => 'RVC028',
             'validacion_type_Y' => 'N',
@@ -1729,7 +1728,7 @@ function RVC020($dataTxt, &$errorMessages)
         $query->where('codigo', strval($dataTxt['codProcedimiento']));
     })->first();
 
-    if (!$cupsRips || $cupsRips->extra_I != 'AP') {
+    if (! $cupsRips || $cupsRips->extra_I != 'AP') {
         $errorMessages[] = [
             'validacion' => 'RVC020',
             'validacion_type_Y' => 'N',
@@ -1759,7 +1758,7 @@ function RVC021($dataTxt, $value2, &$errorMessages)
 
     $error = false;
 
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $error = true;
     } elseif ($cupsRips->extra_VIII == 'E' && count($value2['servicios']['hospitalizacion']) > 0) {
         $error = false;
@@ -1847,7 +1846,7 @@ function RVC024($dataTxt, &$errorMessages)
         $query->where('codigo', $dataTxt['codTecnologiaSalud']);
     })->first();
 
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $errorMessages[] = [
             'validacion' => 'RVC024',
             'validacion_type_Y' => 'R',
@@ -1901,7 +1900,7 @@ function RVC026($dataTxt, &$errorMessages)
 
     $error = false;
 
-    if (!$cupsRips) {
+    if (! $cupsRips) {
         $error = true;
     } else {
         if ($cupsRips->extra_I == 'AT') {
@@ -2736,10 +2735,10 @@ function validationFormatDate($dataTxt, $key, &$errorMessages, $dataExtra = null
 
     $dataTxt[$key] = trim($dataTxt[$key]);
     $error = true;
-    if (!empty($dataTxt[$key])) {
+    if (! empty($dataTxt[$key])) {
         $error = false;
         $preg = preg_match($format, $dataTxt[$key]);
-        if (!$preg) {
+        if (! $preg) {
             $error = true;
         }
     }
@@ -2765,7 +2764,7 @@ function validationFormatDate($dataTxt, $key, &$errorMessages, $dataExtra = null
 function onlyNumbers($dataTxt, $key, &$errorMessages, $dataExtra = null, $validacion_type_Y = 'R')
 {
 
-    if (!is_numeric($dataTxt[$key])) {
+    if (! is_numeric($dataTxt[$key])) {
         $errorMessages[] = [
             'validacion' => 'onlyNumbers',
             'validacion_type_Y' => $validacion_type_Y,
@@ -2999,7 +2998,7 @@ function searchInArray($dataTxt, $key, &$errorMessages, $dataExtra = null, $vali
         $arrayEnd = $arrayPersonalized;
     }
 
-    if (!in_array($dataTxt[$key], $arrayEnd, 1)) {
+    if (! in_array($dataTxt[$key], $arrayEnd, 1)) {
 
         $array = implode(', ', $arrayEnd);
 
@@ -3045,7 +3044,7 @@ function validateStringRange($dataTxt, $key, &$errorMessages, $min = 0, $max = 9
 {
     $length = mb_strlen(strval($dataTxt[$key]), 'UTF-8');
 
-    if (!($length >= $min && $length <= $max)) {
+    if (! ($length >= $min && $length <= $max)) {
         $errorMessages[] = [
             'validacion' => 'validateStringRange',
             'validacion_type_Y' => $validacion_type_Y,
@@ -3068,7 +3067,7 @@ function validateField_codPais($dataTxt, $key, &$errorMessages, $dataExtra = nul
 
     $country = Pais::where('codigo', $dataTxt[$key])->first();
 
-    if (!$country) {
+    if (! $country) {
         $errorMessages[] = [
             'validacion' => 'validateField_codPaisOrigen',
             'validacion_type_Y' => $validacion_type_Y,

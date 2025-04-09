@@ -42,7 +42,6 @@ class ACFileValidator
             'Columna 17: Valor neto a pagar',
         ];
 
-
         // validar Número de la factura
         if (empty($rowData[0])) {
             ErrorCollector::addError(
@@ -105,7 +104,7 @@ class ACFileValidator
         }
 
         // validar Código de la consulta
-        $allowedTypes = ["890201", "890202", "890301", "890302", "890701", "890702", "890101", "890102", "890203", "890204", "890304", "890303", "890703", "890704", "890205", "890305", "890105", "890206", "890208", "890207", "890209", "890210", "890211", "890212", "890213", "890306", "890307", "890308", "890309", "890310", "890311", "890312", "890313", "890402", "890403", "890404", "890405", "890406", "890408", "890409", "890410", "890411", "890412", "890413", "890501", "890502", "890503", "890214", "890314", "890208", "890209", "890284", "890285", "890202", "890308", "890309", "890384", "890385", "890302", "940100", "940200", "940301", "940700", "940900", "941100", "941301", "941400", "942600", "943101", "943102", "943500", "944001", "944002", "944101", "944102", "944201", "944202", "944901", "944902", "944903", "944904", "944905", "944906", "944910", "944915"];
+        $allowedTypes = ['890201', '890202', '890301', '890302', '890701', '890702', '890101', '890102', '890203', '890204', '890304', '890303', '890703', '890704', '890205', '890305', '890105', '890206', '890208', '890207', '890209', '890210', '890211', '890212', '890213', '890306', '890307', '890308', '890309', '890310', '890311', '890312', '890313', '890402', '890403', '890404', '890405', '890406', '890408', '890409', '890410', '890411', '890412', '890413', '890501', '890502', '890503', '890214', '890314', '890208', '890209', '890284', '890285', '890202', '890308', '890309', '890384', '890385', '890302', '940100', '940200', '940301', '940700', '940900', '941100', '941301', '941400', '942600', '943101', '943102', '943500', '944001', '944002', '944101', '944102', '944201', '944202', '944901', '944902', '944903', '944904', '944905', '944906', '944910', '944915'];
 
         if (! in_array($rowData[6], $allowedTypes)) {
             ErrorCollector::addError(
@@ -122,7 +121,7 @@ class ACFileValidator
         }
 
         // validar Finalidad de la consulta
-        $allowedTypes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"];
+        $allowedTypes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
         if (! in_array($rowData[7], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -138,7 +137,7 @@ class ACFileValidator
         }
 
         // validar Causa externa
-        $allowedTypes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15"];
+        $allowedTypes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15'];
         if (! in_array($rowData[8], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -167,7 +166,7 @@ class ACFileValidator
             );
         }
 
-        //validar codigo de diagnostico principal
+        // validar codigo de diagnostico principal
         if (empty($rowData[9])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -182,8 +181,7 @@ class ACFileValidator
             );
         }
 
-
-        //validar Tipo de diagnóstico principal
+        // validar Tipo de diagnóstico principal
         if (empty($rowData[13])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -198,7 +196,7 @@ class ACFileValidator
             );
         }
 
-        $allowedTypes = [1,2,3];
+        $allowedTypes = [1, 2, 3];
         if (! in_array($rowData[13], $allowedTypes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -213,7 +211,7 @@ class ACFileValidator
             );
         }
 
-        //validar Valor de la consulta
+        // validar Valor de la consulta
         if (empty($rowData[14])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -228,7 +226,7 @@ class ACFileValidator
             );
         }
 
-        //validar Valor neto a pagar
+        // validar Valor neto a pagar
         if (empty($rowData[16])) {
             ErrorCollector::addError(
                 $keyErrorRedis,
@@ -242,9 +240,6 @@ class ACFileValidator
                 'El valor neto a pagar es un dato obligatorio.'
             );
         }
-
-
-
 
         // logMessage(ErrorCollector::getErrors($keyErrorRedis));
     }

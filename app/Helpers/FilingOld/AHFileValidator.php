@@ -9,37 +9,37 @@ class AHFileValidator
     /**
      * Valida el archivo AH y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Número de la factura",
-            "columna 2: Código del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del usuario",
-            "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Via de ingreso a la institucion",
-            "columna 6: Fecha de ingreso del usuario a la institución",
-            "columna 7: Hora de ingreso del usuario a la Institución",
-            "columna 8: Numero de autorizacion",
-            "columna 9: Causa externa",
-            "columna 10: Diagnostico principal de ingreso",
-            "columna 11: Diagnóstico principal de egreso",
-            "columna 12: Diagnóstico relacionado Nro. 1 de egreso",
-            "columna 13: Diagnóstico relacionado Nro. 2 de egreso",
-            "columna 14: Diagnóstico relacionado Nro. 3 de egreso",
-            "columna 15: Diagnóstico de la complicacion",
-            "columna 16: Estado a la salida",
-            "columna 17: Diagnóstico de la causa básica de muerte",
-            "columna 18: Fecha de egreso del usuario a la institución",
-            "columna 19: Hora de egreso del usuario de la institución"
+            'columna 1: Número de la factura',
+            'columna 2: Código del prestador de servicios de salud',
+            'columna 3: Tipo de identificación del usuario',
+            'columna 4: Número de identificación del usuario en el sistema',
+            'columna 5: Via de ingreso a la institucion',
+            'columna 6: Fecha de ingreso del usuario a la institución',
+            'columna 7: Hora de ingreso del usuario a la Institución',
+            'columna 8: Numero de autorizacion',
+            'columna 9: Causa externa',
+            'columna 10: Diagnostico principal de ingreso',
+            'columna 11: Diagnóstico principal de egreso',
+            'columna 12: Diagnóstico relacionado Nro. 1 de egreso',
+            'columna 13: Diagnóstico relacionado Nro. 2 de egreso',
+            'columna 14: Diagnóstico relacionado Nro. 3 de egreso',
+            'columna 15: Diagnóstico de la complicacion',
+            'columna 16: Estado a la salida',
+            'columna 17: Diagnóstico de la causa básica de muerte',
+            'columna 18: Fecha de egreso del usuario a la institución',
+            'columna 19: Hora de egreso del usuario de la institución',
         ];
 
         // 1. Número de la factura (columna 0)
@@ -91,8 +91,8 @@ class AHFileValidator
         }
 
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["1", "2", "3", "4"];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        $allowedPrefixes = ['1', '2', '3', '4'];
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_004',
@@ -155,8 +155,8 @@ class AHFileValidator
         }
 
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15"];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        $allowedPrefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15'];
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AP_ERROR_008',

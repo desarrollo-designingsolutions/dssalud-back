@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\Glosa\GlosaExcelErrorsValidationExport;
 use App\Exports\InvoiceAudit\InvoiceAuditExcelExport;
 use App\Exports\Service\ServiceListExcelExport;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditListResource;
@@ -10,10 +11,10 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
-use App\Models\Service;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
+use App\Repositories\ServiceRepository;
 use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class InvoiceAuditController extends Controller
         protected ThirdRepository $thirdRepository,
         protected PatientRepository $patientRepository,
         protected CodeGlosaRepository $codeGlosaRepository,
+        protected ServiceRepository $serviceRepository,
     ) {}
 
     public function list(Request $request)
@@ -134,7 +136,7 @@ class InvoiceAuditController extends Controller
 
     public function getInformationSheet(Request $request, $third_id, $invoice_audit_id, $patient_id)
     {
-        return $this->execute(function () use ($request, $third_id, $invoice_audit_id, $patient_id) {
+        return $this->execute(function () use ($third_id, $invoice_audit_id, $patient_id) {
 
             $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
             $third = $this->thirdRepository->find($third_id);
@@ -142,9 +144,8 @@ class InvoiceAuditController extends Controller
             $patient = $this->patientRepository->find($patient_id);
             $patient = new InvoiceAuditPaginatePatientResource($patient);
 
-
-            $value_glosa = $invoice_audit->services->sum("value_glosa");
-            $value_approved = $invoice_audit->services->sum("value_approved");
+            $value_glosa = $invoice_audit->services->sum('value_glosa');
+            $value_approved = $invoice_audit->services->sum('value_approved');
 
             return [
                 'code' => 200,
@@ -152,8 +153,8 @@ class InvoiceAuditController extends Controller
                     'invoice_audit' => $invoice_audit,
                     'third' => $third,
                     'patient' => $patient,
-                    'value_glosa' => $value_glosa,
-                    'value_approved' => $value_approved,
+                    'value_glosa' => formatNumber($value_glosa),
+                    'value_approved' => formatNumber($value_approved),
                 ],
             ];
         });
@@ -181,51 +182,6 @@ class InvoiceAuditController extends Controller
         });
     }
 
-    public function exportServices(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-
-            $services = Service::query();
-            $services->where(function ($query) use ($request) {
-
-                if (!empty($request['invoice_audit_id'])) {
-                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
-                }
-                if (!empty($request['patient_id'])) {
-                    $query->where('patient_id', $request['patient_id']);
-                }
-                if (!empty($request['third_id'])) {
-                    $query->where('third_id', $request['third_id']);
-                }
-                if (!empty($request['assignment_batch_id'])) {
-                    $query->where('assignment_batch_id', $request['assignment_batch_id']);
-                }
-            });
-            $services =  $services->get();
-
-            $glosses = $this->codeGlosaRepository->list(
-                [
-                    'typeData' => 'all',
-                    'is_active' => 1,
-                ]
-            );
-            $attachedData = [
-                [
-                    "id" => auth()->user()->id,
-                ]
-            ];
-
-            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData), \Maatwebsite\Excel\Excel::XLSX);
-
-            $excelBase64 = base64_encode($excel);
-
-            return [
-                'code' => 200,
-                'excel' => $excelBase64,
-            ];
-        });
-    }
-
     public function exportListServicesExcel(Request $request)
     {
         return $this->execute(function () use ($request) {
@@ -242,66 +198,11 @@ class InvoiceAuditController extends Controller
         });
     }
 
-    public function exportPatients(Request $request)
+    public function exportDataToGlosasImportCsv(Request $request)
     {
         return $this->execute(function () use ($request) {
 
-            $services = Service::query()->with([
-                "patient" => function ($query) use ($request){
-                    if (!empty($request['patient_id'])) {
-                        $query->where('id', $request['patient_id']);
-                    }
-                },
-                "invoice_audit" => function ($query) use ($request){
-                    if (!empty($request['invoice_audit_id'])) {
-                        $query->where('id', $request['invoice_audit_id']);
-                    }
-
-
-                    if (!empty($request['third_id'])) {
-                        $query->whereHas('third', function ($subQuery) use ($request) {
-                            if (!empty($request['third_id'])) {
-                                $subQuery->where('id', $request['third_id']);
-                            }
-                        });
-                    }
-
-                    $query->whereHas('assignment.assignmentBatche', function ($subQuery) use ($request) {
-                        if (!empty($request['assignment_batch_id'])) {
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                        }
-                    });
-
-                },
-                // "invoice_audit.assignment.assignmentBatche"
-            ]);
-            $services->where(function ($query) use ($request) {
-
-                if (!empty($request['invoice_audit_id'])) {
-                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
-                }
-                if (!empty($request['patient_id'])) {
-                    $query->where('patient_id', $request['patient_id']);
-                }
-                if (!empty($request['third_id'])) {
-
-                    $query->whereHas('invoice_audit', function ($subQuery) use ($request) {
-                        if (!empty($request['third_id'])) {
-                            $subQuery->where('third_id', $request['third_id']);
-                        }
-                    });
-                }
-                if (!empty($request['assignment_batch_id'])) {
-
-                    $query->whereHas('invoice_audit.assignment.assignmentBatche', function ($subQuery) use ($request) {
-                        if (!empty($request['assignment_batch_id'])) {
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                        }
-                    });
-                }
-            });
-            $services =  $services->get();
-
+            $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
             $glosses = $this->codeGlosaRepository->list(
                 [
@@ -311,13 +212,56 @@ class InvoiceAuditController extends Controller
             );
             $attachedData = [
                 [
-                    "id" => auth()->user()->id,
-                ]
+                    'id' => $request->input('user_id'),
+                ],
             ];
 
-            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData,$request->all()), \Maatwebsite\Excel\Excel::XLSX);
+            $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData, $request->all()), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function excelErrorsValidation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            $user_id = $request->input('user_id');
+
+            // Obtener los mensajes de errores de las validaciones
+            $data = $this->invoiceAuditRepository->getValidationsErrorMessages($user_id);
+
+            $excel = Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function exportCsvErrorsValidation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            $user_id = $request->input('user_id');
+
+            // Obtener los mensajes de errores de las validaciones
+            $data = $this->invoiceAuditRepository->getValidationsErrorMessages($user_id);
+
+            $data = collect($data)->pluck('data');
+
+            // Generar el CSV con Laravel Excel
+            $csv = Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::CSV);
+
+            $excelBase64 = base64_encode($csv);
 
             return [
                 'code' => 200,

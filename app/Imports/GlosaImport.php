@@ -7,27 +7,25 @@ use App\Events\ProgressCircular;
 use App\Helpers\Constants;
 use App\Jobs\Glosa\ProcessGlosasServiceJob;
 use App\Models\Glosa;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\BeforeImport;
-use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Events\BeforeImport;
 
-class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents, SkipsOnFailure
+class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithEvents
 {
-
     use Importable, SkipsFailures;
 
     public function __construct(
         protected $user_id,
     ) {}
-
 
     public function registerEvents(): array
     {
@@ -50,27 +48,40 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
                 $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
                 $errorsFormatted = [];
 
-                if (!empty($errors)) {
+                if (! empty($errors)) {
                     // logger('Errores encontrados durante la importación:');
                     foreach ($errors as $index => $errorJson) {
                         $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
                         // logger("Error #" . ($index + 1) . ": " . json_encode($errorData));
                     }
-
-                    // Limpiar errores
-                    Redis::del("list:glosas_import_errors_{$this->user_id}");
                 } else {
                     // logger('No se encontraron errores durante la importación.');
                 }
 
                 // Emitir errores al front
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
-            }
+
+                // Obtener todos los service_id únicos como un array
+                $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
+
+                // Convertir a colección si prefieres trabajar con Laravel Collections
+                $uniqueServiceIdsCollection = collect($uniqueServiceIds);
+
+                foreach ($uniqueServiceIdsCollection as $serviceId) {
+                    ProcessGlosasServiceJob::dispatch($serviceId);
+                }
+
+                // Opcional: Limpiar el Set de Redis después de usarlo
+                Redis::del("set:glosas_service_ids_{$this->user_id}");
+            },
         ];
     }
 
     public function model(array $row)
     {
+        // Limpiar errores
+        Redis::del("list:glosas_import_errors_{$this->user_id}");
+
         return DB::transaction(function () use ($row) {
             // Incrementar contador y calcular progreso
             $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
@@ -101,22 +112,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
             // Emitir evento de progreso
             ProgressCircular::dispatch("glosa.{$this->user_id}", $progress);
 
-            if ($progress >= 100) {
-                // Obtener todos los service_id únicos como un array
-                $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
-
-                // Convertir a colección si prefieres trabajar con Laravel Collections
-                $uniqueServiceIdsCollection = collect($uniqueServiceIds);
-
-
-                foreach ($uniqueServiceIdsCollection as $serviceId) {
-                    ProcessGlosasServiceJob::dispatch($serviceId);
-                }
-
-                // Opcional: Limpiar el Set de Redis después de usarlo
-                Redis::del("set:glosas_service_ids_{$this->user_id}");
-            }
-
             return null;
         });
     }
@@ -126,7 +121,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         return Constants::CHUNKSIZE;
     }
 
-
     public function validations($row, $processed, $data)
     {
         $error = false;
@@ -135,74 +129,72 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         $result = $this->user($row[0], 'id');
         if ($result === null) { // Usar === para comparación estricta
             $errorData = [
-                'column' => "1",
+                'column' => '1',
                 'row' => $processed,
                 'value' => $row[0],
-                'data' => $row, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => "El ID de usuario no existe en la base de datos.",
+                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
+                'errors' => 'El ID de usuario no existe en la base de datos.',
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-            $error= true; // O lanza una excepción, o haz algo para detener el flujo
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
         }
 
         $service = $this->service($row[1], 'id');
         if ($service == null) {
             $errorData = [
-                'column' => "2", // Número de columna
+                'column' => '2', // Número de columna
                 'row' => $processed, // Número de fila
                 'value' => $row[1],
                 'data' => $data,     // Datos originales
-                'errors' => "El ID del servicio no existe en la base de datos.", // Mensajes de error
+                'errors' => 'El ID del servicio no existe en la base de datos.', // Mensajes de error
             ];
 
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-            $error= true; // O lanza una excepción, o haz algo para detener el flujo
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
         } else {
 
-            if(is_numeric($row[3]) && $row[3]>$service["total_value"]){
+            if (is_numeric($row[3]) && $row[3] > $service['total_value']) {
                 $errorData = [
-                    'column' => "4", // Número de columna
+                    'column' => '4', // Número de columna
                     'row' => $processed, // Número de fila
                     'value' => $row[3],
                     'data' => $data,     // Datos originales
-                    'errors' => "El valor de la glosa no puede supérar el valor del servicio.", // Mensajes de error
+                    'errors' => 'El valor de la glosa no puede supérar el valor del servicio.', // Mensajes de error
                 ];
 
                 Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-                $error= true; // O lanza una excepción, o haz algo para detener el flujo
+                $error = true; // O lanza una excepción, o haz algo para detener el flujo
             }
         }
 
-
         if ($this->codeGlosa($row[2], 'id') == null) {
             $errorData = [
-                'column' => "3", // Número de columna
+                'column' => '3', // Número de columna
                 'row' => $processed, // Número de fila
                 'value' => $row[2],
                 'data' => $data,     // Datos originales
-                'errors' => "El ID del código de glosa no existe en la base de datos.", // Mensajes de error
+                'errors' => 'El ID del código de glosa no existe en la base de datos.', // Mensajes de error
             ];
 
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-            $error= true; // O lanza una excepción, o haz algo para detener el flujo
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
         }
 
         // Validar que glosa_value sea un número válido
-        if (!is_numeric($row[3]) || preg_match('/[a-zA-Z]/', $row[3])) {
+        if (! is_numeric($row[3]) || preg_match('/[a-zA-Z]/', $row[3])) {
             $errorData = [
-                'column' => "4",
+                'column' => '4',
                 'row' => $processed,
-                'value'  => $row[3],
-                'data' => $row,
-                'errors' => "El valor de la glosa debe ser un número válido sin letras.",
+                'value' => $row[3],
+                'data' => $data,
+                'errors' => 'El valor de la glosa debe ser un número válido sin letras.',
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
-            $error= true;;
+            $error = true;
         }
 
         return $error; // Omitir esta fila
     }
-
 
     public function user($value, $field)
     {
@@ -212,6 +204,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
@@ -227,6 +220,7 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
         if (Redis::exists($key)) {
             // Recuperamos todos los datos del hash
             $serviceData = Redis::hgetall($key);
+
             return $serviceData ?: true; // Devuelve el hash completo o true si está vacío
         }
 
@@ -237,7 +231,6 @@ class GlosaImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents,
     {
         $redisData = Redis::get('Redis_CodeGlosa');
         $cache = $redisData ? collect(json_decode($redisData, true)) : collect([]);
-
 
         $data = $cache->first(function ($item) use ($value, $field) {
             return strtoupper($item[$field]) === strtoupper($value);

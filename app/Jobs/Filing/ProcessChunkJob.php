@@ -2,9 +2,7 @@
 
 namespace App\Jobs\Filing;
 
-use App\Enums\Filing\StatusFilingEnum;
 use App\Events\ProgressCircular;
-use App\Helpers\Common\ErrorCollector;
 use App\Helpers\FilingOld\ACFileValidator;
 use App\Helpers\FilingOld\AFFileValidator;
 use App\Helpers\FilingOld\AHFileValidator;

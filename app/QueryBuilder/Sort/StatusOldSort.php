@@ -12,8 +12,8 @@ class StatusOldSort implements Sort
     /**
      * Constructor que permite definir un arreglo personalizado de estados.
      *
-     * @param array|null $customStatusOrder Arreglo de estados con estructura [['value' => ..., 'title' => ...], ...].
-     *                                      Si es null, usa el arreglo por defecto.
+     * @param  array|null  $customStatusOrder  Arreglo de estados con estructura [['value' => ..., 'title' => ...], ...].
+     *                                         Si es null, usa el arreglo por defecto.
      */
     public function __construct($customStatusOrder = null)
     {
@@ -23,10 +23,9 @@ class StatusOldSort implements Sort
     /**
      * Ordena la consulta por el campo status basado en los títulos traducidos.
      *
-     * @param Builder $query     El objeto de consulta.
-     * @param bool    $descending Indica si el orden es descendente (true) o ascendente (false).
-     * @param string  $property   El nombre de la propiedad a ordenar (en este caso, "status").
-     * @return Builder
+     * @param  Builder  $query  El objeto de consulta.
+     * @param  bool  $descending  Indica si el orden es descendente (true) o ascendente (false).
+     * @param  string  $property  El nombre de la propiedad a ordenar (en este caso, "status").
      */
     public function __invoke($query, $descending, $property): Builder
     {
@@ -42,6 +41,6 @@ class StatusOldSort implements Sort
         }
 
         // Usamos FIELD para ordenar según el orden personalizado
-        return $query->orderByRaw("FIELD($property, '" . implode("','", $orderedValues) . "') $direction");
+        return $query->orderByRaw("FIELD($property, '".implode("','", $orderedValues)."') $direction");
     }
 }

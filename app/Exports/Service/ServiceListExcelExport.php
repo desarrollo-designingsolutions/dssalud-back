@@ -31,9 +31,12 @@ class ServiceListExcelExport implements WithMultipleSheets
 
     protected function createSheet($title, $data, $view)
     {
-        return new class($title, $data, $view) implements FromView, ShouldAutoSize, WithEvents, WithTitle {
+        return new class($title, $data, $view) implements FromView, ShouldAutoSize, WithEvents, WithTitle
+        {
             protected $title;
+
             protected $data;
+
             protected $view;
 
             public function __construct($title, $data, $view)
@@ -60,7 +63,7 @@ class ServiceListExcelExport implements WithMultipleSheets
                         $sheet = $event->sheet;
                         $highestColumn = $sheet->getHighestColumn();
                         $highestRow = $sheet->getHighestRow();
-                        $range = 'A1:' . $highestColumn . $highestRow;
+                        $range = 'A1:'.$highestColumn.$highestRow;
                         $sheet->setAutoFilter($range);
                     },
                 ];

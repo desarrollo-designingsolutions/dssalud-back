@@ -14,7 +14,6 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-
     public function __construct() {}
 
     public function handle(): void
@@ -24,7 +23,7 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
                 $serviceData = $element->toArray();
                 $key = "services:{$element->id}";
                 Redis::hmset($key, $serviceData);
-                Redis::sadd("services:ids_set", $element->id);
+                Redis::sadd('services:ids_set', $element->id);
             }
         });
 

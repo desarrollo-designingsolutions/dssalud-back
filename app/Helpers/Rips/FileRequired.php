@@ -910,8 +910,6 @@ function validateGroupedData(Collection $groupedCsvData)
     return $errorMessages;
 }
 
-
-
 function processData($build, $groupedData)
 {
     // return$groupedData;
@@ -1388,7 +1386,6 @@ function verifyNullData(&$array, $requiredFields, $value, $element1)
 // }
 
 // suma todos los valores VRSERVICE DE TODAS LAS FACTURAS
-
 
 // function saveReloadDataRips($data, $updateAll = true)
 // {

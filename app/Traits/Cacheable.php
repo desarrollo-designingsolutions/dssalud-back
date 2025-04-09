@@ -51,7 +51,7 @@ trait Cacheable
 
             $project = env('KEY_REDIS_PROJECT');
 
-        $prefix = $project.$prefix;
+            $prefix = $project.$prefix;
 
             $usePattern = str_ends_with($prefix, '*');
             $cleanPrefix = $usePattern ? rtrim($prefix, '*') : $prefix;

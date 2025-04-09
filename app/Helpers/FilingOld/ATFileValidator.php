@@ -9,29 +9,29 @@ class ATFileValidator
     /**
      * Valida el archivo AT y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Número de la factura",
-            "columna 2: Código del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del usuario",
-            "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Numero de autorizacion",
-            "columna 6: Tipo de servicio",
-            "columna 7: Codigo del servicio",
-            "columna 8: Nombre del servicio",
-            "columna 9: Cantidad",
-            "columna 10: Valor unitario del material e insumo",
-            "columna 11: Valor total del material e insumo"
+            'columna 1: Número de la factura',
+            'columna 2: Código del prestador de servicios de salud',
+            'columna 3: Tipo de identificación del usuario',
+            'columna 4: Número de identificación del usuario en el sistema',
+            'columna 5: Numero de autorizacion',
+            'columna 6: Tipo de servicio',
+            'columna 7: Codigo del servicio',
+            'columna 8: Nombre del servicio',
+            'columna 9: Cantidad',
+            'columna 10: Valor unitario del material e insumo',
+            'columna 11: Valor total del material e insumo',
         ];
 
         // 1. Número de la factura (columna 0)
@@ -69,7 +69,7 @@ class ATFileValidator
         // 3. Tipo de identificación del usuario (columna 3)
         // Unicamente los valores permitidos
         $allowedPrefixes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AT_ERROR_003',

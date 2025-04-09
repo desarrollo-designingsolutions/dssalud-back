@@ -31,7 +31,8 @@ class ProgressCircular implements ShouldBroadcastNow
     {
         return [
             'channel' => $this->channel,
-            'progress' => round($this->progress),
+            'progress' => sprintf('%.2f', floor($this->progress * 100) / 100),
+            'progress_2' => $this->progress,
         ];
     }
 }

@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\Service;
 use App\Models\Third;
 use App\QueryBuilder\Sort\DynamicConcatSort;
+use Illuminate\Support\Facades\Redis;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -27,13 +28,13 @@ class InvoiceAuditRepository extends BaseRepository
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
 
-                if (!empty($request['company_id'])) {
+                if (! empty($request['company_id'])) {
                     $query->where('company_id', $request['company_id']);
                 }
             })
             ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && !empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 
@@ -80,8 +81,7 @@ class InvoiceAuditRepository extends BaseRepository
                         $subQuery->where('user_id', request('user_id'));
                     });
 
-
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 })
@@ -109,7 +109,7 @@ class InvoiceAuditRepository extends BaseRepository
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                             $subQuery->where('user_id', $request['user_id']);
 
-                            $subQuery->where(function ($subQuery2) use ($request) {
+                            $subQuery->where(function ($subQuery2) {
                                 $subQuery2->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_001);
                                 $subQuery2->orWhere('status', StatusAssignmentEnum::ASSIGNMENT_EST_002);
                             });
@@ -144,7 +144,7 @@ class InvoiceAuditRepository extends BaseRepository
                         $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                     });
 
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 })
@@ -171,21 +171,21 @@ class InvoiceAuditRepository extends BaseRepository
 
                 ])
                 ->allowedSorts([
-                    'invoice_number'
+                    'invoice_number',
                 ])->where(function ($query) use ($request) {
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->whereHas('third.company', function ($subQuery) use ($request) {
                             $subQuery->where('company_id', $request['company_id']);
                         });
                     }
 
-                    if (!empty($request['assignment_batch_id'])) {
+                    if (! empty($request['assignment_batch_id'])) {
                         $query->whereHas('assignment', function ($subQuery) use ($request) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         });
                     }
 
-                    if (!empty($request['third_id'])) {
+                    if (! empty($request['third_id'])) {
                         $query->where('third_id', $request['third_id']);
                     }
                 })
@@ -228,10 +228,10 @@ class InvoiceAuditRepository extends BaseRepository
                     'total_value',
                 ])->where(function ($query) use ($request) {
 
-                    if (!empty($request['invoice_audit_id'])) {
+                    if (! empty($request['invoice_audit_id'])) {
                         $query->where('invoice_audit_id', $request['invoice_audit_id']);
                     }
-                    if (!empty($request['patient_id'])) {
+                    if (! empty($request['patient_id'])) {
                         $query->where('patient_id', $request['patient_id']);
                     }
                 })
@@ -264,7 +264,7 @@ class InvoiceAuditRepository extends BaseRepository
                     'gender',
                 ])->where(function ($query) use ($request) {
 
-                    if (!empty($request['invoice_audit_id'])) {
+                    if (! empty($request['invoice_audit_id'])) {
                         $query->where('invoice_audit_id', $request['invoice_audit_id']);
                     }
                 })
@@ -278,7 +278,7 @@ class InvoiceAuditRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -295,10 +295,10 @@ class InvoiceAuditRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
+            if (! empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
@@ -322,5 +322,22 @@ class InvoiceAuditRepository extends BaseRepository
         });
 
         return $data;
+    }
+
+    public function getValidationsErrorMessages($user_id)
+    {
+        // Recuperar y mostrar los errores almacenados en Redis
+        $errorListKey = "list:glosas_import_errors_{$user_id}";
+        $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+        $errorsFormatted = [];
+
+        if (! empty($errors)) {
+            foreach ($errors as $index => $errorJson) {
+                $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
+            }
+
+        }
+
+        return $errorsFormatted;
     }
 }

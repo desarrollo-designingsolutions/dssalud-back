@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Service extends Model
 {
-    use HasUuids, Searchable, SoftDeletes, HasFactory;
+    use HasFactory, HasUuids, Searchable, SoftDeletes;
 
     protected $guarded = [];
 
@@ -25,6 +25,7 @@ class Service extends Model
     {
         return $this->belongsTo(InvoiceAudit::class);
     }
+
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);

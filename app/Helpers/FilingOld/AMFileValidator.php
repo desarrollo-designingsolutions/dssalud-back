@@ -9,32 +9,32 @@ class AMFileValidator
     /**
      * Valida el archivo AM y sus columnas.
      *
-     * @param string $fileName Nombre del archivo
-     * @param string $rowData datos de la fila del txt a validar
-     * @param string $rowNumber numero de la fila del txt a validar
-     * @param string $filing_id numero de la fila del txt a validar
+     * @param  string  $fileName  Nombre del archivo
+     * @param  string  $rowData  datos de la fila del txt a validar
+     * @param  string  $rowNumber  numero de la fila del txt a validar
+     * @param  string  $filing_id  numero de la fila del txt a validar
      */
     public static function validate(string $fileName, string $rowData, $rowNumber, $filing_id): void
     {
         $keyErrorRedis = "filingOld:{$filing_id}:errors";
 
-        $rowData = array_map('trim', explode(",", $rowData));
+        $rowData = array_map('trim', explode(',', $rowData));
 
         $titleColumn = [
-            "columna 1: Número de la factura",
-            "columna 2: Código del prestador de servicios de salud",
-            "columna 3: Tipo de identificación del usuario",
-            "columna 4: Número de identificación del usuario en el sistema",
-            "columna 5: Numero de autorizacion",
-            "columna 6: Código del medicamento",
-            "columna 7: Tipo de medicamento",
-            "columna 8: Nombre genérico del medicamento",
-            "columna 9: Forma farmacéutica",
-            "columna 10: Concentración del medicamento",
-            "columna 11: Unidad de medida del medicamento",
-            "columna 12: Número de unidades",
-            "columna 13: Valor unitario de medicamento",
-            "columna 14: Valor total de medicamento"
+            'columna 1: Número de la factura',
+            'columna 2: Código del prestador de servicios de salud',
+            'columna 3: Tipo de identificación del usuario',
+            'columna 4: Número de identificación del usuario en el sistema',
+            'columna 5: Numero de autorizacion',
+            'columna 6: Código del medicamento',
+            'columna 7: Tipo de medicamento',
+            'columna 8: Nombre genérico del medicamento',
+            'columna 9: Forma farmacéutica',
+            'columna 10: Concentración del medicamento',
+            'columna 11: Unidad de medida del medicamento',
+            'columna 12: Número de unidades',
+            'columna 13: Valor unitario de medicamento',
+            'columna 14: Valor total de medicamento',
         ];
 
         // 1. Número de la factura (columna 0)
@@ -72,7 +72,7 @@ class AMFileValidator
         // 3. Tipo de identificación del usuario (columna 3)
         // Unicamente los valores permitidos
         $allowedPrefixes = ['CC', 'CE', 'CD', 'PA', 'SC', 'PE', 'RE', 'RC', 'TI', 'CN', 'AS', 'MS', 'DE', 'PT', 'SI'];
-        if (!in_array($rowData[2], $allowedPrefixes)) {
+        if (! in_array($rowData[2], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AM_ERROR_003',
@@ -103,8 +103,8 @@ class AMFileValidator
         }
 
         // Unicamente los valores permitidos
-        $allowedPrefixes = ["1", "2"];
-        if (!in_array($rowData[6], $allowedPrefixes)) {
+        $allowedPrefixes = ['1', '2'];
+        if (! in_array($rowData[6], $allowedPrefixes)) {
             ErrorCollector::addError(
                 $keyErrorRedis,
                 'FILE_AM_ERROR_005',

@@ -28,7 +28,7 @@ class Third extends Model
     public function assignedInvoiceAudits()
     {
         return $this->hasMany(InvoiceAudit::class)
-                    ->whereHas('assignment');
+            ->whereHas('assignment');
     }
 
     public function sumInvoiceAuditsTotalValue()
@@ -36,15 +36,14 @@ class Third extends Model
         return $this->invoiceAudits()->sum('total_value');
     }
 
-    public function countInvoiceByFilter(Array $filter = [])
+    public function countInvoiceByFilter(array $filter = [])
     {
-        return $this->invoiceAudits()->whereHas('assignment', function($query) use($filter) {
+        return $this->invoiceAudits()->whereHas('assignment', function ($query) use ($filter) {
 
-            if (!empty($filter['status'])) {
+            if (! empty($filter['status'])) {
                 $query->where('status', $filter['status']);
             }
 
         })->count(); // Filtramos por el campo status en Assignment
     }
-
 }

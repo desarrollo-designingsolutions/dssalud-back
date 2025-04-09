@@ -20,10 +20,10 @@ class GlosaRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function ()  use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
 
             $query = QueryBuilder::for($this->model->query())
-                ->select("glosas.*")
+                ->select('glosas.*')
                 // ->join("users", "users.id", "=", "user_id")
                 // ->join("services", "services.id", "=", "service_id")
                 ->allowedFilters([
@@ -48,10 +48,10 @@ class GlosaRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
-                    "observation",
-                    "glosa_value",
+                    'observation',
+                    'glosa_value',
                     AllowedSort::custom('user_full_name', new DynamicConcatSort("users.name, ' ', users.surname")),
-                    AllowedSort::custom('service_description', new DynamicConcatSort("services.description")),
+                    AllowedSort::custom('service_description', new DynamicConcatSort('services.description')),
                 ])
                 ->where(function ($query) use ($request) {
                     if (isset($request['service_id']) && ! empty($request['service_id'])) {
@@ -76,7 +76,7 @@ class GlosaRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 

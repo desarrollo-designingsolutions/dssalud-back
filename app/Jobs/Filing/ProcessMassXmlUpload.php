@@ -38,7 +38,7 @@ class ProcessMassXmlUpload implements ShouldQueue
 
         logMessage('juan33333');
         logMessage($filing_invoice);
-        
+
         $jsonContents = openFileJson($filing_invoice->path_json);
 
         $data = [
@@ -63,7 +63,6 @@ class ProcessMassXmlUpload implements ShouldQueue
             $filing_invoice->path_xml = $finalPath;
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
             $filing_invoice->validationXml = null;
-     
 
         } else {
             logMessage('2');

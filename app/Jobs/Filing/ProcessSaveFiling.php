@@ -38,7 +38,7 @@ class ProcessSaveFiling implements ShouldQueue
      */
     public function handle(): void
     {
-        //Obtengo los errores de este proceso
+        // Obtengo los errores de este proceso
         $keyErrorRedis = "filingOld:{$this->filingId}:errors";
         $errorCollector = ErrorCollector::getErrors($keyErrorRedis);
 
@@ -56,15 +56,14 @@ class ProcessSaveFiling implements ShouldQueue
             $tempDirectory = json_decode(Redis::get("filingOld:{$this->filingId}:files_txts"), 1);
             $jsonContents = ZipHelper::buildAllDataTogether($tempDirectory);
 
-            //JSONS
+            // JSONS
             // Nombre del archivo json
-            $nameFile = 'filing_' . $this->filingId . '.json';
+            $nameFile = 'filing_'.$this->filingId.'.json';
             // Guarda el JSON en el sistema de archivos usando el disco predeterminado (puede configurar otros discos si es necesario)
-            $ruta = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $this->filingId . '/' . $nameFile; // Ruta donde se guardará la carpeta
-            Storage::disk(Constants::DISK_FILES)->put($ruta, json_encode($jsonContents)); //guardo el archivo
+            $ruta = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$this->filingId.'/'.$nameFile; // Ruta donde se guardará la carpeta
+            Storage::disk(Constants::DISK_FILES)->put($ruta, json_encode($jsonContents)); // guardo el archivo
             $path_json = $ruta;
         }
-
 
         $filing->status = $status;
         $filing->validationTxt = $validationTxt;

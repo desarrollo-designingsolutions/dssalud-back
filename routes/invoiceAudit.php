@@ -26,9 +26,12 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::get('/invoiceAudit/getServices/{invoice_audit_id}/{patient_id}', [InvoiceAuditController::class, 'getServices']);
 
-    Route::post('/invoiceAudit/exportServices', [InvoiceAuditController::class, 'exportServices']);
-
     Route::post('/invoiceAudit/exportListServicesExcel', [InvoiceAuditController::class, 'exportListServicesExcel']);
 
-    Route::post('/invoiceAudit/exportPatients', [InvoiceAuditController::class, 'exportPatients']);
+    Route::post('/invoiceAudit/exportDataToGlosasImportCsv', [InvoiceAuditController::class, 'exportDataToGlosasImportCsv']);
+
+    Route::get('/invoiceAudit/excelErrorsValidation', [InvoiceAuditController::class, 'excelErrorsValidation']);
+
+    Route::get('/invoiceAudit/exportCsvErrorsValidation', [InvoiceAuditController::class, 'exportCsvErrorsValidation']);
+
 });

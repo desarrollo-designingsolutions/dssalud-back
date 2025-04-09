@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InvoiceAudit extends Model
 {
-    use HasUuids, Searchable, SoftDeletes, HasFactory;
+    use HasFactory, HasUuids, Searchable, SoftDeletes;
 
     public function files()
     {

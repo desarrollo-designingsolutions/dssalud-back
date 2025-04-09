@@ -40,6 +40,7 @@ class FilingInvoiceRepository extends BaseRepository
         $this->removeInvalidFilters(['files_count']);
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
         return $this->cacheService->remember($cacheKey, function () use ($filter, $request, $customTypes) {
 
             $query = QueryBuilder::for($this->model->query())
@@ -81,9 +82,8 @@ class FilingInvoiceRepository extends BaseRepository
                     AllowedSort::custom('status', new StatusOldSort($customTypes)),
                 ]);
 
-
-            if (!empty($request["filing_id"])) {
-                $query = $query->where("filing_id", $request["filing_id"]);
+            if (! empty($request['filing_id'])) {
+                $query = $query->where('filing_id', $request['filing_id']);
             }
 
             if (isset($filter['files_count']) && is_numeric($filter['files_count'])) {
@@ -100,7 +100,7 @@ class FilingInvoiceRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (!empty($request['id'])) {
+        if (! empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -119,13 +119,13 @@ class FilingInvoiceRepository extends BaseRepository
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['id'])) {
+            if (! empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
-            if (!empty($request['invoice_number'])) {
+            if (! empty($request['invoice_number'])) {
                 $query->where('invoice_number', $request['invoice_number']);
             }
-            if (!empty($request['filing_id'])) {
+            if (! empty($request['filing_id'])) {
                 $query->where('filing_id', $request['filing_id']);
             }
         });
@@ -139,10 +139,10 @@ class FilingInvoiceRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (!empty($request['idsAllowed'])) {
+            if (! empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (!empty($request['company_id'])) {
+            if (! empty($request['company_id'])) {
                 $query->whereHas('filing', function ($subQuery) use ($request) {
                     $subQuery->where('company_id', $request['company_id']);
                 });
@@ -173,15 +173,15 @@ class FilingInvoiceRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (!empty($request['company_id'])) {
+            if (! empty($request['company_id'])) {
                 $query->whereHas('filing', function ($subQuery) use ($request) {
                     $subQuery->where('company_id', $request['company_id']);
                 });
             }
-            if (!empty($request['status'])) {
+            if (! empty($request['status'])) {
                 $query->where('status', $request['status']);
             }
-            if (!empty($request['filing_id'])) {
+            if (! empty($request['filing_id'])) {
                 $query->where('filing_id', $request['filing_id']);
             }
         });
@@ -203,9 +203,9 @@ class FilingInvoiceRepository extends BaseRepository
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
 
-        $type = "JSON";
-        if($data->filing->type == TypeFilingEnum::FILING_TYPE_001){
-            $type = "TXT";
+        $type = 'JSON';
+        if ($data->filing->type == TypeFilingEnum::FILING_TYPE_001) {
+            $type = 'TXT';
         }
         // Definir las validaciones
         $validations = [

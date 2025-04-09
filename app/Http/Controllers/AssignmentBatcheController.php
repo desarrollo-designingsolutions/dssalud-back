@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AssignmentBatche\AssignmentBatcheStoreRequest;
 use App\Http\Resources\AssignmentBatche\AssignmentBatcheFormResource;
 use App\Http\Resources\AssignmentBatche\AssignmentBatchePaginateResource;
-use App\Repositories\CompanyRepository;
 use App\Repositories\AssignmentBatcheRepository;
+use App\Repositories\CompanyRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
@@ -23,7 +23,7 @@ class AssignmentBatcheController extends Controller
     public function paginate(Request $request)
     {
         return $this->execute(function () use ($request) {
-             $data = $this->assignmentBatcheRepository->paginate($request->all());
+            $data = $this->assignmentBatcheRepository->paginate($request->all());
             $tableData = AssignmentBatchePaginateResource::collection($data);
 
             return [

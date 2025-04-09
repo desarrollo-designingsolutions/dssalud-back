@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
-use App\Events\FilingInvoiceRowUpdatedNow;
 use App\Helpers\Constants;
 use App\Models\Filing;
 use App\Models\FilingInvoice;
@@ -35,11 +34,11 @@ class FilingRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($filter,$request) {
+        return $this->cacheService->remember($cacheKey, function () use ($filter, $request) {
 
             $query = QueryBuilder::for($this->model->query())
                 ->with(['contract:id,name'])
-                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr',"filings.company_id"])
+                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr', 'filings.company_id'])
                 ->withCount(['filingInvoicePreRadicated'])
                 ->allowedFilters([
                     'status',
@@ -83,9 +82,8 @@ class FilingRepository extends BaseRepository
                 $query->having('filing_invoice_pre_radicated_count', '=', $filter['filing_invoice_pre_radicated_count']);
             }
 
-
-            if (!empty($request["company_id"])) {
-                $query = $query->where("company_id", $request["company_id"]);
+            if (! empty($request['company_id'])) {
+                $query = $query->where('company_id', $request['company_id']);
             }
 
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
@@ -135,9 +133,9 @@ class FilingRepository extends BaseRepository
         // Inicializar un array para almacenar los mensajes de error
         $errorMessages = [];
 
-        $type = "JSON";
-        if($data->type == TypeFilingEnum::FILING_TYPE_001){
-            $type = "TXT";
+        $type = 'JSON';
+        if ($data->type == TypeFilingEnum::FILING_TYPE_001) {
+            $type = 'TXT';
         }
 
         // Definir las validaciones
@@ -157,7 +155,7 @@ class FilingRepository extends BaseRepository
                     $elementos = $parsedData;
 
                     if ($data->type == TypeFilingEnum::FILING_TYPE_002) {
-                        $elementos = $parsedData["errorMessages"];
+                        $elementos = $parsedData['errorMessages'];
                     }
 
                     foreach ($elementos as $message) {

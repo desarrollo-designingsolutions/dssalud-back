@@ -66,7 +66,7 @@ function filterComponent($query, &$request, $model = null)
                         $search = $value['search'];
 
                         if ($value['type'] == 'LIKE' && ! is_array($search)) {
-                            $search = '%' . $value['search'] . '%';
+                            $search = '%'.$value['search'].'%';
                         }
                         if (isset($value['relation'])) {
                             foreach ($value['relation'] as $key => $relation) {
@@ -174,7 +174,7 @@ function generatePastelColor($opacity = 1.0)
 function truncate_text($text, $maxLength = 15)
 {
     if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength) . '...';
+        return substr($text, 0, $maxLength).'...';
     }
 
     return $text;
@@ -185,7 +185,7 @@ function formatNumber($number, $currency_symbol = '$ ', $decimal = 2)
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, $decimal, ',', '.');
 
-    return $currency_symbol . $formattedNumber;
+    return $currency_symbol.$formattedNumber;
 }
 
 function formattedElement($element)
@@ -292,7 +292,7 @@ function customSort($a, $b, $sortingRules)
                 }
                 break;
 
-            // Puedes agregar más tipos de ordenación según sea necesario
+                // Puedes agregar más tipos de ordenación según sea necesario
 
             default:
                 // Si el tipo de orden no es 'asc' ni 'desc', no realizar ninguna comparación
@@ -442,7 +442,6 @@ function isNumericArray(array $array): bool
     return array_keys($keys) === $keys; // Comprueba si las claves son 0, 1, 2...
 }
 
-
 function openFileJson($path_json)
 {
 
@@ -500,13 +499,13 @@ function changeServiceData($service_id)
 {
     $service = Service::find($service_id);
 
-    $value_glosa = $service->glosas->sum("glosa_value");
+    $value_glosa = $service->glosas->sum('glosa_value');
 
     if ($value_glosa > $service->total_value) {
         $value_glosa = $service->total_value;
     }
 
-    $value_approved =  $service->total_value - $value_glosa;
+    $value_approved = $service->total_value - $value_glosa;
 
     $service->update([
         'value_glosa' => $value_glosa,

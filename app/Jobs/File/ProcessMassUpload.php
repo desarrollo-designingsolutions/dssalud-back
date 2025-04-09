@@ -48,16 +48,16 @@ class ProcessMassUpload implements ShouldQueue
 
         // Crear el directorio destino si no existe
         $directory = dirname($this->finalPath);
-        if (!Storage::disk($disk)->exists($directory)) {
+        if (! Storage::disk($disk)->exists($directory)) {
             Storage::disk($disk)->makeDirectory($directory);
         }
 
         // Mover el archivo usando rutas relativas
         $moved = Storage::disk($disk)->move($this->tempPath, $this->finalPath);
 
-        if (!$moved) {
+        if (! $moved) {
             logMessage("Error: No se pudo mover el archivo de {$this->tempPath} a {$this->finalPath}");
-            throw new \Exception("No se pudo mover el archivo");
+            throw new \Exception('No se pudo mover el archivo');
         }
 
         $fileRepository->store([

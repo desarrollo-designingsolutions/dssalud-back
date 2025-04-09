@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Helpers\Constants;
 use App\Traits\Cacheable;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -11,12 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\Constants;
-
 
 class FilingInvoice extends Model
 {
-    use HasUuids, Searchable, SoftDeletes,Cacheable;
+    use Cacheable, HasUuids, Searchable,SoftDeletes;
 
     protected $casts = [
         'status' => StatusFilingInvoiceEnum::class,

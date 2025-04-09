@@ -18,21 +18,21 @@ class ServiceRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function ()  use($request){
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
 
-        $query = QueryBuilder::for($this->model->query())
-            ->allowedFilters([
-                AllowedFilter::callback('inputGeneral', function ($query, $value) {}),
-            ])
-            ->allowedSorts([])
-            ->where(function ($query) use ($request) {
-                if (isset($request['service_id']) && ! empty($request['service_id'])) {
-                    $query->orWhere('service_id', $request['service_id']);
-                }
-            })
-            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            $query = QueryBuilder::for($this->model->query())
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {}),
+                ])
+                ->allowedSorts([])
+                ->where(function ($query) use ($request) {
+                    if (isset($request['service_id']) && ! empty($request['service_id'])) {
+                        $query->orWhere('service_id', $request['service_id']);
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-        return $query;
+            return $query;
         }, Constants::REDIS_TTL);
     }
 
@@ -48,7 +48,7 @@ class ServiceRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 
@@ -108,6 +108,65 @@ class ServiceRepository extends BaseRepository
 
             return $data;
         });
+
+        return $data;
+    }
+
+    public function getServicesToImportGlosas($request = [])
+    {
+        $data = $this->model::query()
+            ->with([
+                'patient' => function ($query) use ($request) {
+                    if (! empty($request['patient_id'])) {
+                        $query->where('id', $request['patient_id']);
+                    }
+                },
+                'invoice_audit' => function ($query) use ($request) {
+                    if (! empty($request['invoice_audit_id'])) {
+                        $query->where('id', $request['invoice_audit_id']);
+                    }
+
+                    if (! empty($request['third_id'])) {
+                        $query->whereHas('third', function ($subQuery) use ($request) {
+                            if (! empty($request['third_id'])) {
+                                $subQuery->where('id', $request['third_id']);
+                            }
+                        });
+                    }
+
+                    $query->whereHas('assignment.assignmentBatche', function ($subQuery) use ($request) {
+                        if (! empty($request['assignment_batch_id'])) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        }
+                    });
+                },
+            ])
+            ->where(function ($query) use ($request) {
+
+                if (! empty($request['invoice_audit_id'])) {
+                    $query->where('invoice_audit_id', $request['invoice_audit_id']);
+                }
+                if (! empty($request['patient_id'])) {
+                    $query->where('patient_id', $request['patient_id']);
+                }
+                if (! empty($request['third_id'])) {
+
+                    $query->whereHas('invoice_audit', function ($subQuery) use ($request) {
+                        if (! empty($request['third_id'])) {
+                            $subQuery->where('third_id', $request['third_id']);
+                        }
+                    });
+                }
+                if (! empty($request['assignment_batch_id'])) {
+
+                    $query->whereHas('invoice_audit.assignment.assignmentBatche', function ($subQuery) use ($request) {
+                        if (! empty($request['assignment_batch_id'])) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        }
+                    });
+                }
+            })
+            ->get();
 
         return $data;
     }

@@ -87,7 +87,7 @@ class ProcessFilingValidationTxt implements ShouldQueue
         if (! empty($this->lastProcess)) {
 
             // Ya sea que tenga errores txt o no, la radicacion queda abierta
-            $filing->status =StatusFilingEnum::FILING_EST_008;
+            $filing->status = StatusFilingEnum::FILING_EST_008;
             $filing->save();
 
             FilingFinishProcessJob::dispatch($filing->id);

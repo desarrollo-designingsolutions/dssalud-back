@@ -49,7 +49,7 @@ class AssignmentBatcheRepository extends BaseRepository
                     'count_invoice_completed',
                 ])
                 ->where(function ($query) use ($request) {
-                    if (!empty($request['company_id'])) {
+                    if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 });
@@ -60,6 +60,7 @@ class AssignmentBatcheRepository extends BaseRepository
             // }
 
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
             return $query;
         }, Constants::REDIS_TTL);
     }

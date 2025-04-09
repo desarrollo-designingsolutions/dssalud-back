@@ -8,15 +8,15 @@ use App\Events\ProgressCircular;
 use App\Helpers\Constants;
 use App\Models\Assignment;
 use App\Services\CacheService;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\BeforeImport;
-use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Concerns\ToModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Events\BeforeImport;
 
-class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEvents
+class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEvents
 {
     // ... constructor y otras propiedades ...
 
@@ -24,9 +24,8 @@ class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEv
         protected $user_id,
         protected $company_id,
     ) {
-        $cache = new CacheService();
+        $cache = new CacheService;
     }
-
 
     public function registerEvents(): array
     {
@@ -44,7 +43,7 @@ class AssingmentImport implements ToModel, WithChunkReading, ShouldQueue, WithEv
 
                 Redis::del("integer:assignments_import_total_{$this->user_id}");
                 Redis::del("integer:assignments_import_processed_{$this->user_id}");
-            }
+            },
         ];
     }
 
