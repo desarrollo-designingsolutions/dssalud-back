@@ -163,7 +163,9 @@ class CacheService
                 }
                 break;
             case 'hash':
+                logMessage(1);
                 if (is_array($data)) {
+                    logMessage(2);
                     Redis::hmset($key, $data);
                     Redis::expire($key, $ttl);
                 }

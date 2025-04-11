@@ -173,10 +173,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
-
-            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
-
         }
 
         // Guardar los errores en Redis como una lista
@@ -193,9 +189,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
 
-            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
-
         }
 
         $service = $this->service($row[1], 'id');
@@ -211,9 +204,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
 
-            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
-
         } else {
 
             if (is_numeric($row[3]) && $row[3] > $service['total_value']) {
@@ -227,9 +217,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
                 Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
                 $error = true; // O lanza una excepción, o haz algo para detener el flujo
-
-                $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-                $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
 
             }
         }
@@ -246,9 +233,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
 
-            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
-
         }
 
         // Validar que glosa_value sea un número válido
@@ -262,9 +246,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true;
-
-            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
-            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
 
         }
 
