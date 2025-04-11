@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('company_id')->constrained();
             $table->foreignUuid('invoice_audit_id')->constrained();
             $table->foreignUuid('patient_id')->constrained();
             $table->string('detail_code')->nullable();
@@ -20,6 +21,8 @@ return new class extends Migration
             $table->integer('quantity')->nullable();
             $table->decimal('unit_value', 15, 2)->nullable();
             $table->decimal('total_value', 15, 2)->nullable();
+            $table->decimal('value_glosa', 15, 2)->nullable()->comment('Valor Glosa es la sumatoria de los valores de las glosas del servicio');
+            $table->decimal('value_approved', 15, 2)->nullable()->comment('Valor aprobado resta entre el valor de la glosa y el total del servicio');
             $table->timestamps();
             $table->softDeletes();
         });

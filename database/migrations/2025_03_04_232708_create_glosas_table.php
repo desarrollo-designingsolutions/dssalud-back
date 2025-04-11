@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('glosas', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('company_id')->constrained();
             $table->foreignUuid('user_id')->constrained();
             $table->foreignUuid('service_id')->constrained();
-            $table->string('code_glosa_id')->nullable();
+            $table->foreignUuid('code_glosa_id')->nullable()->constrained();
             $table->decimal('glosa_value', 15, 2)->nullable();
             $table->text('observation')->nullable();
             $table->timestamps();
