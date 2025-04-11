@@ -15,11 +15,10 @@ return new class extends Migration
     {
         Schema::create('assignments', function (Blueprint $table) {
             $table->uuid('id')->primary();
-
+            $table->foreignUuid('company_id')->constrained();
             $table->foreignUuid('assignment_batch_id')->constrained();
             $table->foreignUuid('user_id')->constrained();
             $table->foreignUuid('invoice_audit_id')->constrained();
-
             $table->string('phase')->nullable();
             $table->string('status')->nullable();
 
