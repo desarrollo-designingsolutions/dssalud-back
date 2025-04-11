@@ -86,6 +86,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 }
 
                 // Emitir errores al front
+                logMessage($errorsFormatted);
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
 
                 // Obtener todos los service_id únicos como un array
@@ -294,31 +295,31 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         return $data;
     }
 
-    public function rules(): array
-    {
-        return [
-            'user_id' => 'required|exists:users,id',
-            'service_id' => 'required|exists:services,id',
-            'code_glosa_id' => 'required|exists:code_glosas,id',
-            'glosa_value' => 'required|numeric|regex:/^\d+(\.\d+)?$/',
-            'observation' => 'nullable|string',
-        ];
-    }
+    // public function rules(): array
+    // {
+    //     return [
+    //         'user_id' => 'required|exists:users,id',
+    //         'service_id' => 'required|exists:services,id',
+    //         'code_glosa_id' => 'required|exists:code_glosas,id',
+    //         'glosa_value' => 'required|numeric|regex:/^\d+(\.\d+)?$/',
+    //         'observation' => 'nullable|string',
+    //     ];
+    // }
 
-    public function customValidationMessages(): array
-    {
-        return [
-            'user_id.required' => 'El ID de usuario es obligatorio.',
-            'user_id.exists' => 'El ID de usuario no existe en la base de datos.',
-            'service_id.required' => 'El ID del servicio es obligatorio.',
-            'service_id.exists' => 'El ID del servicio no existe en la base de datos.',
-            'code_glosa_id.required' => 'El ID del código de glosa es obligatorio.',
-            'code_glosa_id.exists' => 'El ID del código de glosa no existe en la base de datos.',
-            'glosa_value.required' => 'El valor de la glosa es obligatorio.',
-            'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
-            'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
-        ];
-    }
+    // public function customValidationMessages(): array
+    // {
+    //     return [
+    //         'user_id.required' => 'El ID de usuario es obligatorio.',
+    //         'user_id.exists' => 'El ID de usuario no existe en la base de datos.',
+    //         'service_id.required' => 'El ID del servicio es obligatorio.',
+    //         'service_id.exists' => 'El ID del servicio no existe en la base de datos.',
+    //         'code_glosa_id.required' => 'El ID del código de glosa es obligatorio.',
+    //         'code_glosa_id.exists' => 'El ID del código de glosa no existe en la base de datos.',
+    //         'glosa_value.required' => 'El valor de la glosa es obligatorio.',
+    //         'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
+    //         'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
+    //     ];
+    // }
 
     public function getCsvSettings(): array
     {

@@ -41,17 +41,17 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new AssignmentBatchesImport, $filePath);
 
-        $filePath = public_path('seeders\invoice_audits.csv');
+        // $filePath = public_path('seeders\invoice_audits.csv');
 
-        // Depuración: Verifica si el archivo existe
-        if (! file_exists($filePath)) {
-            throw new \Exception('Archivo no encontrado en: '.$filePath);
-        }
+        // // Depuración: Verifica si el archivo existe
+        // if (! file_exists($filePath)) {
+        //     throw new \Exception('Archivo no encontrado en: '.$filePath);
+        // }
 
-        Excel::import(new InvoiceAuditsImport, $filePath);
+        // Excel::import(new InvoiceAuditsImport, $filePath);
 
 
-        // //ROLES
+        //ROLES
         // $filePath = public_path('seeders\roles.xlsx');
 
         // // Depuración: Verifica si el archivo existe
@@ -61,7 +61,7 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new RoleImport, $filePath);
 
-        // //USERS
+        //USERS
         // $filePath = public_path('seeders\users.xlsx');
 
         // // Depuración: Verifica si el archivo existe
@@ -73,14 +73,14 @@ class ThirdSeederXlsx extends Seeder
 
 
 
-        $filePath = public_path('seeders\assignments.csv');
+        // $filePath = public_path('seeders\assignments.csv');
 
-        // Depuración: Verifica si el archivo existe
-        if (! file_exists($filePath)) {
-            throw new \Exception('Archivo no encontrado en: '.$filePath);
-        }
+        // // Depuración: Verifica si el archivo existe
+        // if (! file_exists($filePath)) {
+        //     throw new \Exception('Archivo no encontrado en: '.$filePath);
+        // }
 
-        Excel::import(new AssignmentsImport, $filePath);
+        // Excel::import(new AssignmentsImport, $filePath);
 
 
         // $filePath = public_path('seeders\patients.xlsx');
