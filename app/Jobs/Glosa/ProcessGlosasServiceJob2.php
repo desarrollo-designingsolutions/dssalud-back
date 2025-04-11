@@ -27,7 +27,6 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
         $lastRunKey = 'last_glosas_job_run';
         $lastRun = Redis::get($lastRunKey) ? Carbon::parse(Redis::get($lastRunKey)) : Carbon::today();
 
-        logMessage($lastRun);
         foreach ($companies_ids as $company) {
             $results = [];
             $model::where('company_id', $company->id)
