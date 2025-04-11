@@ -234,6 +234,9 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['patient_id'])) {
                         $query->where('patient_id', $request['patient_id']);
                     }
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Helpers\Constants;
 use App\Models\CodeGlosa;
 
 class CodeGlosaRepository extends BaseRepository
@@ -13,6 +14,10 @@ class CodeGlosaRepository extends BaseRepository
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
     {
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
+
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+
         $data = $this->model->with($with)->where(function ($query) {})
             ->where(function ($query) use ($request) {
                 filterComponent($query, $request);
@@ -35,6 +40,8 @@ class CodeGlosaRepository extends BaseRepository
         }
 
         return $data;
+    }, Constants::REDIS_TTL);
+
     }
 
     public function store(array $request)

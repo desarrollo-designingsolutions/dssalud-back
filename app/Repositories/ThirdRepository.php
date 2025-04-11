@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Helpers\Constants;
 use App\Models\Third;
 
 class ThirdRepository extends BaseRepository
@@ -13,28 +14,33 @@ class ThirdRepository extends BaseRepository
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
     {
-        $data = $this->model->with($with)->where(function ($query) {})
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-                if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
-                }
-            })
-            ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
-                }
-            });
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
 
-        $data = $data->orderBy('id', 'desc');
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
+            $data = $this->model->with($with)->where(function ($query) {})
+                ->where(function ($query) use ($request) {
+                    filterComponent($query, $request);
 
-        return $data;
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
+                })
+                ->where(function ($query) use ($request) {
+                    if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    }
+                });
+
+            $data = $data->orderBy('id', 'desc');
+            if (empty($request['typeData'])) {
+                $data = $data->paginate($request['perPage'] ?? 10);
+            } else {
+                $data = $data->get();
+            }
+
+            return $data;
+        }, Constants::REDIS_TTL);
     }
 
     public function store(array $request)
