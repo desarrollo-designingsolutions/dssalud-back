@@ -10,8 +10,10 @@ use App\Http\Resources\Glosa\GlosaPaginateResource;
 use App\Imports\GlosaImport;
 use App\Models\CodeGlosa;
 use App\Models\User;
+use App\Repositories\CodeGlosaRepository;
 use App\Repositories\GlosaRepository;
 use App\Repositories\ServiceRepository;
+use App\Repositories\UserRepository;
 use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
@@ -26,6 +28,8 @@ class GlosaController extends Controller
     private $key_redis_project;
 
     public function __construct(
+        protected UserRepository $userRepository,
+        protected CodeGlosaRepository $codeGlosaRepository,
         protected GlosaRepository $glosaRepository,
         protected QueryController $queryController,
         protected ServiceRepository $serviceRepository,
@@ -70,7 +74,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
 
             return [
                 'code' => 200,
@@ -102,7 +106,7 @@ class GlosaController extends Controller
 
             changeServiceData($glosa->service_id);
 
-            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
 
             return [
                 'code' => 200,
@@ -123,7 +127,7 @@ class GlosaController extends Controller
 
                 changeServiceData($service_id);
 
-                $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
+                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
 
                 $msg = 'Registro eliminado correctamente';
             } else {
@@ -144,11 +148,22 @@ class GlosaController extends Controller
         return $this->runTransaction(function () use ($request) {
 
             $user_id = $request->input('user_id');
+            $company_id = $request->input('company_id');
 
-            Redis::set('Redis_User', User::select('id')->get());
-            Redis::set('Redis_CodeGlosa', CodeGlosa::select('id')->get());
+            $users = $this->userRepository->list([
+                "is_active" => 1,
+                "company_id" => $company_id,
+                "typeData" => "all",
+            ]);
 
-            $csv = Excel::import(new GlosaImport($user_id), $request->file('archiveCsv'));
+            $codeGlosas = $this->codeGlosaRepository->list([
+                "is_active" => 1,
+                "typeData" => "all",
+            ]);
+
+            $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
+
+            $csv = Excel::import(new GlosaImport($user_id, $company_id, $services,$users,$codeGlosas), $request->file('archiveCsv'));
 
             return [
                 'code' => 200,
@@ -192,7 +207,7 @@ class GlosaController extends Controller
                 changeServiceData($serviceId);
             }
 
-            $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
 
             return [
                 'code' => 200,

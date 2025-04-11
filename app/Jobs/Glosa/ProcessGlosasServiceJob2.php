@@ -29,6 +29,7 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
 
         // PARA CONTINUAR
         // que solo siga agregando los nuevos registros
+        // verificar que se haga por fecha por la fecha actual
 
     }
 }

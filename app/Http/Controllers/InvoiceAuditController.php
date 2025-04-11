@@ -256,10 +256,18 @@ class InvoiceAuditController extends Controller
             // Obtener los mensajes de errores de las validaciones
             $data = $this->invoiceAuditRepository->getValidationsErrorMessages($user_id);
 
-            $data = collect($data)->pluck('data');
+            // Agrupar por 'row'
+            $groupedErrors = collect($data)->groupBy('row');
+
+            // Obtener un solo 'data' por grupo (el primero, por ejemplo)
+            $result = $groupedErrors->map(function ($group) {
+                // Tomar el primer elemento del grupo y devolver solo su 'data'
+                return $group->first()['data'] ?? null;
+            })->values();
+
 
             // Generar el CSV con Laravel Excel
-            $csv = Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::CSV);
+            $csv = Excel::raw(new GlosaExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
 
             $excelBase64 = base64_encode($csv);
 

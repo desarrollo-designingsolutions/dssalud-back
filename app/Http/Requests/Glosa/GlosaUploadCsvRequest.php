@@ -45,6 +45,11 @@ class GlosaUploadCsvRequest extends FormRequest
     {
         $this->merge([
             'id' => $this->id ? formattedElement($this->id) : null,
+            'user_id' => $this->user_id ? formattedElement($this->user_id) : null,
+            'invoice_audit_id' => $this->invoice_audit_id ? formattedElement($this->invoice_audit_id) : null,
+            'patient_id' => $this->patient_id ? formattedElement($this->patient_id) : null,
+            'third_id' => $this->third_id ? formattedElement($this->third_id) : null,
+            'assignment_batch_id' => $this->assignment_batch_id ? formattedElement($this->assignment_batch_id) : null,
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Events\ProgressCircular;
 use App\Helpers\Constants;
 use App\Jobs\Glosa\ProcessGlosasServiceJob;
 use App\Models\Glosa;
+use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
@@ -15,22 +16,44 @@ use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
 
-class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithEvents
+class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
 {
     use Importable, SkipsFailures;
 
+    public $services_id;
+    private $key_redis_project;
+    private $cacheService;
+
     public function __construct(
         protected $user_id,
-    ) {}
+        protected $company_id,
+        protected $services,
+        protected $users,
+        protected $codeGlosas,
+
+    ) {
+
+        $this->cacheService = new CacheService();
+
+        $this->key_redis_project = env('KEY_REDIS_PROJECT');
+        $this->services_id = [];
+        if (count($this->services->toArray()) > 0) {
+            $this->services_id = $this->services->pluck('id')->toArray();
+        }
+    }
 
     public function registerEvents(): array
     {
         return [
             BeforeImport::class => function (BeforeImport $event) {
+                // Limpiar errores
+                Redis::del("list:glosas_import_errors_{$this->user_id}");
+
                 // Obtener total de filas (ajusta si hay encabezados)
                 $totalRows = $event->getReader()->getTotalRows()['Worksheet'];
                 $totalRows = max($totalRows, 1);
@@ -39,6 +62,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 Redis::set("integer:glosas_import_processed_{$this->user_id}", 0);
             },
             AfterImport::class => function (AfterImport $event) {
+
+                // Limpiar cache de Redis de las glosas
+                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
+
                 // Limpiar cache al finalizar
                 Redis::del("integer:glosas_import_total_{$this->user_id}");
                 Redis::del("integer:glosas_import_processed_{$this->user_id}");
@@ -67,9 +94,22 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 // Convertir a colección si prefieres trabajar con Laravel Collections
                 $uniqueServiceIdsCollection = collect($uniqueServiceIds);
 
-                foreach ($uniqueServiceIdsCollection as $serviceId) {
-                    ProcessGlosasServiceJob::dispatch($serviceId);
-                }
+                // Calcular el total de serviceId para el progreso
+                $totalServices = $uniqueServiceIdsCollection->count();
+
+                // Iterar sobre los serviceId y despachar jobs con el progreso
+                $uniqueServiceIdsCollection->each(function ($serviceId, $index) use ($totalServices) {
+                    // Calcular el progreso basado en la posición (index + 1 porque empieza en 0)
+                    $progress = $totalServices > 0 ? (($index + 1) / $totalServices) * 100 : 100;
+
+                    // Despachar el job pasando el user_id y el progreso
+                    ProcessGlosasServiceJob::dispatch($serviceId, $this->user_id, $progress);
+                });
+
+                // $processedServices = 0;
+                // foreach ($uniqueServiceIdsCollection as $serviceId) {
+                //     ProcessGlosasServiceJob::dispatch($serviceId);
+                // }
 
                 // Opcional: Limpiar el Set de Redis después de usarlo
                 Redis::del("set:glosas_service_ids_{$this->user_id}");
@@ -79,9 +119,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
     public function model(array $row)
     {
-        // Limpiar errores
-        Redis::del("list:glosas_import_errors_{$this->user_id}");
-
         return DB::transaction(function () use ($row) {
             // Incrementar contador y calcular progreso
             $processed = Redis::incrby("integer:glosas_import_processed_{$this->user_id}", 1);
@@ -94,6 +131,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 'code_glosa_id' => $row[2],
                 'glosa_value' => $row[3],
                 'observation' => $row[4],
+                // 'company_id' => $this->company_id,
             ];
 
             // Validar los datos manualmente
@@ -125,9 +163,26 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     {
         $error = false;
 
+        if (in_array($row[1], $this->services_id) == false) {
+            $errorData = [
+                'column' => '2',
+                'row' => $processed,
+                'value' => $row[1],
+                'data' => $data,
+                'errors' => 'El ID del servicio no es valido para la carga actual.',
+            ];
+            Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
+        }
+
         // Guardar los errores en Redis como una lista
         $result = $this->user($row[0], 'id');
-        if ($result === null) { // Usar === para comparación estricta
+        if ($result == null) { // Usar === para comparación estricta
+
             $errorData = [
                 'column' => '1',
                 'row' => $processed,
@@ -137,6 +192,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
         }
 
         $service = $this->service($row[1], 'id');
@@ -151,6 +210,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
         } else {
 
             if (is_numeric($row[3]) && $row[3] > $service['total_value']) {
@@ -164,6 +227,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
                 Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
                 $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+                $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+                $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
             }
         }
 
@@ -178,6 +245,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
         }
 
         // Validar que glosa_value sea un número válido
@@ -191,6 +262,10 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true;
+
+            $errorListKey = "list:glosas_import_errors_{$this->user_id}";
+            $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+
         }
 
         return $error; // Omitir esta fila
@@ -198,13 +273,12 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
     public function user($value, $field)
     {
-        $redisData = Redis::get('Redis_User');
+        $redisData = $this->users;
 
-        $cache = $redisData ? collect(json_decode($redisData, true)) : collect([]);
+        $cache = $redisData;
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
-
             return $match;
         });
 
@@ -229,8 +303,8 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
     public function codeGlosa($value, $field)
     {
-        $redisData = Redis::get('Redis_CodeGlosa');
-        $cache = $redisData ? collect(json_decode($redisData, true)) : collect([]);
+        $redisData = $this->codeGlosas;
+        $cache = $redisData;
 
         $data = $cache->first(function ($item) use ($value, $field) {
             return strtoupper($item[$field]) === strtoupper($value);
@@ -262,6 +336,14 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             'glosa_value.required' => 'El valor de la glosa es obligatorio.',
             'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
             'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
+        ];
+    }
+
+    public function getCsvSettings(): array
+    {
+        return [
+            'delimiter' => ';', // Configura el separador como punto y coma
+            'input_encoding' => 'UTF-8', // Asegúrate de que la codificación sea correcta
         ];
     }
 }

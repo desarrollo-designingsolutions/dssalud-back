@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\ChangeInvoiceAuditData;
 use App\Helpers\Constants;
 use App\Models\Service;
 use Illuminate\Support\Carbon;
@@ -497,7 +498,7 @@ function sumVrServicio($valueJsonInvoice)
 
 function changeServiceData($service_id)
 {
-    $service = Service::find($service_id);
+    $service = Service::with(["invoice_audit"])->find($service_id);
 
     $value_glosa = $service->glosas->sum('glosa_value');
 
@@ -511,4 +512,16 @@ function changeServiceData($service_id)
         'value_glosa' => $value_glosa,
         'value_approved' => $value_approved,
     ]);
+
+
+    $value_glosa = $service->invoice_audit->services->sum('value_glosa');
+    $value_approved = $service->invoice_audit->services->sum('value_approved');
+
+
+    logMessage($service->invoice_audit_id);
+    ChangeInvoiceAuditData::dispatch($service->invoice_audit_id, [
+        "value_glosa" => formatNumber($value_glosa),
+        "value_approved" => formatNumber($value_approved),
+    ]);
+
 }
