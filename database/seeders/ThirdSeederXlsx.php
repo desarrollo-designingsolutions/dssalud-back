@@ -32,7 +32,7 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new ThirdsImport, $filePath);
 
-        // $filePath = public_path('seeders\assignmentBatche.xlsx');
+        // $filePath = public_path('seeders\assignment_batches.xlsx');
 
         // // Depuración: Verifica si el archivo existe
         // if (! file_exists($filePath)) {
@@ -41,19 +41,18 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new AssignmentBatchesImport, $filePath);
 
-        // $filePath = public_path('seeders\invoiceAudit.xlsx');
+        $filePath = public_path('seeders\invoice_audits.csv');
 
-        // // Depuración: Verifica si el archivo existe
-        // if (! file_exists($filePath)) {
-        //     throw new \Exception('Archivo no encontrado en: '.$filePath);
-        // }
+        // Depuración: Verifica si el archivo existe
+        if (! file_exists($filePath)) {
+            throw new \Exception('Archivo no encontrado en: '.$filePath);
+        }
 
-        // Excel::import(new InvoiceAuditsImport, $filePath);
-
+        Excel::import(new InvoiceAuditsImport, $filePath);
 
 
         // //ROLES
-        // $filePath = public_path('seeders\roles.xls');
+        // $filePath = public_path('seeders\roles.xlsx');
 
         // // Depuración: Verifica si el archivo existe
         // if (! file_exists($filePath)) {
@@ -74,14 +73,14 @@ class ThirdSeederXlsx extends Seeder
 
 
 
-        // $filePath = public_path('seeders\assignments.csv');
+        $filePath = public_path('seeders\assignments.csv');
 
-        // // Depuración: Verifica si el archivo existe
-        // if (! file_exists($filePath)) {
-        //     throw new \Exception('Archivo no encontrado en: '.$filePath);
-        // }
+        // Depuración: Verifica si el archivo existe
+        if (! file_exists($filePath)) {
+            throw new \Exception('Archivo no encontrado en: '.$filePath);
+        }
 
-        // Excel::import(new AssignmentsImport, $filePath);
+        Excel::import(new AssignmentsImport, $filePath);
 
 
         // $filePath = public_path('seeders\patients.xlsx');

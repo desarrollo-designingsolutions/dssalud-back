@@ -5,9 +5,11 @@ namespace App\Imports;
 use App\Enums\Assignment\StatusAssignmentEnum;
 use App\Helpers\Constants;
 use App\Models\Assignment;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class AssignmentsImport implements ToModel
+class AssignmentsImport implements ToModel, ShouldQueue, WithChunkReading
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null
@@ -36,5 +38,10 @@ class AssignmentsImport implements ToModel
             default:
                 return $status;
         }
+    }
+
+    public function chunkSize(): int
+    {
+        return Constants::CHUNKSIZE;
     }
 }

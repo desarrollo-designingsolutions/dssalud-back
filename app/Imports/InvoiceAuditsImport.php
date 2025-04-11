@@ -4,10 +4,12 @@ namespace App\Imports;
 
 use App\Helpers\Constants;
 use App\Models\InvoiceAudit;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow; // Agrega esta interfaz
 
-class InvoiceAuditsImport implements ToModel, WithHeadingRow
+class InvoiceAuditsImport implements ToModel, ShouldQueue, WithChunkReading
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null
@@ -15,18 +17,23 @@ class InvoiceAuditsImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         return InvoiceAudit::updateOrCreate(
-            ['id' => $row['id']],
+            ['id' => $row[0]],
             [
                 'company_id' => Constants::COMPANY_UUID,
-                'third_id' => $row['third_id'],
-                'invoice_number' => $row['invoice_number'],
-                'total_value' => $row['total_value'],
-                'origin' => $row['origin'],
-                'modality' => $row['modality'],
-                'regimen' => $row['regimen'],
-                'coverage' => $row['coverage'],
-                'contract_number' => $row['contract_number'],
+                'third_id' => $row[1],
+                'invoice_number' => $row[2],
+                'total_value' => $row[3],
+                'origin' => $row[4],
+                'modality' => $row[8],
+                'regimen' => $row[9],
+                'coverage' => $row[10],
+                'contract_number' => $row[11],
             ]
         );
+    }
+
+    public function chunkSize(): int
+    {
+        return Constants::CHUNKSIZE;
     }
 }

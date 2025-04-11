@@ -19,7 +19,7 @@ class RoleImport implements ToModel, WithHeadingRow
             [
                 'company_id' => Constants::COMPANY_UUID,
                 'name' => $row['name'],
-                'guard_name' => $row['guard_name'],
+                'guard_name' => 'api',
                 'viewable' => $row['viewable'],
                 'description' => $row['description'],
                 'type' => $row['type'],

@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InvoiceAudit extends Model
 {
+    protected $guarded = [];
+
     use HasFactory, HasUuids, Searchable, SoftDeletes;
 
     public function files()
