@@ -15,10 +15,11 @@ class ThirdsImport implements ToModel, WithHeadingRow
     public function model(array $row)
     {
         return Third::updateOrCreate(
-            ['nit' => $row['nit']],
+            ['id' => $row['nit']],
             [
                 'company_id' => Constants::COMPANY_UUID,
                 'name' => $row['razon_social'],
+                'nit' => $row['nit'],
             ]
         );
     }
