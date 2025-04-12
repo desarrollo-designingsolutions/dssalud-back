@@ -164,7 +164,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     public function validations($row, $processed, $data)
     {
         $error = false;
-        
+
 
         if (in_array($row[1], $this->services_id) == false) {
             $errorData = [
