@@ -165,7 +165,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     {
         $error = false;
 
-
         if (in_array($row[1], $this->services_id) == false) {
             $errorData = [
                 'column' => '2',
