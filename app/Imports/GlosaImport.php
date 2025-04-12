@@ -160,7 +160,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         return Constants::CHUNKSIZE;
     }
 
-
     public function validations($row, $processed, $data)
     {
         $error = false;
