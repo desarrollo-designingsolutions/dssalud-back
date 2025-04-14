@@ -11,11 +11,14 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateInvoiceAuditResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
+use App\Jobs\BrevoProcessSendEmail;
+use App\Notifications\BellNotification;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\ThirdRepository;
+use App\Repositories\UserRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -30,6 +33,7 @@ class InvoiceAuditController extends Controller
         protected PatientRepository $patientRepository,
         protected CodeGlosaRepository $codeGlosaRepository,
         protected ServiceRepository $serviceRepository,
+        protected UserRepository $userRepository,
     ) {}
 
     public function list(Request $request)
@@ -202,6 +206,9 @@ class InvoiceAuditController extends Controller
     {
         return $this->execute(function () use ($request) {
 
+            ini_set('memory_limit', '1024M');
+
+            $user_id = $request->input('user_id');
             $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
             $glosses = $this->codeGlosaRepository->list(
@@ -212,13 +219,46 @@ class InvoiceAuditController extends Controller
             );
             $attachedData = [
                 [
-                    'id' => $request->input('user_id'),
+                    'id' => $user_id,
                 ],
             ];
 
             $excel = Excel::raw(new InvoiceAuditExcelExport($services, $glosses, $attachedData, $request->all()), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
+
+
+            // Obtener el objeto User a partir del ID
+            $user = $this->userRepository->find($user_id);
+
+            if ($user) {
+                // Enviar notificación
+                // $user->notify(new BellNotification($data));
+
+                // Enviar el correo usando el job de Brevo
+                BrevoProcessSendEmail::dispatch(
+                    emailTo: [
+                        [
+                            "name" => $user->full_name,
+                            "email" => $user->email,
+                        ]
+                    ],
+                    subject: "Exportacion de servicios",
+                    templateId: 9,  // El ID de la plantilla de Brevo que quieres usar
+                    params: [
+                        "full_name" => $user->full_name,
+                        "subtitle" => "informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios",
+                        "bussines_name" => $user->company?->name,
+                    ],
+                    attachments: [
+                        [
+                            'name' => 'Servicios.xlsx',
+                            'content' => $excelBase64,
+                        ],
+                    ],
+                );
+            }
+
 
             return [
                 'code' => 200,

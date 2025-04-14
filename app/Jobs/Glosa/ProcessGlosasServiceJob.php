@@ -24,7 +24,5 @@ class ProcessGlosasServiceJob implements ShouldQueue
         // Emitir el evento de progreso
         ProgressCircular::dispatch("glosa_service_jobs.{$this->userId}", $this->progress);
 
-        logMessage("servidios");
-        logMessage($this->progress);
     }
 }

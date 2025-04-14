@@ -111,8 +111,6 @@ class BrevoEmailService
             $data['params'] = $this->params;
         }
         if ($this->attachments && is_array($this->attachments)) {
-            logMessage(is_array($this->attachments));
-            logMessage($this->attachments);
             $data['attachment'] = $this->attachments;
         }
 

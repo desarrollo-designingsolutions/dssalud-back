@@ -8,7 +8,6 @@ function validateDataFilesXml($archivo, $data)
     $errorMessages = [];
     $arrayExito = [];
 
-    logMessage($archivo);
     $arrayExito[] = validationFileXml($archivo, $data, $errorMessages);
     if ($arrayExito[0]['result'] == false) {
         return [
