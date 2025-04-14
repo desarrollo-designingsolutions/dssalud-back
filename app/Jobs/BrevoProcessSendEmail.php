@@ -67,6 +67,9 @@ class BrevoProcessSendEmail implements ShouldQueue
         if ($this->cco && is_array($this->cco)) {
             $brevoEmailService->setCco($this->cco);
         }
+        if ($this->attachments && is_array($this->attachments)) {
+            $brevoEmailService->setAttachments($this->attachments);
+        }
 
         $brevoEmailService->sendEmail();
     }

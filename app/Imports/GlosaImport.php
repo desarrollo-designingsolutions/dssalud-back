@@ -4,9 +4,13 @@ namespace App\Imports;
 
 use App\Events\ModalError;
 use App\Events\ProgressCircular;
+use App\Exports\Glosa\GlosaExcelErrorsValidationExport;
 use App\Helpers\Constants;
+use App\Jobs\BrevoProcessSendEmail;
 use App\Jobs\Glosa\ProcessGlosasServiceJob;
 use App\Models\Glosa;
+use App\Models\User;
+use App\Notifications\BellNotification;
 use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +24,8 @@ use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
 {
@@ -86,8 +92,24 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 }
 
                 // Emitir errores al front
-                logMessage($errorsFormatted);
+                // logMessage($errorsFormatted);
                 ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
+
+                // Enviar notificación al usuario
+                $title = 'Importación de glosas';
+                $subtitle = 'La importación de glosas ha finalizado sin novedad.';
+                if (count($errorsFormatted) > 0) {
+                    $subtitle = 'La importación de glosas ha finalizado con las siguientes novedades:';
+                }
+
+                $this->sendNotification(
+                    $this->user_id,
+                    [
+                        'title' => $title,
+                        'subtitle' => $subtitle,
+                        'glosas_import' => $errorsFormatted,
+                    ]
+                );
 
                 // Obtener todos los service_id únicos como un array
                 $uniqueServiceIds = Redis::smembers("set:glosas_service_ids_{$this->user_id}");
@@ -247,7 +269,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true;
-
         }
 
         return $error; // Omitir esta fila
@@ -295,37 +316,84 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         return $data;
     }
 
-    // public function rules(): array
-    // {
-    //     return [
-    //         'user_id' => 'required|exists:users,id',
-    //         'service_id' => 'required|exists:services,id',
-    //         'code_glosa_id' => 'required|exists:code_glosas,id',
-    //         'glosa_value' => 'required|numeric|regex:/^\d+(\.\d+)?$/',
-    //         'observation' => 'nullable|string',
-    //     ];
-    // }
-
-    // public function customValidationMessages(): array
-    // {
-    //     return [
-    //         'user_id.required' => 'El ID de usuario es obligatorio.',
-    //         'user_id.exists' => 'El ID de usuario no existe en la base de datos.',
-    //         'service_id.required' => 'El ID del servicio es obligatorio.',
-    //         'service_id.exists' => 'El ID del servicio no existe en la base de datos.',
-    //         'code_glosa_id.required' => 'El ID del código de glosa es obligatorio.',
-    //         'code_glosa_id.exists' => 'El ID del código de glosa no existe en la base de datos.',
-    //         'glosa_value.required' => 'El valor de la glosa es obligatorio.',
-    //         'glosa_value.numeric' => 'El valor de la glosa debe ser un número.',
-    //         'glosa_value.regex' => 'El valor de la glosa no puede contener espacios ni letras, solo números.',
-    //     ];
-    // }
-
     public function getCsvSettings(): array
     {
         return [
             'delimiter' => ';', // Configura el separador como punto y coma
             'input_encoding' => 'UTF-8', // Asegúrate de que la codificación sea correcta
         ];
+    }
+
+
+    /**
+     * Enviar notificación al usuario
+     */
+    private function sendNotification($userId, $data)
+    {
+        // Obtener el objeto User a partir del ID
+        $user = User::find($userId);
+
+
+        if ($user) {
+            // Enviar notificación
+            $user->notify(new BellNotification($data));
+
+            $excel = $this->excelErrorsValidation($data['glosas_import']);
+            $csv = $this->exportCsvErrorsValidation($data['glosas_import']);
+
+            // Enviar el correo usando el job de Brevo
+            BrevoProcessSendEmail::dispatch(
+                emailTo: [
+                    [
+                        "name" => $user->full_name,
+                        "email" => $user->email,
+                    ]
+                ],
+                subject: $data['title'],
+                templateId: 8,  // El ID de la plantilla de Brevo que quieres usar
+                params: [
+                    "full_name" => $user->full_name,
+                    "subtitle" => $data['subtitle'],
+                    "bussines_name" => $user->company?->name,
+                    "glosas_import" => $data['glosas_import'],
+                    "show_table_errors" => count($data['glosas_import']) > 0 ? true : false,
+                ],
+                attachments: [
+                    [
+                        'name' => 'Lista de errores de validación.xlsx',
+                        'content' => base64_encode($excel),
+                    ],
+                    [
+                        'name' => 'Glosas.csv',
+                        'content' => base64_encode($csv),
+                    ],
+                ],
+            );
+        }
+    }
+
+    private function excelErrorsValidation($data)
+    {
+
+        $excel =Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+        return $excel;
+    }
+    private function exportCsvErrorsValidation($data)
+    {
+        // Agrupar por 'row'
+        $groupedErrors = collect($data)->groupBy('row');
+
+        // Obtener un solo 'data' por grupo (el primero, por ejemplo)
+        $result = $groupedErrors->map(function ($group) {
+            // Tomar el primer elemento del grupo y devolver solo su 'data'
+            return $group->first()['data'] ?? null;
+        })->values();
+
+
+        // Generar el CSV con Laravel Excel
+        $csv = Excel::raw(new GlosaExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
+
+        return $csv;
     }
 }

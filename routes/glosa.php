@@ -30,5 +30,4 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::post('/glosa/uploadCsvGlosa', [GlosaController::class, 'uploadCsvGlosa']);
 
-
 });

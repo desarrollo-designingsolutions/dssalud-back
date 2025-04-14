@@ -156,7 +156,7 @@ function paginatePerzonalized($data)
 function clearCacheLaravel()
 {
     // Limpia la caché de permisos
-    Artisan::call('cache:clear');
+    // Artisan::call('cache:clear');
     // Artisan::call('config:cache');
     // Artisan::call('view:clear');
     // Artisan::call('optimize:clear');
