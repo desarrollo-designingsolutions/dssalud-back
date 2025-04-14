@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('invoice_audit_id')->constrained();
             $table->foreignUuid('patient_id')->constrained();
             $table->string('detail_code')->nullable();
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
             $table->integer('quantity')->nullable();
             $table->decimal('unit_value', 15, 2)->nullable();
             $table->decimal('total_value', 15, 2)->nullable();

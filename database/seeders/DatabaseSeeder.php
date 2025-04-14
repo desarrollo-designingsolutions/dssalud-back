@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             // CodeGlosaSeeder::class,
 
 
-            // // TO VALIDATIONS
+            // TO VALIDATIONS
 
             // Cie10Seeder::class,
             // CupsRipsSeeder::class,
