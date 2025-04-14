@@ -18,6 +18,7 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
 
     public function handle(): void
     {
+        // Service::whereIn("id", ["749325334", "745606154", "745606155", "745681930", "745681931", "745730486"])->chunk(100, function ($elements) {
         Service::chunk(100, function ($elements) {
             foreach ($elements as $element) {
                 $serviceData = $element->toArray();

@@ -139,6 +139,18 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
         }
 
+        if ($row[0] != $this->user_id) {
+            $errorData = [
+                'column' => '1',
+                'row' => $processed,
+                'value' => $row[0],
+                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
+                'errors' => 'El usuario no coincide con el que lo anda cargando.',
+            ];
+            Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+        }
+
         $service = $this->service($row[1], 'id');
         if ($service == null) {
             $errorData = [
@@ -152,7 +164,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
         } else {
-
             if (is_numeric($row[3]) && $row[3] > $service['total_value']) {
                 $errorData = [
                     'column' => '4', // Número de columna
