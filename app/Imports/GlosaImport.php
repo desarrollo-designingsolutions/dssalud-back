@@ -229,7 +229,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 'row' => $processed,
                 'value' => $row[0],
                 'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => 'El usuario no coincide con el que lo anda cargando.',
+                'errors' => 'El usuario que realiza la carga no corresponde al usuario registrado en el archivo CSV.',
             ];
             Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
@@ -297,6 +297,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     public function user($value, $field)
     {
         $redisData = $this->users;
+        logMessage($redisData);
 
         $cache = $redisData;
 

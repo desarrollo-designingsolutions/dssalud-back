@@ -163,7 +163,7 @@ class GlosaController extends Controller
                 "typeData" => "all",
             ]);
 
-          return  $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
+            $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
             $csv = Excel::import(new GlosaImport($user_id, $company_id, $services, $users, $codeGlosas), $request->file('archiveCsv'));
 
@@ -221,14 +221,14 @@ class GlosaController extends Controller
     public function getContentJson(Request $request)
     {
         return $this->execute(function () use ($request) {
-        // Obtener el contenido del archivo
+            // Obtener el contenido del archivo
 
-        $jsonContent = openFileJson($request["url_json"]);
+            $jsonContent = openFileJson($request["url_json"]);
 
-        return [
-            'code' => 200,
-            'data' => $jsonContent,
-        ];
+            return [
+                'code' => 200,
+                'data' => $jsonContent,
+            ];
         });
     }
 }
