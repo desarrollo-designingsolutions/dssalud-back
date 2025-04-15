@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AssignmentBatche\StatusAssignmentBatcheEnum;
 use App\Http\Requests\AssignmentBatche\AssignmentBatcheStoreRequest;
 use App\Http\Resources\AssignmentBatche\AssignmentBatcheFormResource;
 use App\Http\Resources\AssignmentBatche\AssignmentBatchePaginateResource;
@@ -9,6 +10,7 @@ use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\CompanyRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
+
 
 class AssignmentBatcheController extends Controller
 {
@@ -51,6 +53,7 @@ class AssignmentBatcheController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
             $post = $request->all();
+            $post['status'] = StatusAssignmentBatcheEnum::ASSIGNMENT_EST_001;
 
             $data = $this->assignmentBatcheRepository->store($post);
 
