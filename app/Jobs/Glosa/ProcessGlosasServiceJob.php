@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Glosa;
 
+use App\Events\ProgressCircular;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,18 +13,16 @@ class ProcessGlosasServiceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $service_id;
-
-    public function __construct($service_id)
+    public function __construct(protected $serviceId, protected $userId, protected $progress)
     {
-        $this->service_id = $service_id;
     }
 
     public function handle(): void
     {
-        // sleep(3);
+        changeServiceData($this->serviceId);
 
-        changeServiceData($this->service_id);
+        // Emitir el evento de progreso
+        ProgressCircular::dispatch("glosa_service_jobs.{$this->userId}", $this->progress);
 
     }
 }

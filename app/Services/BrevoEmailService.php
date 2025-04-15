@@ -30,6 +30,8 @@ class BrevoEmailService
 
     protected $params = [];
 
+    private $attachments = [];
+
     public function __construct()
     {
         $this->client = new Client;
@@ -79,6 +81,11 @@ class BrevoEmailService
         $this->params = $params;
     }
 
+    public function setAttachments($attachments)
+    {
+        $this->attachments = $attachments;
+    }
+
     public function sendEmail()
     {
         $sender = [
@@ -102,6 +109,9 @@ class BrevoEmailService
         }
         if ($this->params && is_array($this->params)) {
             $data['params'] = $this->params;
+        }
+        if ($this->attachments && is_array($this->attachments)) {
+            $data['attachment'] = $this->attachments;
         }
 
         try {

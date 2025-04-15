@@ -3,23 +3,26 @@
 namespace App\Imports;
 
 use App\Helpers\Constants;
-use App\Models\Third;
+use App\Models\Role;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow; // Agrega esta interfaz
 
-class ThirdsImport implements ToModel, WithHeadingRow
+class RoleImport implements ToModel, WithHeadingRow
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function model(array $row)
     {
-        return Third::updateOrCreate(
-            ['id' => $row['nit']],
+        return Role::updateOrCreate(
+            ['id' => $row['id']],
             [
                 'company_id' => Constants::COMPANY_UUID,
-                'name' => $row['razon_social'],
-                'nit' => $row['nit'],
+                'name' => $row['name'],
+                'guard_name' => $row['guard_name'],
+                'viewable' => $row['viewable'],
+                'description' => $row['description'],
+                'type' => $row['type'],
             ]
         );
     }

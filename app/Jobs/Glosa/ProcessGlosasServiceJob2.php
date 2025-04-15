@@ -2,7 +2,10 @@
 
 namespace App\Jobs\Glosa;
 
+use App\Models\Company;
 use App\Models\Service;
+use App\Services\CacheService;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,22 +17,40 @@ class ProcessGlosasServiceJob2 implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct() {}
-
-    public function handle(): void
+    public function handle(CacheService $cacheService): void
     {
-        // Service::whereIn("id", ["749325334", "745606154", "745606155", "745681930", "745681931", "745730486"])->chunk(100, function ($elements) {
-        Service::chunk(100, function ($elements) {
-            foreach ($elements as $element) {
-                $serviceData = $element->toArray();
-                $key = "services:{$element->id}";
-                Redis::hmset($key, $serviceData);
-                Redis::sadd('services:ids_set', $element->id);
-            }
-        });
+        $model = Service::class;
+        $table = (new $model)->getTable();
 
-        // PARA CONTINUAR
-        // que solo siga agregando los nuevos registros
 
+        $companies_ids = Company::select(["id"])->get();
+        $lastRunKey = 'last_glosas_job_run';
+        $lastRun = Redis::get($lastRunKey) ? Carbon::parse(Redis::get($lastRunKey)) : Carbon::today();
+
+        foreach ($companies_ids as $company) {
+            $results = [];
+            $model::where('company_id', $company->id)
+                ->where('created_at', '>=', $lastRun)
+                ->chunk(100, function ($elements) use (&$results, $table, $company, $cacheService) {
+                    foreach ($elements as $element) {
+                        $serviceData = $element->toArray();
+
+                        $request = [
+                            'company_id' => $company->id,
+                            'element_id' => $element->id,
+                        ];
+
+                        // Generar la clave de caché
+                        $cacheKey = $cacheService->generateKey("{$table}_cronjob", $request, 'hash');
+
+
+                        Redis::hmset($cacheKey, $serviceData);
+                        $results[$element->id] = $serviceData;
+                    }
+                });
+        }
+
+        // Actualizar la fecha de última ejecución
+        Redis::set($lastRunKey, Carbon::now());
     }
 }

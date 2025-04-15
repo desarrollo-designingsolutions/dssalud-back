@@ -3,23 +3,23 @@
 namespace App\Imports;
 
 use App\Helpers\Constants;
-use App\Models\Third;
+use App\Models\AssignmentBatche;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow; // Agrega esta interfaz
 
-class ThirdsImport implements ToModel, WithHeadingRow
+class AssignmentBatchesImport implements ToModel, WithHeadingRow
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function model(array $row)
     {
-        return Third::updateOrCreate(
-            ['id' => $row['nit']],
+        return AssignmentBatche::updateOrCreate(
+            ['id' => $row['id']],
             [
                 'company_id' => Constants::COMPANY_UUID,
-                'name' => $row['razon_social'],
-                'nit' => $row['nit'],
+                'description' => $row['description'],
+                'status' => $row['status'],
             ]
         );
     }

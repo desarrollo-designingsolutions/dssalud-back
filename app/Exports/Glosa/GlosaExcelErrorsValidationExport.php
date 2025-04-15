@@ -30,7 +30,7 @@ class GlosaExcelErrorsValidationExport implements FromCollection, WithCustomCsvS
     {
         return [
             'delimiter' => ';',         // Separador: punto y coma
-            'enclosure' => '"',          // Sin comillas alrededor de los valores
+            'enclosure' => '"',          // Con comillas alrededor de los valores
             'escape_character' => '\\', // Carácter de escape (por si acaso)
             'input_encoding' => 'UTF-8',
             'output_encoding' => 'UTF-8',

@@ -2,15 +2,15 @@
     <thead>
         <tr>
 
-            @if (isset($request['third_id']))
+            @if (isset($request['from']) && $request['from'] == 'thirds')
                 <td>Tercero</td>
             @endif
 
-            @if (isset($request['invoice_audit_id']))
+            @if (isset($request['from']) && ($request['from'] == 'invoices' || $request['from'] == 'thirds'))
                 <td>Factura</td>
             @endif
 
-            @if (isset($request['patient_id']))
+            @if (isset($request['from']) &&  ($request['from'] == 'patients' || $request['from'] == 'invoices' || $request['from'] == 'thirds'))
                 <td>Cedula</td>
                 <td>Nombre</td>
             @endif
@@ -29,15 +29,15 @@
         @foreach ($data as $item)
             <tr>
 
-                @if (isset($request['third_id']))
+                @if (isset($request['from']) && $request['from'] == 'thirds')
                     <td> {{ $item['invoice_audit']['third']['name'] }}</td>
                 @endif
 
-                @if (isset($request['invoice_audit_id']))
+                @if (isset($request['from']) && ($request['from'] == 'invoices' || $request['from'] == 'thirds'))
                     <td> {{ $item['invoice_audit']['invoice_number'] }}</td>
                 @endif
 
-                @if (isset($request['patient_id']))
+                @if (isset($request['from']) &&  ($request['from'] == 'patients' || $request['from'] == 'invoices' || $request['from'] == 'thirds'))
                     <td> {{ $item['patient']['identification_number'] }}</td>
                     <td> {{ $item['patient']['first_name'] }}</td>
                 @endif

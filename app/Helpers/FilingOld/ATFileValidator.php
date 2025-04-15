@@ -83,9 +83,6 @@ class ATFileValidator
             );
         }
 
-        logMessage($rowData[2]);
-        logMessage($titleColumn[2]);
-
         // 4. Tipo de servicio (columna 5)
         // Valor obligatorio
         if (empty($rowData[5])) {

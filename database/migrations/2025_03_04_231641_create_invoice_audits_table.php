@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('invoice_audits', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('company_id')->constrained();
             $table->foreignUuid('third_id')->nullable()->constrained();
             $table->string('invoice_number')->nullable();
             $table->decimal('total_value', 15, 2);

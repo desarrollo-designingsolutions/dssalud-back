@@ -34,7 +34,7 @@ class InvoiceAuditRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                 }
             });
 
@@ -234,6 +234,9 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['patient_id'])) {
                         $query->where('patient_id', $request['patient_id']);
                     }
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -334,8 +337,8 @@ class InvoiceAuditRepository extends BaseRepository
         if (! empty($errors)) {
             foreach ($errors as $index => $errorJson) {
                 $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
-            }
 
+            }
         }
 
         return $errorsFormatted;
