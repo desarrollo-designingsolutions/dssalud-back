@@ -161,7 +161,7 @@ class GlosaController extends Controller
                 "typeData" => "all",
             ]);
 
-            $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
+          return  $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
             $csv = Excel::import(new GlosaImport($user_id, $company_id, $services,$users,$codeGlosas), $request->file('archiveCsv'));
 

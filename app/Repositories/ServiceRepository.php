@@ -48,7 +48,7 @@ class ServiceRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                 }
             });
 
@@ -139,7 +139,10 @@ class ServiceRepository extends BaseRepository
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         }
                     });
+
                 },
+
+
             ])
             ->where(function ($query) use ($request) {
 
@@ -149,14 +152,25 @@ class ServiceRepository extends BaseRepository
                 if (! empty($request['patient_id'])) {
                     $query->where('patient_id', $request['patient_id']);
                 }
-                if (! empty($request['third_id'])) {
 
+
+                if (! empty($request['third_id'])) {
                     $query->whereHas('invoice_audit', function ($subQuery) use ($request) {
                         if (! empty($request['third_id'])) {
                             $subQuery->where('third_id', $request['third_id']);
                         }
                     });
                 }
+
+                if (! empty($request['user_id'])) {
+                    $query->whereHas('invoice_audit.assignment', function ($subQuery) use ($request) {
+                        if (! empty($request['user_id'])) {
+                            $subQuery->where('user_id', $request['user_id']);
+                        }
+                    });
+                }
+
+
                 if (! empty($request['assignment_batch_id'])) {
 
                     $query->whereHas('invoice_audit.assignment.assignmentBatche', function ($subQuery) use ($request) {

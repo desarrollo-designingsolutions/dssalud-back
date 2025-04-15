@@ -6,6 +6,7 @@ use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Patient extends Model
@@ -15,5 +16,10 @@ class Patient extends Model
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->second_name.' '.$this->first_surname.' '.$this->second_surname;
+    }
+
+    public function invoice_audit(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceAudit::class);
     }
 }
