@@ -163,7 +163,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 'code_glosa_id' => $row[2],
                 'glosa_value' => $row[3],
                 'observation' => $row[4],
-                // 'company_id' => $this->company_id,
+                'company_id' => $this->company_id,
             ];
 
             // Validar los datos manualmente
