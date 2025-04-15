@@ -15,6 +15,7 @@ use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -41,7 +42,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         protected $services,
         protected $users,
         protected $codeGlosas,
-
     ) {
 
         $this->cacheService = new CacheService();
@@ -94,17 +94,15 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 // logMessage($errorsFormatted);
 
                 // Convert array to JSON
-                $jsonContent = json_encode($errorsFormatted, JSON_PRETTY_PRINT);
-
-                // Save JSON to a file in storage/app directory
-                // /storage/companies/company_(UUID)/glosas/errors/error_(id del proceso)_(USER_ID).json
-
-                $nameFile = 'error.json';
-                $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice['numFactura'].'/'.$nameFile; // Ruta donde se guardará la carpeta
-                Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice));
+                $routeJson = null;
+                if (count($errorsFormatted) > 0) {
+                    $nameFile = 'error_' . $this->user_id . '.json';
+                    $routeJson = 'companies/company_' . $this->company_id . '/glosas/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
+                }
 
                 // Emitir errores al front
-                ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
+                ModalError::dispatch("glosaModalErrors.{$this->user_id}", $routeJson);
 
                 // Enviar notificación al usuario
                 $title = 'Importación de glosas';
@@ -401,6 +399,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
         return $excel;
     }
+
     private function exportCsvErrorsValidation($data)
     {
         // Agrupar por 'row'
