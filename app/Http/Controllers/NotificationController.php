@@ -19,7 +19,7 @@ class NotificationController extends Controller
     {
         $user = $this->userRepository->find($userId);
 
-        $perPage = 2;
+        $perPage = 3;
 
         // Obtener el conteo de las notificaciones no leídas
         $unreadCount = $user->notificaciones()
