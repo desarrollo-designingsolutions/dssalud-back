@@ -256,7 +256,7 @@ class InvoiceAuditController extends Controller
                     templateId: 9,  // El ID de la plantilla de Brevo que quieres usar
                     params: [
                         "full_name" => $user->full_name,
-                        "subtitle" => "Descargue el archivo con la información detallada de los servicios.",
+                        "subtitle" => "informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios",
                         "bussines_name" => $user->company?->name,
                     ],
                     attachments: [
@@ -302,13 +302,13 @@ class InvoiceAuditController extends Controller
 
         return $this->execute(function () use ($request) {
 
-            $data =  $this->assignmentRepository->changeStatusAssigment($request);
+            $this->assignmentRepository->changeStatusAssigmentMasive($request);
 
             return [
                 'code' => 200,
-                'data' => $data,
                 'message' => "Auditoria finalizada con exito",
             ];
         });
     }
+
 }
