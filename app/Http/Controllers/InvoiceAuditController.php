@@ -21,6 +21,7 @@ use App\Repositories\PatientRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\ThirdRepository;
 use App\Repositories\UserRepository;
+use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -28,6 +29,8 @@ use Maatwebsite\Excel\Facades\Excel;
 class InvoiceAuditController extends Controller
 {
     use HttpResponseTrait;
+
+    private $key_redis_project;
 
     public function __construct(
         protected InvoiceAuditRepository $invoiceAuditRepository,
@@ -37,7 +40,11 @@ class InvoiceAuditController extends Controller
         protected ServiceRepository $serviceRepository,
         protected UserRepository $userRepository,
         protected AssignmentRepository $assignmentRepository,
-    ) {}
+        protected CacheService $cacheService,
+
+    ) {
+        $this->key_redis_project = env('KEY_REDIS_PROJECT');
+    }
 
     public function list(Request $request)
     {
@@ -303,6 +310,10 @@ class InvoiceAuditController extends Controller
         return $this->execute(function () use ($request) {
 
             $this->assignmentRepository->changeStatusAssigmentMasive($request);
+
+
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
+
 
             return [
                 'code' => 200,

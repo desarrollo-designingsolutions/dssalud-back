@@ -370,6 +370,8 @@ class AssignmentRepository extends BaseRepository
             if (!empty($request['invoices_audits_ids'])) {
                 $query->whereIn('invoice_audit_id', $request["invoices_audits_ids"]);
             }
+
+            $query->where('status', "!=", StatusAssignmentEnum::ASSIGNMENT_EST_003->value);
         });
 
         // logMessage($assignment->pluck("id"));
