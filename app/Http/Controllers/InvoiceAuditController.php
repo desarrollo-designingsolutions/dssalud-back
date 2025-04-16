@@ -256,7 +256,7 @@ class InvoiceAuditController extends Controller
                     templateId: 9,  // El ID de la plantilla de Brevo que quieres usar
                     params: [
                         "full_name" => $user->full_name,
-                        "subtitle" => "informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios",
+                        "subtitle" => "Descargue el archivo con la información detallada de los servicios.",
                         "bussines_name" => $user->company?->name,
                     ],
                     attachments: [
