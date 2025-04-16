@@ -34,4 +34,6 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::get('/invoiceAudit/exportCsvErrorsValidation', [InvoiceAuditController::class, 'exportCsvErrorsValidation']);
 
+    Route::post('/invoiceAudit/successFinalizedAudit', [InvoiceAuditController::class, 'successFinalizedAudit']);
+
 });

@@ -52,7 +52,7 @@ class InvoiceAuditRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateBatche", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(AssignmentBatche::query())
                 ->withCount([
                     'assignments as count_invoice' => function ($query) use ($request) {
@@ -98,14 +98,14 @@ class InvoiceAuditRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function paginateThirds($request = [])
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateThirds", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Third::query())
                 ->withCount([
                     'invoiceAudits as count_invoice_total' => function ($query) use ($request) {
@@ -162,7 +162,7 @@ class InvoiceAuditRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function paginateInvoiceAudit($request = [])
@@ -170,7 +170,7 @@ class InvoiceAuditRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateInvoiceAudit", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(InvoiceAudit::query())
                 ->withCount(['patients', 'services'])
                 ->allowedFilters([
@@ -212,7 +212,7 @@ class InvoiceAuditRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function paginateServices($request = [])
@@ -220,7 +220,7 @@ class InvoiceAuditRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateServices", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Service::query())
                 ->allowedFilters([
 
@@ -272,7 +272,7 @@ class InvoiceAuditRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function paginatePatient($request = [])
@@ -280,7 +280,7 @@ class InvoiceAuditRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginatePatient", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Patient::query())
                 ->allowedFilters([
 
@@ -314,7 +314,7 @@ class InvoiceAuditRepository extends BaseRepository
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function store(array $request)
