@@ -374,7 +374,7 @@ class AssignmentRepository extends BaseRepository
 
         // logMessage($assignment->pluck("id"));
         $assignment->update([
-            "status" => StatusAssignmentEnum::ASSIGNMENT_EST_001
+            "status" => StatusAssignmentEnum::ASSIGNMENT_EST_003
         ]);
 
 
