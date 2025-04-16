@@ -13,13 +13,13 @@ enum StatusAssignmentBatcheEnum: string
     // OTROS
     #[Description('Sin Asignar')]
     #[BackgroundColor('warning')]
-    case ASSIGNMENT_EST_001 = 'ASSIGNMENT_EST_001';
+    case ASSIGNMENT_BATCHE_EST_001 = 'ASSIGNMENT_BATCHE_EST_001';
 
     #[Description('Asignado')]
     #[BackgroundColor('error')]
-    case ASSIGNMENT_EST_002 = 'ASSIGNMENT_EST_002';
+    case ASSIGNMENT_BATCHE_EST_002 = 'ASSIGNMENT_BATCHE_EST_002';
 
     #[Description('Finalizado')]
     #[BackgroundColor('success')]
-    case ASSIGNMENT_EST_003 = 'ASSIGNMENT_EST_003';
+    case ASSIGNMENT_BATCHE_EST_003 = 'ASSIGNMENT_BATCHE_EST_003';
 }

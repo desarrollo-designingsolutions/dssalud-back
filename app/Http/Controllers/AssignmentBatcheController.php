@@ -53,7 +53,7 @@ class AssignmentBatcheController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
             $post = $request->all();
-            $post['status'] = StatusAssignmentBatcheEnum::ASSIGNMENT_EST_001;
+            $post['status'] = StatusAssignmentBatcheEnum::ASSIGNMENT_BATCHE_EST_001;
 
             $data = $this->assignmentBatcheRepository->store($post);
 
