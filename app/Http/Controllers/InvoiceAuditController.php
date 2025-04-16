@@ -313,6 +313,8 @@ class InvoiceAuditController extends Controller
 
 
             $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:_paginateThirds*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:_paginateBatche*');
 
 
             return [
