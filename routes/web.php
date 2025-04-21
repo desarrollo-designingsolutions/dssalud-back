@@ -6,19 +6,125 @@ use App\Models\SupportType;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
+use Aws\S3\S3Client;
+
+// $prefix = $prefix .'1032365030/1032365030-JSE933/';
+
+
+
+Route::get('/s3-test/{folder?}', function ($folder = null) {
+    try {
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region' => config('filesystems.disks.s3.region'),
+            'credentials' => [
+                'key' => config('filesystems.disks.s3.key'),
+                'secret' => config('filesystems.disks.s3.secret'),
+            ],
+        ]);
+
+        // Prepare the prefix (e.g., '02/subfolder/' or '' for root)
+        $prefix = $folder ? rtrim($folder, '/') . '/' : '';
+
+        $prefix = $prefix .'1032365030/1032365030-JSE933/';
+        $items = ['files' => [], 'folders' => []];
+        $continuationToken = null;
+
+        do {
+            $result = $s3->listObjectsV2([
+                'Bucket' => config('filesystems.disks.s3.bucket'),
+                'Prefix' => $prefix,
+                'Delimiter' => '/',
+                'ContinuationToken' => $continuationToken,
+            ]);
+
+            // Collect files, removing the prefix from each file name
+            $files = collect($result['Contents'] ?? [])
+                ->map(function ($file) use ($prefix, $s3) {
+                    $key = $file['Key'];
+                    $fileName = str_replace($prefix, '', $key);
+                    // Generate a presigned URL for the file (valid for 1 hour)
+                    $cmd = $s3->getCommand('GetObject', [
+                        'Bucket' => config('filesystems.disks.s3.bucket'),
+                        'Key' => $key,
+                    ]);
+                    $presignedUrl = $s3->createPresignedRequest($cmd, '+1 hour')->getUri()->__toString();
+                    return [
+                        'name' => $fileName,
+                        'url' => $presignedUrl,
+                    ];
+                })
+                ->all();
+            $items['files'] = array_merge($items['files'], $files);
+
+            // Collect subfolders, removing the prefix from each folder name
+            $folders = collect($result['CommonPrefixes'] ?? [])
+                ->pluck('Prefix')
+                ->map(function ($folder) use ($prefix) {
+                    return str_replace($prefix, '', $folder);
+                })
+                ->all();
+            $items['folders'] = array_merge($items['folders'], $folders);
+
+            $continuationToken = $result['NextContinuationToken'] ?? null;
+        } while ($continuationToken);
+
+        \Log::info('S3 Items:', [
+            'files' => $items['files'],
+            'folders' => $items['folders'],
+            'bucket' => config('filesystems.disks.s3.bucket'),
+            'prefix' => $prefix
+        ]);
+
+        if (empty($items['files']) && empty($items['folders'])) {
+            return response()->json(['message' => "No files or folders found in prefix: $prefix", 'items' => $items]);
+        }
+
+        return response()->json(['prefix' => $prefix, 'items' => $items]);
+    } catch (\Exception $e) {
+        \Log::error('S3 Listing Error: ' . $e->getMessage());
+        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
 Route::get('/', function () {
     return view('welcome');
 });
-
 Route::get('/s3', function () {
     try {
         $files = Storage::disk('s3')->files();
+        \Log::info('S3 Files:', $files); // Log the files
         return response()->json($files);
     } catch (\Exception $e) {
+        \Log::error('S3 Error: ' . $e->getMessage()); // Log the error
         return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
     }
 });
 
+
+Route::get('/s2', function () {
+    try {
+        // List files from the root
+        $folder = ''; // Empty string for root
+        // Use files() for root-level files only, or allFiles() for recursive listing
+        $files = Storage::disk('s3')->files($folder); // Non-recursive (root only)
+        // $files = Storage::disk('s3')->allFiles($folder); // Recursive (root + subfolders)
+
+        \Log::info('S3 Files Listed:', [
+            'files' => $files,
+            'bucket' => config('filesystems.disks.s3.bucket'),
+            'folder' => $folder
+        ]);
+
+        if (empty($files)) {
+            return response()->json(['message' => 'No files found in bucket root', 'files' => []]);
+        }
+
+        return response()->json($files);
+    } catch (\Exception $e) {
+        \Log::error('S3 Listing Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
 
 Route::get('/ftp', function () {
     // Obtener datos necesarios del request

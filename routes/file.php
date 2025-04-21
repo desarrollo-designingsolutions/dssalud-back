@@ -26,3 +26,5 @@ Route::get('/file/download', [FileController::class, 'download']);
 Route::post('/file/massUpload', [FileController::class, 'massUpload']);
 
 Route::get('/file/listTableV2', [FileController::class, 'listTableV2']);
+
+Route::get('/file/getUrlS3', [FileController::class, 'getUrlS3']);
