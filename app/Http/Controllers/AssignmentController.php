@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Assignment\StatusAssignmentEnum;
+use App\Helpers\Common\ErrorCollector;
+use App\Helpers\Common\ImportCsvValidator;
 use App\Helpers\Constants;
 use App\Http\Requests\Assignment\AssignmentUploadCsvRequest;
 use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
@@ -12,7 +14,9 @@ use App\Imports\AssingmentImport;
 use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\AssignmentRepository;
 use App\Repositories\CompanyRepository;
+use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\ThirdRepository;
+use App\Repositories\UserRepository;
 use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
@@ -29,6 +33,8 @@ class AssignmentController extends Controller
         protected AssignmentBatcheRepository $assignmentBatcheRepository,
         protected ThirdRepository $thirdRepository,
         protected CacheService $cacheService,
+        protected UserRepository $userRepository,
+        protected InvoiceAuditRepository $invoiceAuditRepository,
     ) {}
 
     public function paginateThirds(Request $request, $assignment_batch_id)
@@ -101,15 +107,47 @@ class AssignmentController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
+            $keyErrorRedis = 'list:assignment_import_errors_' . $request->input('user_id');
+
             $user_id = $request->input('user_id');
             $company_id = $request->input('company_id');
 
-            $csv = Excel::import(new AssingmentImport($user_id, $company_id), $request->file('archiveCsv'));
+            $assignmentBatches = $this->assignmentBatcheRepository->list([
+                "company_id" => $company_id,
+                "typeData" => "all",
+            ]);
 
-            return [
-                'request' => $request->all(),
-                'csv' => $csv,
-            ];
+            $users = $this->userRepository->list([
+                "is_active" => 1,
+                "company_id" => $company_id,
+                "typeData" => "all",
+            ]);
+
+            $invoiceAudits = $this->invoiceAuditRepository->list([
+                "company_id" => $company_id,
+                "typeData" => "all",
+            ]);
+
+            $assignmentStatusEnumValues = array_column(StatusAssignmentEnum::cases(), 'value');
+
+            $file = $request->file('archiveCsv');
+
+            $file_path = $file->getRealPath();
+
+            if (!ImportCsvValidator::validate($keyErrorRedis, $file_path, 5)) {
+                $errors = ErrorCollector::getErrors($keyErrorRedis);  // Obtener lista de errores
+                return [
+                    'code' => 422,
+                    'errors' => $errors
+                ];
+            } else {
+                $csv = Excel::import(new AssingmentImport($user_id, $company_id, $assignmentBatches, $users, $invoiceAudits, $assignmentStatusEnumValues, $file_path), $request->file('archiveCsv'));
+    
+                return [
+                    'request' => $request->all(),
+                    'csv' => $csv,
+                ];
+            }
         });
     }
 
