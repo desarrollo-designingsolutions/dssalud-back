@@ -27,7 +27,6 @@ class AssignmentBatcheStoreRequest extends FormRequest
 
         $rules = [
             'description' => 'required',
-            'status' => 'required',
             'due_date' => 'required',
             // 'company_id' => 'required',
         ];
@@ -39,7 +38,6 @@ class AssignmentBatcheStoreRequest extends FormRequest
     {
         return [
             'description.required' => 'El campo es obligatorio',
-            'status.required' => 'El campo es obligatorio',
             'due_date.required' => 'El campo es obligatorio',
         ];
     }

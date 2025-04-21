@@ -17,7 +17,6 @@ class AssignmentBatcheFormResource extends JsonResource
         return [
             'id' => $this->id,
             'description' => $this->description,
-            'status' => $this->status,
             'due_date' => $this->due_date,
         ];
     }

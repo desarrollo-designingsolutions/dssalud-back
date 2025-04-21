@@ -84,6 +84,16 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
+
+
+                    if (! empty($request['user_id'])) {
+                        $query->whereHas('assignments', function ($subQuery) use ($request) {
+                            if (! empty($request['user_id'])) {
+                                $subQuery->where('user_id', $request['user_id']);
+                            }
+                        });
+                    }
+
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -147,6 +157,7 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
+
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -188,6 +199,15 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['third_id'])) {
                         $query->where('third_id', $request['third_id']);
                     }
+
+                    if (! empty($request['user_id'])) {
+                        $query->whereHas('assignment', function ($subQuery) use ($request) {
+                            if (! empty($request['user_id'])) {
+                                $subQuery->where('user_id', $request['user_id']);
+                            }
+                        });
+                    }
+
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -237,6 +257,17 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
+
+
+                    if (! empty($request['user_id'])) {
+                        $query->whereHas('invoice_audit.assignment', function ($subQuery) use ($request) {
+                            if (! empty($request['user_id'])) {
+                                $subQuery->where('user_id', $request['user_id']);
+                            }
+                        });
+                    }
+
+
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -270,6 +301,15 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['invoice_audit_id'])) {
                         $query->where('invoice_audit_id', $request['invoice_audit_id']);
                     }
+
+                    if (! empty($request['user_id'])) {
+                        $query->whereHas('invoice_audit.assignment', function ($subQuery) use ($request) {
+                            if (! empty($request['user_id'])) {
+                                $subQuery->where('user_id', $request['user_id']);
+                            }
+                        });
+                    }
+
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 

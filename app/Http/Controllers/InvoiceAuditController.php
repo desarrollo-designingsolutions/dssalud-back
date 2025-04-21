@@ -12,13 +12,16 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
 use App\Jobs\BrevoProcessSendEmail;
+use App\Models\Assignment;
 use App\Notifications\BellNotification;
+use App\Repositories\AssignmentRepository;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\InvoiceAuditRepository;
 use App\Repositories\PatientRepository;
 use App\Repositories\ServiceRepository;
 use App\Repositories\ThirdRepository;
 use App\Repositories\UserRepository;
+use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -27,6 +30,8 @@ class InvoiceAuditController extends Controller
 {
     use HttpResponseTrait;
 
+    private $key_redis_project;
+
     public function __construct(
         protected InvoiceAuditRepository $invoiceAuditRepository,
         protected ThirdRepository $thirdRepository,
@@ -34,7 +39,12 @@ class InvoiceAuditController extends Controller
         protected CodeGlosaRepository $codeGlosaRepository,
         protected ServiceRepository $serviceRepository,
         protected UserRepository $userRepository,
-    ) {}
+        protected AssignmentRepository $assignmentRepository,
+        protected CacheService $cacheService,
+
+    ) {
+        $this->key_redis_project = env('KEY_REDIS_PROJECT');
+    }
 
     public function list(Request $request)
     {
@@ -140,7 +150,7 @@ class InvoiceAuditController extends Controller
 
     public function getInformationSheet(Request $request, $third_id, $invoice_audit_id, $patient_id)
     {
-        return $this->execute(function () use ($third_id, $invoice_audit_id, $patient_id) {
+        return $this->execute(function () use ($third_id, $invoice_audit_id, $patient_id, $request) {
 
             $invoice_audit = $this->invoiceAuditRepository->find($invoice_audit_id);
             $third = $this->thirdRepository->find($third_id);
@@ -151,8 +161,14 @@ class InvoiceAuditController extends Controller
             $value_glosa = $invoice_audit->services->sum('value_glosa');
             $value_approved = $invoice_audit->services->sum('value_approved');
 
+            $request['third_id'] = $third_id;
+            $request['invoice_audit_id'] = $invoice_audit_id;
+
+            $assignment =  $this->assignmentRepository->searchOne($request->all());
+
             return [
                 'code' => 200,
+                'assignment' => $assignment,
                 'data' => [
                     'invoice_audit' => $invoice_audit,
                     'third' => $third,
@@ -287,34 +303,25 @@ class InvoiceAuditController extends Controller
         });
     }
 
-    public function exportCsvErrorsValidation(Request $request)
+    public function successFinalizedAudit(Request $request)
     {
+        $request = $request->all();
+
         return $this->execute(function () use ($request) {
 
-            $user_id = $request->input('user_id');
-
-            // Obtener los mensajes de errores de las validaciones
-            $data = $this->invoiceAuditRepository->getValidationsErrorMessages($user_id);
-
-            // Agrupar por 'row'
-            $groupedErrors = collect($data)->groupBy('row');
-
-            // Obtener un solo 'data' por grupo (el primero, por ejemplo)
-            $result = $groupedErrors->map(function ($group) {
-                // Tomar el primer elemento del grupo y devolver solo su 'data'
-                return $group->first()['data'] ?? null;
-            })->values();
+            $this->assignmentRepository->changeStatusAssigmentMasive($request);
 
 
-            // Generar el CSV con Laravel Excel
-            $csv = Excel::raw(new GlosaExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
+            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
 
-            $excelBase64 = base64_encode($csv);
 
             return [
                 'code' => 200,
-                'excel' => $excelBase64,
+                'message' => "Auditoria finalizada con exito",
             ];
         });
     }
+
 }

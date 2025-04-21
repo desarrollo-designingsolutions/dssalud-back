@@ -192,18 +192,6 @@ class AssignmentRepository extends BaseRepository
         return $data;
     }
 
-    public function register($request)
-    {
-        $data = $this->model;
-
-        foreach ($request as $key => $value) {
-            $data[$key] = $request[$key];
-        }
-
-        $data->save();
-
-        return $data;
-    }
 
     public function findByEmail($email)
     {
@@ -335,5 +323,100 @@ class AssignmentRepository extends BaseRepository
         }
 
         return $audits;
+    }
+
+    public function changeStatusAssigmentMasive($request)
+    {
+        $assignment = $this->model::where(function ($query) use ($request) {
+
+            if (!empty($request['assignments_ids'])) {
+                $query->whereIn('id', $request["assignments_ids"]);
+            }
+
+            //COMPAÑIA
+            if (!empty($request['company_id'])) {
+                $query->where('company_id', $request["company_id"]);
+            }
+            //USUARIO LOGEUADO
+            if (!empty($request['user_id'])) {
+                $query->where('user_id', $request["user_id"]);
+            }
+
+            //TERCEROS
+            if (!empty($request['thirds_ids'])) {
+                $query->whereHas('invoiceAudit', function ($subQuery) use ($request) {
+                    $subQuery->whereIn('third_id', $request["thirds_ids"]);
+                });
+            }
+            //PACIENTES
+            if (!empty($request['patients_ids'])) {
+                $query->whereHas('invoiceAudit.patients', function ($subQuery) use ($request) {
+                    $subQuery->whereIn('id', $request["patients_ids"]);
+                });
+            }
+
+            // PAQUETE
+            if (!empty($request['assignment_batch_id'])) {
+                $query->where('assignment_batch_id', $request["assignment_batch_id"]);
+            }
+            if (!empty($request['assignments_batchs_ids'])) {
+                $query->whereIn('assignment_batch_id', $request["assignments_batchs_ids"]);
+            }
+
+            // FACTURAS
+            if (!empty($request['invoice_audit_id'])) {
+                $query->where('invoice_audit_id', $request["invoice_audit_id"]);
+            }
+            if (!empty($request['invoices_audits_ids'])) {
+                $query->whereIn('invoice_audit_id', $request["invoices_audits_ids"]);
+            }
+
+            $query->where('status', "!=", StatusAssignmentEnum::ASSIGNMENT_EST_003->value);
+        });
+
+        // logMessage($assignment->pluck("id"));
+        $assignment->update([
+            "status" => StatusAssignmentEnum::ASSIGNMENT_EST_003
+        ]);
+
+
+        return $assignment;
+    }
+
+    public function searchOne($request = [], $with = [], $idsAllowed = [])
+    {
+        // Construcción de la consulta
+        $data = $this->model->with($with)->where(function ($query) use ($request) {
+            if (! empty($request['id'])) {
+                $query->where('id', $request['id']);
+            }
+
+            if (! empty($request['company_id'])) {
+                $query->where('company_id', $request["company_id"]);
+            }
+
+            if (! empty($request['assignment_batch_id'])) {
+                $query->where('assignment_batch_id', $request["assignment_batch_id"]);
+            }
+
+            if (! empty($request['user_id'])) {
+                $query->where('user_id', $request["user_id"]);
+            }
+
+            if (! empty($request['invoice_audit_id'])) {
+                $query->where('invoice_audit_id', $request["invoice_audit_id"]);
+            }
+
+            if (! empty($request['third_id'])) {
+                $query->whereHas('invoiceAudit', function ($subQuery) use ($request) {
+                    $subQuery->where('third_id', $request["third_id"]);
+                });
+            }
+        });
+
+        // Obtener el primer resultado
+        $data = $data->first();
+
+        return $data;
     }
 }

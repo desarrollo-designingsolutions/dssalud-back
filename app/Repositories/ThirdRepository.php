@@ -123,6 +123,9 @@ class ThirdRepository extends BaseRepository
                     if (! empty($request['third_id'])) {
                         $query->where('id', $request['third_id']);
                     }
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
                 }
             )
             ->count();

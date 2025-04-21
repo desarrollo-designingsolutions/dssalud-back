@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Constants;
 use App\Http\Requests\Glosa\GlosaMasiveStoreRequest;
 use App\Http\Requests\Glosa\GlosaStoreRequest;
 use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
@@ -19,6 +20,7 @@ use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class GlosaController extends Controller
@@ -163,7 +165,7 @@ class GlosaController extends Controller
 
             $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
-            $csv = Excel::import(new GlosaImport($user_id, $company_id, $services,$users,$codeGlosas), $request->file('archiveCsv'));
+            $csv = Excel::import(new GlosaImport($user_id, $company_id, $services, $users, $codeGlosas), $request->file('archiveCsv'));
 
             return [
                 'code' => 200,
@@ -212,6 +214,20 @@ class GlosaController extends Controller
             return [
                 'code' => 200,
                 'message' => 'Glosa/s agregada/s correctamente',
+            ];
+        });
+    }
+
+    public function getContentJson(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            // Obtener el contenido del archivo
+
+            $jsonContent = openFileJson($request["url_json"]);
+
+            return [
+                'code' => 200,
+                'data' => $jsonContent,
             ];
         });
     }

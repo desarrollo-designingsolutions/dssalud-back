@@ -15,6 +15,7 @@ use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -41,7 +42,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         protected $services,
         protected $users,
         protected $codeGlosas,
-
     ) {
 
         $this->cacheService = new CacheService();
@@ -91,9 +91,18 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                     // logger('No se encontraron errores durante la importación.');
                 }
 
-                // Emitir errores al front
                 // logMessage($errorsFormatted);
-                ModalError::dispatch("glosaModalErrors.{$this->user_id}", $errorsFormatted);
+
+                // Convert array to JSON
+                $routeJson = null;
+                if (count($errorsFormatted) > 0) {
+                    $nameFile = 'error_' . $this->user_id . '.json';
+                    $routeJson = 'companies/company_' . $this->company_id . '/glosas/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
+                }
+
+                // Emitir errores al front
+                ModalError::dispatch("glosaModalErrors.{$this->user_id}", $routeJson);
 
                 // Enviar notificación al usuario
                 $title = 'Importación de glosas';
@@ -154,7 +163,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 'code_glosa_id' => $row[2],
                 'glosa_value' => $row[3],
                 'observation' => $row[4],
-                // 'company_id' => $this->company_id,
+                'company_id' => $this->company_id,
             ];
 
             // Validar los datos manualmente
@@ -214,6 +223,18 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
         }
 
+        if ($row[0] != $this->user_id) {
+            $errorData = [
+                'column' => '1',
+                'row' => $processed,
+                'value' => $row[0],
+                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
+                'errors' => 'El usuario que realiza la carga no corresponde al usuario registrado en el archivo CSV.',
+            ];
+            Redis::rpush("list:glosas_import_errors_{$this->user_id}", json_encode($errorData));
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+        }
+
         $service = $this->service($row[1], 'id');
         if ($service == null) {
             $errorData = [
@@ -228,7 +249,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             $error = true; // O lanza una excepción, o haz algo para detener el flujo
 
         } else {
-
             if (is_numeric($row[3]) && $row[3] > $service['total_value']) {
                 $errorData = [
                     'column' => '4', // Número de columna
@@ -277,6 +297,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     public function user($value, $field)
     {
         $redisData = $this->users;
+        logMessage($redisData);
 
         $cache = $redisData;
 
@@ -375,10 +396,11 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     private function excelErrorsValidation($data)
     {
 
-        $excel =Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+        $excel = Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
 
         return $excel;
     }
+
     private function exportCsvErrorsValidation($data)
     {
         // Agrupar por 'row'
