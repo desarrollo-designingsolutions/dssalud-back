@@ -4,10 +4,21 @@ use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
 use App\Models\SupportType;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/s3', function () {
+    try {
+        $files = Storage::disk('s3')->files();
+        return response()->json($files);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
+
 
 Route::get('/ftp', function () {
     // Obtener datos necesarios del request
