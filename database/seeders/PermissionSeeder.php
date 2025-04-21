@@ -49,16 +49,16 @@ class PermissionSeeder extends Seeder
             ],
             [
                 'id' => 6,
-                'name' => 'menu.filing',
-                'description' => 'Visualizar Menu Radicación',
-                'menu_id' => 6,
-            ],
-            [
-                'id' => 7,
                 'name' => 'filing.new.index',
                 'description' => 'Visualizar Módulo Radicación',
-                'menu_id' => 7,
+                'menu_id' => 6,
             ],
+            // [
+            //     'id' => 7,
+            //     'name' => 'filing.new.index',
+            //     'description' => 'Visualizar Módulo Radicación',
+            //     'menu_id' => 7,
+            // ],
             [
                 'id' => 8,
                 'name' => 'menu.medical.bills',

@@ -10,6 +10,7 @@ use App\Models\Filing;
 use App\Models\FilingInvoice;
 use App\QueryBuilder\Filters\QueryFilters;
 use App\QueryBuilder\Sort\RelatedTableSort;
+use App\QueryBuilder\Sort\UserFullNameSort;
 use App\Traits\FilterManager;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
@@ -37,14 +38,19 @@ class FilingRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($filter, $request) {
 
             $query = QueryBuilder::for($this->model->query())
-                ->with(['contract:id,name'])
-                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr', 'filings.company_id'])
+                ->with(['contract:id,name','user:id,name,surname'])
+                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr', 'filings.company_id',"filings.user_id"])
                 ->withCount(['filingInvoicePreRadicated'])
+                ->defaultSort('-created_at')
                 ->allowedFilters([
                     'status',
 
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
+
+                            $query->orWhereHas('user', function ($subQuery) use ($value) {
+                                $subQuery->whereRaw("CONCAT(name, ' ', surname) LIKE ?", ["%{$value}%"]);
+                            });
                             $query->orWhereHas('contract', function ($subQuery) use ($value) {
                                 $subQuery->where('name', 'like', "%$value%");
                             });
@@ -70,12 +76,16 @@ class FilingRepository extends BaseRepository
                     'status',
                     'sumVr',
                     'filing_invoice_pre_radicated_count',
+                    'created_at',
                     AllowedSort::custom('contract_name', new RelatedTableSort(
                         'filings',
                         'contracts',
                         'name',
                         'contract_id',
                     )),
+                    AllowedSort::custom('user_full_name', new RelatedTableSort('filings', 'users', 'name', 'user_id')),
+
+
                 ]);
 
             if (isset($filter['filing_invoice_pre_radicated_count']) && is_numeric($filter['filing_invoice_pre_radicated_count'])) {
@@ -83,7 +93,7 @@ class FilingRepository extends BaseRepository
             }
 
             if (! empty($request['company_id'])) {
-                $query = $query->where('company_id', $request['company_id']);
+                $query = $query->where('filings.company_id', $request['company_id']);
             }
 
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
