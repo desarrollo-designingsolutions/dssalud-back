@@ -12,6 +12,7 @@ use App\Models\Third;
 use App\QueryBuilder\Sort\DynamicConcatSort;
 use App\Traits\AuditMap;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redis;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -418,5 +419,21 @@ class AssignmentRepository extends BaseRepository
         $data = $data->first();
 
         return $data;
+    }
+
+    public function getValidationsErrorMessages($user_id)
+    {
+        // Recuperar y mostrar los errores almacenados en Redis
+        $errorListKey = "list:assignment_import_errors_{$user_id}";
+        $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
+        $errorsFormatted = [];
+
+        if (! empty($errors)) {
+            foreach ($errors as $index => $errorJson) {
+                $errorsFormatted[] = json_decode($errorJson, true); // Decodificar el JSON
+            }
+        }
+
+        return $errorsFormatted;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Role\RoleTypeEnum;
 use App\Helpers\Constants;
 use App\Models\User;
 use App\QueryBuilder\Filters\QueryFilters;
@@ -237,5 +238,29 @@ class UserRepository extends BaseRepository
         }
 
         return $audits;
+    }
+
+    public function getAuditUsers($request = [])
+    {
+        $data = $this->model->where(function ($query) use ($request) {
+            if (!empty($request['is_active'])) {
+                $query->where('is_active', $request['is_active']);
+            }
+            if (!empty($request['company_id'])) {
+                $query->where('company_id', $request['company_id']);
+            }
+        })
+        ->whereHas('roles', function ($subQuery) {
+            $subQuery->where('type', RoleTypeEnum::ROLE_TYPE_001);
+        });
+
+        $data = $data->orderBy('id', 'desc');
+        if (empty($request['typeData'])) {
+            $data = $data->paginate($request['perPage'] ?? 10);
+        } else {
+            $data = $data->get();
+        }
+
+        return $data;
     }
 }

@@ -65,6 +65,31 @@ class AssignmentBatcheRepository extends BaseRepository
         }, Constants::REDIS_TTL);
     }
 
+    public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
+    {
+        $data = $this->model->with($with)->where(function ($query) {})
+            ->where(function ($query) use ($request) {
+
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
+            })
+            ->where(function ($query) use ($request) {
+                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                    $query->orWhere('description', 'like', '%'.$request['searchQueryInfinite'].'%');
+                }
+            });
+
+        $data = $data->orderBy('id', 'desc');
+        if (empty($request['typeData'])) {
+            $data = $data->paginate($request['perPage'] ?? 10);
+        } else {
+            $data = $data->get();
+        }
+
+        return $data;
+    }
+
     public function store($request)
     {
         $request = $this->clearNull($request);

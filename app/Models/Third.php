@@ -51,4 +51,17 @@ class Third extends Model
 
         })->count(); // Filtramos por el campo status en Assignment
     }
+
+    // Nueva relación para obtener las asignaciones a través de InvoiceAudit
+    public function assignments()
+    {
+        return $this->hasManyThrough(
+            Assignment::class,      // Modelo destino (Assignment)
+            InvoiceAudit::class,    // Modelo intermedio (InvoiceAudit)
+            'third_id',             // Clave foránea en InvoiceAudit que apunta a Third
+            'invoice_audit_id',     // Clave foránea en Assignment que apunta a InvoiceAudit
+            'id',                   // Clave primaria en Third
+            'id'                    // Clave primaria en InvoiceAudit
+        );
+    }
 }
