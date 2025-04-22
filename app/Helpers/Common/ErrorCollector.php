@@ -32,17 +32,6 @@ class ErrorCollector
         string $message
     ): void {
 
-        // self::$errors[] = [
-        //     'validacion' => $validation,
-        //     'validacion_type_Y' => $validationType,
-        //     'num_invoice' => $numInvoice,
-        //     'file' => $file,
-        //     'row' => $row,
-        //     'column' => $column,
-        //     'data' => $data,
-        //     'error' => $message,
-        // ];
-
         $errors = json_decode(Redis::get($keyRedis), 1);
         $errors[] = [
             'validacion' => $validation,
@@ -63,7 +52,6 @@ class ErrorCollector
      */
     public static function getErrors($keyRedis): array
     {
-        // return self::$errors;
 
         $errors = json_decode(Redis::get($keyRedis), 1);
 
@@ -75,8 +63,6 @@ class ErrorCollector
      */
     public static function clear($keyRedis): void
     {
-        // self::$errors = [];
-
         Redis::set($keyRedis, json_encode([]));
     }
 }

@@ -5,21 +5,27 @@ namespace App\Imports;
 // app/Imports/AssingmentImport.php
 
 use App\Enums\Assignment\StatusAssignmentEnum;
+use App\Events\ModalError;
 use App\Events\ProgressCircular;
+use App\Exports\Assignment\AssignmentExcelErrorsValidationExport;
 use App\Helpers\Constants;
+use App\Jobs\BrevoProcessSendEmail;
 use App\Models\Assignment;
 use App\Models\AssignmentBatche;
 use App\Models\InvoiceAudit;
 use App\Models\User;
+use App\Notifications\BellNotification;
 use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
 {
@@ -33,6 +39,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         protected $company_id,
         protected $assignmentBatches,
         protected $users,
+        protected $auditUsers,
         protected $invoiceAudits,
         protected $assignmentStatusEnumValues,
         protected $file_path,
@@ -78,7 +85,36 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                     // logger('No se encontraron errores durante la importación.');
                 }
 
-                logMessage($errorsFormatted);
+                // Convert array to JSON
+                $routeJson = null;
+                if (count($errorsFormatted) > 0) {
+                    $nameFile = 'error_' . $this->user_id . '.json';
+                    $routeJson = 'companies/company_' . $this->company_id . '/assignment/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
+                }
+
+                // Emitir errores al front
+                ModalError::dispatch("assignmentModalErrors.{$this->user_id}", $routeJson);
+
+                // Enviar notificación al usuario
+                $title = 'Importación de asignaciones';
+                $subtitle = 'La importación de asignaciones ha finalizado sin novedad.';
+                if (count($errorsFormatted) > 0) {
+                    $subtitle = 'La importación de asignaciones ha finalizado con las siguientes novedades:';
+                }
+
+                $this->sendNotification(
+                    $this->user_id,
+                    [
+                        'title' => $title,
+                        'subtitle' => $subtitle,
+                        'assignments_import' => $errorsFormatted,
+                    ]
+                );
+
+                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
+                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
+                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
             },
         ];
     }
@@ -158,6 +194,22 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         }
 
+        $auditUser = $this->auditUser($row[1], 'id');
+
+        if ($auditUser == null) { // Usar === para comparación estricta
+
+            $errorData = [
+                'column' => '2',
+                'row' => $processed,
+                'value' => $row[1],
+                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
+                'errors' => 'El usuario no cuenta con la funcion de rol Auditor.',
+            ];
+            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
+            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+
+        }
+
         $invoiceAudit = $this->invoiceAudit($row[2], 'id');
 
         if ($invoiceAudit == null) { // Usar === para comparación estricta
@@ -180,7 +232,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                 'row' => $processed,
                 'value' => $row[4],
                 'data' => $data,
-                'errors' => 'El Enum del estado no coincide con los estados del sistema.',
+                'errors' => 'El codigo del estado no coincide con los estados del sistema.',
             ];
             Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
             $error = true;
@@ -217,6 +269,20 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         return $data;
     }
 
+    public function auditUser($value, $field)
+    {
+        $redisData = $this->auditUsers;
+
+        $cache = $redisData;
+
+        $data = $cache->first(function ($item) use ($value, $field) {
+            $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+            return $match;
+        });
+
+        return $data;
+    }
+
     public function invoiceAudit($value, $field)
     {
         $redisData = $this->invoiceAudits;
@@ -237,5 +303,75 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
             'delimiter' => ';', // Configura el separador como punto y coma
             'input_encoding' => 'UTF-8', // Asegúrate de que la codificación sea correcta
         ];
+    }
+
+    private function sendNotification($userId, $data)
+    {
+        // Obtener el objeto User a partir del ID
+        $user = User::find($userId);
+
+
+        if ($user) {
+            // Enviar notificación
+            $user->notify(new BellNotification($data));
+
+            $excel = $this->excelErrorsValidation($data['assignments_import']);
+            $csv = $this->exportCsvErrorsValidation($data['assignments_import']);
+
+            // Enviar el correo usando el job de Brevo
+            BrevoProcessSendEmail::dispatch(
+                emailTo: [
+                    [
+                        "name" => $user->full_name,
+                        "email" => $user->email,
+                    ]
+                ],
+                subject: $data['title'],
+                templateId: 10,  // El ID de la plantilla de Brevo que quieres usar
+                params: [
+                    "full_name" => $user->full_name,
+                    "subtitle" => $data['subtitle'],
+                    "bussines_name" => $user->company?->name,
+                    "assignments_import" => $data['assignments_import'],
+                    "show_table_errors" => count($data['assignments_import']) > 0 ? true : false,
+                ],
+                attachments: [
+                    [
+                        'name' => 'Lista de errores de validación.xlsx',
+                        'content' => base64_encode($excel),
+                    ],
+                    [
+                        'name' => 'Asignaciones.csv',
+                        'content' => base64_encode($csv),
+                    ],
+                ],
+            );
+        }
+    }
+
+    private function excelErrorsValidation($data)
+    {
+
+        $excel = Excel::raw(new AssignmentExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+        return $excel;
+    }
+
+    private function exportCsvErrorsValidation($data)
+    {
+        // Agrupar por 'row'
+        $groupedErrors = collect($data)->groupBy('row');
+
+        // Obtener un solo 'data' por grupo (el primero, por ejemplo)
+        $result = $groupedErrors->map(function ($group) {
+            // Tomar el primer elemento del grupo y devolver solo su 'data'
+            return $group->first()['data'] ?? null;
+        })->values();
+
+
+        // Generar el CSV con Laravel Excel
+        $csv = Excel::raw(new AssignmentExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
+
+        return $csv;
     }
 }
