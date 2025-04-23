@@ -258,7 +258,7 @@ class AssignmentController extends Controller
                 $countNumberProviders = $this->thirdRepository->getTotalThirdsInAssignedAudits($request->all());
 
                 $outstandingInvoices = $this->assignmentRepository->countNumberProviders([
-                    'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_001, StatusAssignmentEnum::ASSIGNMENT_EST_002],
+                    'status_diff_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_003],
                     'assignment_batch_id' => $request['assignment_batch_id'],
                     'third_id' => $request['third_id'],
                 ]);

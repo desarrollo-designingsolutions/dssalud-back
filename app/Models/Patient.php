@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Assignment\StatusAssignmentEnum;
 use App\Traits\Searchable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,11 +16,28 @@ class Patient extends Model
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->second_name.' '.$this->first_surname.' '.$this->second_surname;
+        return $this->first_name . ' ' . $this->second_name . ' ' . $this->first_surname . ' ' . $this->second_surname;
     }
 
     public function invoice_audit(): BelongsTo
     {
         return $this->belongsTo(InvoiceAudit::class);
+    }
+
+    public function assignmentStatusFor($request): string
+    {
+        $hasPending = $this->invoice_audit
+            ->assignment()
+            ->whereNot('status', StatusAssignmentEnum::ASSIGNMENT_EST_003->value)
+            ->where(function ($query) use ($request) {
+                if (! empty($request['user_id'])) {
+                    $query->where('user_id', $request['user_id']);
+                }
+            })
+            ->exists(); // consulta eficiente, no carga todos los registros :contentReference[oaicite:1]{index=1}
+
+        return $hasPending
+            ? 'pending' // 'Pendiente'
+            : 'finished'; // 'Finalizado'
     }
 }

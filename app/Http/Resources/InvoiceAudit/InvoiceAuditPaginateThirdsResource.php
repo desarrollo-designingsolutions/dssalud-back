@@ -22,6 +22,7 @@ class InvoiceAuditPaginateThirdsResource extends JsonResource
             'count_invoice_pending' => $this->count_invoice_pending,
             'count_invoice_finish' => $this->count_invoice_finish,
             'values' => formatNumber($this->total_value_sum),
+            'status' => $this->assignmentStatusFor(['user_id' => $request->input('user_id')]),
         ];
     }
 }

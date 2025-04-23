@@ -30,8 +30,7 @@ class AssignmentBatcheRepository extends BaseRepository
                 ->withCount([
                     'assignments as count_invoice',
                     'assignments as count_invoice_pending' => function ($query) {
-                        $query->where('status', '=', StatusAssignmentEnum::ASSIGNMENT_EST_001);
-                        $query->orWhere('status', '=', StatusAssignmentEnum::ASSIGNMENT_EST_002);
+                        $query->whereNotIn('status', [StatusAssignmentEnum::ASSIGNMENT_EST_003]);
                     },
                     'assignments as count_invoice_completed' => function ($query) {
                         $query->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);

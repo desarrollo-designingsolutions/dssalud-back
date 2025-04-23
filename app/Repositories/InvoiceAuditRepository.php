@@ -60,7 +60,7 @@ class InvoiceAuditRepository extends BaseRepository
                     },
                     'assignments as count_invoice_pending' => function ($query) use ($request) {
                         $query->where('user_id', $request['user_id']);
-                        $query->where('status', '=', StatusAssignmentEnum::ASSIGNMENT_EST_002);
+                        $query->whereNotIn('status', [StatusAssignmentEnum::ASSIGNMENT_EST_003]);
                     },
                     'assignments as count_invoice_completed' => function ($query) use ($request) {
                         $query->where('user_id', $request['user_id']);
@@ -107,43 +107,25 @@ class InvoiceAuditRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Third::query())
-                ->withCount([
-                    'invoiceAudits as count_invoice_total' => function ($query) use ($request) {
-                        $query->whereHas('assignment', function ($subQuery) use ($request) {
-                            $subQuery->where('user_id', $request['user_id']);
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                        });
-                    },
-                    'invoiceAudits as count_invoice_pending' => function ($query) use ($request) {
-                        $query->whereHas('assignment', function ($subQuery) use ($request) {
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                            $subQuery->where('user_id', $request['user_id']);
+            ->withCount([
+                'assignments as count_invoice_total' => function ($query) use ($request) {
+                        $query->where('user_id', $request['user_id']);
+                        $query->where('assignment_batch_id', $request['assignment_batch_id']);
+                },
+                'assignments as count_invoice_pending' => function ($query) use ($request) {
+                        $query->where('assignment_batch_id', $request['assignment_batch_id']);
+                        $query->where('user_id', $request['user_id']);
 
-                            $subQuery->where(function ($subQuery2) {
-                                $subQuery2->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_001);
-                                $subQuery2->orWhere('status', StatusAssignmentEnum::ASSIGNMENT_EST_002);
-                            });
+                        $query->where(function ($subQuery) {
+                            $subQuery->whereNotIn('status', [StatusAssignmentEnum::ASSIGNMENT_EST_003]);
                         });
-                    },
-                    'invoiceAudits as count_invoice_finish' => function ($query) use ($request) {
-                        $query->whereHas('assignment', function ($subQuery) use ($request) {
-                            $subQuery->where('user_id', $request['user_id']);
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                            $subQuery->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);
-                        });
-                    },
-                ])
-
-                ->allowedFilters([
-
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->where(function ($subQuery) use ($value) {
-                            $subQuery->where('nit', 'like', "%$value%")
-                                ->orWhere('name', 'like', "%$value%");
-                        });
-                    }),
-
-                ])
+                },
+                'assignments as count_invoice_finish' => function ($query) use ($request) {
+                        $query->where('user_id', $request['user_id']);
+                        $query->where('assignment_batch_id', $request['assignment_batch_id']);
+                        $query->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);
+                },
+            ])
                 ->allowedSorts([
                     'nit',
                     'name',

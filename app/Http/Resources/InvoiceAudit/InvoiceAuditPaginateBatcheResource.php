@@ -20,6 +20,7 @@ class InvoiceAuditPaginateBatcheResource extends JsonResource
             'count_invoice' => $this->count_invoice,
             'count_invoice_pending' => $this->count_invoice_pending,
             'count_invoice_completed' => $this->count_invoice_completed,
+            'status' => $this->assignmentStatusFor(['user_id' => $request->input('user_id')]),
         ];
     }
 }
