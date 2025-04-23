@@ -297,7 +297,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     public function user($value, $field)
     {
         $redisData = $this->users;
-        logMessage($redisData);
 
         $cache = $redisData;
 

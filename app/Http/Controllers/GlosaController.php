@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ModalError;
+use App\Exports\Glosa\GlosaExcelErrorsValidationExport;
+use App\Helpers\Common\ErrorCollector;
+use App\Helpers\Common\ImportCsvValidator;
 use App\Helpers\Constants;
 use App\Http\Requests\Glosa\GlosaMasiveStoreRequest;
 use App\Http\Requests\Glosa\GlosaStoreRequest;
@@ -9,8 +13,10 @@ use App\Http\Requests\Glosa\GlosaUploadCsvRequest;
 use App\Http\Resources\Glosa\GlosaFormResource;
 use App\Http\Resources\Glosa\GlosaPaginateResource;
 use App\Imports\GlosaImport;
+use App\Jobs\BrevoProcessSendEmail;
 use App\Models\CodeGlosa;
 use App\Models\User;
+use App\Notifications\BellNotification;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\GlosaRepository;
 use App\Repositories\ServiceRepository;
@@ -149,6 +155,8 @@ class GlosaController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
+            $keyErrorRedis = 'list:glosas_import_errors_' . $request->input('user_id');
+
             $user_id = $request->input('user_id');
             $company_id = $request->input('company_id');
 
@@ -165,13 +173,107 @@ class GlosaController extends Controller
 
             $services = $this->serviceRepository->getServicesToImportGlosas($request->all());
 
-            $csv = Excel::import(new GlosaImport($user_id, $company_id, $services, $users, $codeGlosas), $request->file('archiveCsv'));
+            $file = $request->file('archiveCsv');
 
-            return [
-                'code' => 200,
-                'csv' => $csv,
-            ];
+            $file_path = $file->getRealPath();
+
+            if (!ImportCsvValidator::validate($user_id, $keyErrorRedis, $file_path, 5, 'glosa')) {
+                $errors = ErrorCollector::getErrors($keyErrorRedis);  // Obtener lista de errores
+
+                // Convert array to JSON
+                $routeJson = null;
+                if (count($errors) > 0) {
+                    $nameFile = 'error_' . $user_id . '.json';
+                    $routeJson = 'companies/company_' . $company_id . '/assignment/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errors, JSON_PRETTY_PRINT));
+                }
+
+                // Enviar notificación al usuario
+                $title = 'Importación de glosas';
+                $subtitle = 'Se encontraron errores en la estructura del archivo que esta intentando importar.';
+
+                $this->sendNotification(
+                    $user_id,
+                    [
+                        'title' => $title,
+                        'subtitle' => $subtitle,
+                        'data_import' => $errors,
+                    ]
+                );
+
+                // Emitir errores al front
+                ModalError::dispatch("glosaStructureModalErrors.{$user_id}", $routeJson);
+
+                return [
+                    'code' => 422,
+                    'errors' => $errors,
+                ];
+            } else {
+                $csv = Excel::import(new GlosaImport($user_id, $company_id, $services, $users, $codeGlosas), $request->file('archiveCsv'));
+
+                return [
+                    'code' => 200,
+                    'csv' => $csv,
+                ];
+            }
         });
+    }
+
+    private function sendNotification($userId, $data)
+    {
+        // Obtener el objeto User a partir del ID
+        $user = User::find($userId);
+
+
+        if ($user) {
+            // Enviar notificación
+            $user->notify(new BellNotification($data));
+
+            // Enviar el correo usando el job de Brevo
+            BrevoProcessSendEmail::dispatch(
+                emailTo: [
+                    [
+                        "name" => $user->full_name,
+                        "email" => $user->email,
+                    ]
+                ],
+                subject: $data['title'],
+                templateId: 11,  // El ID de la plantilla de Brevo que quieres usar
+                params: [
+                    "full_name" => $user->full_name,
+                    "subtitle" => $data['subtitle'],
+                    "bussines_name" => $user->company?->name,
+                    "data_import" => $data['data_import'],
+                    "show_table_errors" => count($data['data_import']) > 0 ? true : false,
+                ],
+            );
+        }
+    }
+
+    private function excelErrorsValidationStructure($data)
+    {
+
+        $excel = Excel::raw(new GlosaExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+        return $excel;
+    }
+
+    private function exportCsvErrorsValidationStructure($data)
+    {
+        // Agrupar por 'row'
+        $groupedErrors = collect($data)->groupBy('row');
+
+        // Obtener un solo 'data' por grupo (el primero, por ejemplo)
+        $result = $groupedErrors->map(function ($group) {
+            // Tomar el primer elemento del grupo y devolver solo su 'data'
+            return $group->first()['data'] ?? null;
+        })->values();
+
+
+        // Generar el CSV con Laravel Excel
+        $csv = Excel::raw(new GlosaExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
+
+        return $csv;
     }
 
     public function createMasive()

@@ -19,7 +19,8 @@ class ImportCsvValidator
         string $user_id,
         string $keyErrorRedis,
         string $filePath,
-        int $expectedColumns = 5
+        int $expectedColumns = 5,
+        string $prefix,
     ): bool {
         // Eliminar la clave de errores en Redis
         Redis::del($keyErrorRedis);
@@ -89,7 +90,7 @@ class ImportCsvValidator
             $progress = ($processedLines / $totalLines) * 100;
     
             // Emitir el evento de progreso
-            ProgressCircular::dispatch("csv_import_progress.{$user_id}", $progress);
+            ProgressCircular::dispatch("csv_import_progress_{$prefix}.{$user_id}", $progress);
     
             $rowNum++;
         }

@@ -15,6 +15,9 @@ use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
 use App\Http\Resources\Assignment\AssignmentPaginatePatientResource;
 use App\Http\Resources\Assignment\AssignmentPaginateThirdsResource;
 use App\Imports\AssingmentImport;
+use App\Jobs\BrevoProcessSendEmail;
+use App\Models\User;
+use App\Notifications\BellNotification;
 use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\AssignmentRepository;
 use App\Repositories\CompanyRepository;
@@ -146,7 +149,7 @@ class AssignmentController extends Controller
 
             $file_path = $file->getRealPath();
 
-            if (!ImportCsvValidator::validate($user_id, $keyErrorRedis, $file_path, 5)) {
+            if (!ImportCsvValidator::validate($user_id, $keyErrorRedis, $file_path, 5, 'assignment')) {
                 $errors = ErrorCollector::getErrors($keyErrorRedis);  // Obtener lista de errores
 
                 // Convert array to JSON
@@ -157,8 +160,22 @@ class AssignmentController extends Controller
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errors, JSON_PRETTY_PRINT));
                 }
 
+                // Enviar notificación al usuario
+                $title = 'Importación de asignaciones';
+                $subtitle = 'Se encontraron errores en la estructura del archivo que esta intentando importar.';
+
+                $this->sendNotification(
+                    $user_id,
+                    [
+                        'title' => $title,
+                        'subtitle' => $subtitle,
+                        'data_import' => $errors,
+                    ]
+                );
+                
                 // Emitir errores al front
                 ModalError::dispatch("assignmentStructureModalErrors.{$user_id}", $routeJson);
+
                 return [
                     'code' => 422
                 ];
@@ -171,6 +188,63 @@ class AssignmentController extends Controller
                 ];
             }
         });
+    }
+
+    private function sendNotification($userId, $data)
+    {
+        // Obtener el objeto User a partir del ID
+        $user = User::find($userId);
+
+
+        if ($user) {
+            // Enviar notificación
+            $user->notify(new BellNotification($data));
+
+            // Enviar el correo usando el job de Brevo
+            BrevoProcessSendEmail::dispatch(
+                emailTo: [
+                    [
+                        "name" => $user->full_name,
+                        "email" => $user->email,
+                    ]
+                ],
+                subject: $data['title'],
+                templateId: 11,  // El ID de la plantilla de Brevo que quieres usar
+                params: [
+                    "full_name" => $user->full_name,
+                    "subtitle" => $data['subtitle'],
+                    "bussines_name" => $user->company?->name,
+                    "data_import" => $data['data_import'],
+                    "show_table_errors" => count($data['data_import']) > 0 ? true : false,
+                ],
+            );
+        }
+    }
+
+    private function excelErrorsValidationStructure($data)
+    {
+
+        $excel = Excel::raw(new AssignmentExcelErrorsValidationExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+        return $excel;
+    }
+
+    private function exportCsvErrorsValidationStructure($data)
+    {
+        // Agrupar por 'row'
+        $groupedErrors = collect($data)->groupBy('row');
+
+        // Obtener un solo 'data' por grupo (el primero, por ejemplo)
+        $result = $groupedErrors->map(function ($group) {
+            // Tomar el primer elemento del grupo y devolver solo su 'data'
+            return $group->first()['data'] ?? null;
+        })->values();
+
+
+        // Generar el CSV con Laravel Excel
+        $csv = Excel::raw(new AssignmentExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
+
+        return $csv;
     }
 
     public function AssignmentCount(Request $request)
