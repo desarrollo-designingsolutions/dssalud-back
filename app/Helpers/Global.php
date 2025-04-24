@@ -547,3 +547,43 @@ function changeServiceData($service_id)
         "value_approved" => formatNumber($value_approved),
     ]);
 }
+
+function getCronjobHashes($key)
+{
+
+    $project = env('KEY_REDIS_PROJECT');
+
+    // Definir el patrón para las claves
+    $pattern = "laravel_database_{$project}hash:{$key}*";
+    
+    // Array para almacenar los resultados
+    $results = [];
+    
+    // Usar SCAN para obtener claves de manera incremental
+    $cursor = '0';
+    $id = 0;
+    do {
+        // Ejecutar SCAN con el cursor actual y el patrón
+        $scanResult = Redis::scan($cursor, ['match' => $pattern, 'count' => 100]);
+        
+        // $scanResult contiene [nuevo_cursor, [claves]]
+        $cursor = $scanResult[0];
+        $keys = $scanResult[1];
+        
+        // Procesar cada clave encontrada
+        foreach ($keys as $key) {
+            // Limpiar el prefijo si es necesario
+            $cleanKey = str_replace(config('database.redis.options.prefix', ''), '', $key);
+            
+            // Obtener el hash con HGETALL
+            $hash = Redis::hgetall($cleanKey);
+            
+            // Agregar al resultado
+            $results[$id] = $hash;
+
+            $id++;
+        }
+    } while ($cursor !== '0'); // Continuar hasta que el cursor sea 0
+
+    return $results;
+}

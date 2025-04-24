@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Notifications\BellNotification;
 use App\Services\CacheService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -33,6 +34,9 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
     private $key_redis_project;
     private $cacheService;
+    private $assignments;
+    private $invoice_audits;
+    private $keyErrorRedis;
 
     public function __construct(
         protected $user_id,
@@ -40,13 +44,14 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         protected $assignmentBatches,
         protected $users,
         protected $auditUsers,
-        protected $invoiceAudits,
         protected $assignmentStatusEnumValues,
-        protected $file_path,
     ) {
         $this->cacheService = new CacheService();
 
         $this->key_redis_project = env('KEY_REDIS_PROJECT');
+        $this->keyErrorRedis = "string:assignment_import_errors_{$this->user_id}";
+        $this->assignments = [];
+        $this->invoice_audits = [];
     }
 
     public function registerEvents(): array
@@ -54,7 +59,8 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         return [
             BeforeImport::class => function (BeforeImport $event) {
                 // Limpiar errores
-                Redis::del("list:assignment_import_errors_{$this->user_id}");
+                Redis::del($this->keyErrorRedis);
+                Redis::del("set:invoice_audit_validated_{$this->user_id}");
 
                 // Obtener total de filas (ajusta si hay encabezados)
                 $totalRows = $event->getReader()->getTotalRows()['Worksheet'];
@@ -62,6 +68,14 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
                 Redis::set("integer:assignments_import_total_{$this->user_id}", $totalRows);
                 Redis::set("integer:assignments_import_processed_{$this->user_id}", 0);
+
+                $keyData = "assignments:company_{$this->company_id}:cronjob_";
+                $this->assignments = getCronjobHashes($keyData);
+                
+                $keyData = "invoice_audits:company_{$this->company_id}:cronjob_";
+                $this->invoice_audits = getCronjobHashes($keyData);
+
+                logMessage($this->invoice_audits);
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
@@ -71,7 +85,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                 Redis::del("integer:assignments_import_processed_{$this->user_id}");
 
                 // Recuperar y mostrar los errores almacenados en Redis
-                $errorListKey = "list:assignment_import_errors_{$this->user_id}";
+                $errorListKey = $this->keyErrorRedis;
                 $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
                 $errorsFormatted = [];
 
@@ -111,10 +125,12 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                         'assignments_import' => $errorsFormatted,
                     ]
                 );
-
+                
                 $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
                 $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
                 $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
+                
+                Artisan::call('redis:run-service-job');
             },
         ];
     }
@@ -137,7 +153,10 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         ];
 
         // Validar los datos manualmente
-        if ($this->validations($row, $processed, $data)) {
+
+        $a = $this->validations($row, $processed, $data);
+
+        if ($a === true) {
             // Emitir evento de progreso
             ProgressCircular::dispatch("assignment.{$this->user_id}", $progress);
 
@@ -163,78 +182,52 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         // Guardar los errores en Redis como una lista
         $assignmentBatch = $this->assignmentBatch($row[0], 'id');
-
-        if ($assignmentBatch == null) { // Usar === para comparación estricta
-
-            $errorData = [
-                'column' => '1',
-                'row' => $processed,
-                'value' => $row[0],
-                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => 'El ID del paquete no existe en la base de datos.',
-            ];
-            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
-            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+        if ($assignmentBatch == null) { 
+            $this->logError('1', $processed, $row[0], $data, "El ID del paquete no existe en la base de datos.");
+            $error = true;
 
         }
 
         $user = $this->user($row[1], 'id');
+        if ($user == null) { 
 
-        if ($user == null) { // Usar === para comparación estricta
-
-            $errorData = [
-                'column' => '2',
-                'row' => $processed,
-                'value' => $row[1],
-                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => 'El ID del usuario no existe en la base de datos.',
-            ];
-            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
-            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+            $this->logError('2', $processed, $row[1], $data, "El ID del usuario no existe en la base de datos.");
+            $error = true;
 
         }
 
         $auditUser = $this->auditUser($row[1], 'id');
+        if ($auditUser == null) { 
 
-        if ($auditUser == null) { // Usar === para comparación estricta
-
-            $errorData = [
-                'column' => '2',
-                'row' => $processed,
-                'value' => $row[1],
-                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => 'El usuario no cuenta con la funcion de rol Auditor.',
-            ];
-            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
-            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+            $this->logError('2', $processed, $row[1], $data, "El usuario no cuenta con la funcion de rol Auditor.");
+            $error = true;
 
         }
 
         $invoiceAudit = $this->invoiceAudit($row[2], 'id');
+        if ($invoiceAudit) { 
 
-        if ($invoiceAudit == null) { // Usar === para comparación estricta
-
-            $errorData = [
-                'column' => '3',
-                'row' => $processed,
-                'value' => $row[2],
-                'data' => $data, // Cambié $data por $row ya que $data no está definida aquí
-                'errors' => 'El ID de la factura no existe en la base de datos.',
-            ];
-            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
-            $error = true; // O lanza una excepción, o haz algo para detener el flujo
+            $this->logError('3', $processed, $row[2], $data, "El ID de la factura no existe en la base de datos.");
+            $error = true;
 
         }
 
+        $assignment = $this->assignment($row[2], 'invoice_audit_id');
+        if ($assignment) {
+
+            $this->logError('3', $processed, $row[2], $data, "La factura {$row[2]} ya cuenta con una asignacion registrada en BD.");
+            $error = true;
+
+        }
+
+        $assignment_in_file = $this->assignmentInFile($row[2]);
+        if($assignment_in_file){
+            $this->logError('3', $processed, $row[2], $data, "La factura '{$row[2]}' ya está registrado en el archivo actual.");
+            $error = true;
+        }
+
         if (!in_array($row[4], $this->assignmentStatusEnumValues, true)) {
-            $errorData = [
-                'column' => '5',
-                'row' => $processed,
-                'value' => $row[4],
-                'data' => $data,
-                'errors' => 'El codigo del estado no coincide con los estados del sistema.',
-            ];
-            Redis::rpush("list:assignment_import_errors_{$this->user_id}", json_encode($errorData));
+            $this->logError('5', $processed, $row[4], $data, "El codigo del estado no coincide con los estados del sistema.");
             $error = true;
         }
 
@@ -285,16 +278,65 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
     public function invoiceAudit($value, $field)
     {
-        $redisData = $this->invoiceAudits;
+        $redisData = $this->invoice_audits;
 
-        $cache = $redisData;
+        $cache = collect($redisData);
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
-        return $data;
+        logMessage($data);
+
+        return $data ? false : true;
+    }
+
+    public function assignment($value, $field)
+    {
+        $redisData = $this->assignments;
+
+        $cache = collect($redisData);
+
+        $data = $cache->first(function ($item) use ($value, $field) {
+            $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value) && strtoupper($item['status']) !== strtoupper(StatusAssignmentEnum::ASSIGNMENT_EST_003->value);
+
+            return $match;
+        });
+
+        return $data ? true : false;
+    }
+
+    public function assignmentInFile($value)
+    {
+        $setKey = "set:invoice_audit_validated_{$this->user_id}";
+
+        $error = false;
+
+        // Verificar si el valor ya existe en el conjunto
+        if (!Redis::sismember($setKey, $value)) {
+            // El valor no existe, agregarlo al conjunto
+            Redis::sadd($setKey, $value);
+        } else {
+            $error = true;
+        }
+        return $error;
+    }
+
+    /**
+     * Registrar un error en Redis.
+     */
+    private function logError($column, $row, $value, $data, $errorMessage)
+    {
+        $errorData = [
+            'column' => $column,
+            'row' => $row,
+            'value' => $value,
+            'data' => $data,
+            'error' => $errorMessage,
+        ];
+        Redis::rpush($this->keyErrorRedis, json_encode($errorData));
     }
 
     public function getCsvSettings(): array

@@ -15,6 +15,8 @@ use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
 use App\Http\Resources\Assignment\AssignmentPaginatePatientResource;
 use App\Http\Resources\Assignment\AssignmentPaginateThirdsResource;
 use App\Imports\AssingmentImport;
+use App\Imports\AssingmentImportValidationStructure;
+use App\Jobs\Assignment\ProcessValidationStructureAssignment;
 use App\Jobs\BrevoProcessSendEmail;
 use App\Models\User;
 use App\Notifications\BellNotification;
@@ -27,6 +29,7 @@ use App\Repositories\UserRepository;
 use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use ReflectionEnumUnitCase;
@@ -116,7 +119,7 @@ class AssignmentController extends Controller
     {
         return $this->runTransaction(function () use ($request) {
 
-            $keyErrorRedis = 'list:assignment_import_errors_' . $request->input('user_id');
+            ini_set('memory_limit', '1024M');
 
             $user_id = $request->input('user_id');
             $company_id = $request->input('company_id');
@@ -138,87 +141,22 @@ class AssignmentController extends Controller
                 "typeData" => "all",
             ]);
 
-            $invoiceAudits = $this->invoiceAuditRepository->list([
-                "company_id" => $company_id,
-                "typeData" => "all",
-            ]);
-            
             $assignmentStatusEnumValues = array_column(StatusAssignmentEnum::cases(), 'value');
 
-            $file = $request->file('archiveCsv');
-
-            $file_path = $file->getRealPath();
-
-            if (!ImportCsvValidator::validate($user_id, $keyErrorRedis, $file_path, 5, 'assignment')) {
-                $errors = ErrorCollector::getErrors($keyErrorRedis);  // Obtener lista de errores
-
-                // Convert array to JSON
-                $routeJson = null;
-                if (count($errors) > 0) {
-                    $nameFile = 'error_' . $user_id . '.json';
-                    $routeJson = 'companies/company_' . $company_id . '/assignment/errors/' . $nameFile; // Ruta donde se guardará la carpeta
-                    Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errors, JSON_PRETTY_PRINT));
-                }
-
-                // Enviar notificación al usuario
-                $title = 'Importación de asignaciones';
-                $subtitle = 'Se encontraron errores en la estructura del archivo que esta intentando importar.';
-
-                $this->sendNotification(
-                    $user_id,
-                    [
-                        'title' => $title,
-                        'subtitle' => $subtitle,
-                        'data_import' => $errors,
-                    ]
-                );
-                
-                // Emitir errores al front
-                ModalError::dispatch("assignmentStructureModalErrors.{$user_id}", $routeJson);
-
-                return [
-                    'code' => 422
-                ];
-            } else {
-                $csv = Excel::import(new AssingmentImport($user_id, $company_id, $assignmentBatches, $users, $auditUsers, $invoiceAudits, $assignmentStatusEnumValues, $file_path), $request->file('archiveCsv'));
-
-                return [
-                    'request' => $request->all(),
-                    'csv' => $csv,
-                ];
+            if ($request->hasFile('archiveCsv')) {
+                $file = $request->file('archiveCsv');
+                $ruta = '/companies/company_' . $company_id . '/assignments/import_temp/' . $user_id; // Ruta donde se guardará la carpeta
+                $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
+                $path_csv = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
             }
+
+            $csv = Excel::import(new AssingmentImportValidationStructure($user_id, $company_id, $assignmentBatches, $users, $auditUsers, $assignmentStatusEnumValues, $path_csv), $request->file('archiveCsv'));
+
+            return [
+                'request' => $request->all(),
+                'csv' => $csv,
+            ];
         });
-    }
-
-    private function sendNotification($userId, $data)
-    {
-        // Obtener el objeto User a partir del ID
-        $user = User::find($userId);
-
-
-        if ($user) {
-            // Enviar notificación
-            $user->notify(new BellNotification($data));
-
-            // Enviar el correo usando el job de Brevo
-            BrevoProcessSendEmail::dispatch(
-                emailTo: [
-                    [
-                        "name" => $user->full_name,
-                        "email" => $user->email,
-                    ]
-                ],
-                subject: $data['title'],
-                templateId: 11,  // El ID de la plantilla de Brevo que quieres usar
-                params: [
-                    "full_name" => $user->full_name,
-                    "subtitle" => $data['subtitle'],
-                    "bussines_name" => $user->company?->name,
-                    "data_import" => $data['data_import'],
-                    "show_table_errors" => count($data['data_import']) > 0 ? true : false,
-                ],
-            );
-        }
     }
 
     private function excelErrorsValidationStructure($data)
@@ -302,6 +240,8 @@ class AssignmentController extends Controller
             $filteredData = collect($data)->map(function ($item) {
                 return collect($item)->except('data')->toArray();
             });
+            
+            logMessage($data);
 
             $excel = Excel::raw(new AssignmentExcelErrorsValidationExport($filteredData, false, true), \Maatwebsite\Excel\Excel::XLSX);
 
@@ -378,10 +318,9 @@ class AssignmentController extends Controller
                 "typeData" => "all",
             ]);
 
-            $invoiceAudits = $this->invoiceAuditRepository->list([
-                "company_id" => $company_id,
-                "typeData" => "all",
-            ]);
+            $keyData = "invoice_audits:company_{$company_id}:cronjob_";
+
+            $invoiceAudits = getCronjobHashes($keyData);
 
             $assignmentStatusEnumValues = array_map(function ($case) {
                 return [
@@ -393,39 +332,6 @@ class AssignmentController extends Controller
             $excel = Excel::raw(new AssignmentExcelExport($assignmentBatches, $users, $invoiceAudits, $assignmentStatusEnumValues, $request->all()), \Maatwebsite\Excel\Excel::XLSX);
 
             $excelBase64 = base64_encode($excel);
-
-
-            // // Obtener el objeto User a partir del ID
-            // $user = $this->userRepository->find($user_id);
-
-            // if ($user) {
-            //     // Enviar notificación
-            //     // $user->notify(new BellNotification($data));
-
-            //     // Enviar el correo usando el job de Brevo
-            //     BrevoProcessSendEmail::dispatch(
-            //         emailTo: [
-            //             [
-            //                 "name" => $user->full_name,
-            //                 "email" => $user->email,
-            //             ]
-            //         ],
-            //         subject: "Exportacion de servicios",
-            //         templateId: 9,  // El ID de la plantilla de Brevo que quieres usar
-            //         params: [
-            //             "full_name" => $user->full_name,
-            //             "subtitle" => "informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios",
-            //             "bussines_name" => $user->company?->name,
-            //         ],
-            //         attachments: [
-            //             [
-            //                 'name' => 'Servicios.xlsx',
-            //                 'content' => $excelBase64,
-            //             ],
-            //         ],
-            //     );
-            // }
-
 
             return [
                 'code' => 200,

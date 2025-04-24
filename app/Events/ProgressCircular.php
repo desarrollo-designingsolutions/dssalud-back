@@ -16,10 +16,13 @@ class ProgressCircular implements ShouldBroadcastNow
 
     public $progress;
 
-    public function __construct($channel, $progress)
+    public $success;
+
+    public function __construct($channel, $progress, $success = true)
     {
         $this->channel = $channel;
         $this->progress = $progress;
+        $this->success = $success;
     }
 
     public function broadcastOn()
@@ -33,6 +36,7 @@ class ProgressCircular implements ShouldBroadcastNow
             'channel' => $this->channel,
             'progress' => sprintf('%.2f', floor($this->progress * 100) / 100),
             'progress_2' => $this->progress,
+            'success' => $this->success,
         ];
     }
 }

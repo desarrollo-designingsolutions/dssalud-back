@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\Glosa\ProcessGlosasServiceJob2;
+use App\Jobs\ProcessRedisData;
 use Illuminate\Console\Command;
 
 class RunGlosasServiceJob extends Command
 {
-    protected $signature = 'glosas:run-service-job';
+    protected $signature = 'redis:run-service-job';
     protected $description = 'Dispatch ProcessGlosasServiceJob2';
 
     public function handle()
     {
-        ProcessGlosasServiceJob2::dispatch();
+        ProcessRedisData::dispatch();
         $this->info('Job dispatched successfully.');
     }
 }

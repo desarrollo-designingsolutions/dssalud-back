@@ -422,7 +422,7 @@ class AssignmentRepository extends BaseRepository
     public function getValidationsErrorMessages($user_id)
     {
         // Recuperar y mostrar los errores almacenados en Redis
-        $errorListKey = "list:assignment_import_errors_{$user_id}";
+        $errorListKey = "string:assignment_import_errors_{$user_id}";
         $errors = Redis::lrange($errorListKey, 0, -1); // Obtener todos los elementos de la lista
         $errorsFormatted = [];
 
