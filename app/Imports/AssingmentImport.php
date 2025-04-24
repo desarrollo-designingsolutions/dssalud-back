@@ -74,8 +74,6 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                 
                 $keyData = "invoice_audits:company_{$this->company_id}:cronjob_";
                 $this->invoice_audits = getCronjobHashes($keyData);
-
-                logMessage($this->invoice_audits);
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar

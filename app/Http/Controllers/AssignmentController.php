@@ -240,8 +240,6 @@ class AssignmentController extends Controller
             $filteredData = collect($data)->map(function ($item) {
                 return collect($item)->except('data')->toArray();
             });
-            
-            logMessage($data);
 
             $excel = Excel::raw(new AssignmentExcelErrorsValidationExport($filteredData, false, true), \Maatwebsite\Excel\Excel::XLSX);
 
