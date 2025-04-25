@@ -93,7 +93,6 @@ class InvoiceAuditRepository extends BaseRepository
                             }
                         });
                     }
-
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -107,28 +106,48 @@ class InvoiceAuditRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Third::query())
-            ->withCount([
-                'assignments as count_invoice_total' => function ($query) use ($request) {
+                ->withCount([
+                    'assignments as count_invoice_total' => function ($query) use ($request) {
                         $query->where('user_id', $request['user_id']);
                         $query->where('assignment_batch_id', $request['assignment_batch_id']);
-                },
-                'assignments as count_invoice_pending' => function ($query) use ($request) {
+                    },
+                    'assignments as count_invoice_pending' => function ($query) use ($request) {
                         $query->where('assignment_batch_id', $request['assignment_batch_id']);
                         $query->where('user_id', $request['user_id']);
 
                         $query->where(function ($subQuery) {
                             $subQuery->whereNotIn('status', [StatusAssignmentEnum::ASSIGNMENT_EST_003]);
                         });
-                },
-                'assignments as count_invoice_finish' => function ($query) use ($request) {
+                    },
+                    'assignments as count_invoice_finish' => function ($query) use ($request) {
                         $query->where('user_id', $request['user_id']);
                         $query->where('assignment_batch_id', $request['assignment_batch_id']);
                         $query->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);
-                },
-            ])
+                    },
+                ])
+                ->addSelect([
+                    'values' => InvoiceAudit::selectRaw('SUM(total_value)')
+                        ->whereColumn('third_id', 'thirds.id')
+                        ->whereHas('assignment', function ($subQuery) use ($request) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        }),
+                ])
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($subQuery) use ($value) {
+                            $subQuery->orWhere('nit', 'like', "%$value%");
+                            $subQuery->orWhere('name', 'like', "%$value%");
+                        });
+                    }),
+
+                ])
                 ->allowedSorts([
                     'nit',
                     'name',
+                    'count_invoice_total',
+                    'count_invoice_pending',
+                    'count_invoice_finish',
+                    'values',
                 ])->where(function ($query) use ($request) {
 
                     $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
@@ -139,7 +158,6 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
-
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -189,7 +207,6 @@ class InvoiceAuditRepository extends BaseRepository
                             }
                         });
                     }
-
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -248,8 +265,6 @@ class InvoiceAuditRepository extends BaseRepository
                             }
                         });
                     }
-
-
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
@@ -291,7 +306,6 @@ class InvoiceAuditRepository extends BaseRepository
                             }
                         });
                     }
-
                 })
                 ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
