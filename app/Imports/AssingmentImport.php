@@ -128,7 +128,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                 $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
                 $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
                 
-                Artisan::call('redis:run-service-job');
+                // Artisan::call('redis:run-service-job');
             },
         ];
     }
