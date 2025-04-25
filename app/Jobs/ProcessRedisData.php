@@ -16,10 +16,7 @@ class ProcessRedisData implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function handle(CacheService $cacheService): void
-    {
-        ini_set('memory_limit', '256M');
-        set_time_limit(60);
-
+    { 
         try {
             $models = [InvoiceAudit::class];
             // $models = [InvoiceAudit::class, Assignment::class];

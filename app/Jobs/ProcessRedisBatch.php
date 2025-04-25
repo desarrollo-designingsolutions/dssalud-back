@@ -27,10 +27,7 @@ class ProcessRedisBatch implements ShouldQueue
     }
 
     public function handle(CacheService $cacheService): void
-    {
-        ini_set('memory_limit', '256M');
-        set_time_limit(60);
-
+    { 
         try {
             $table = (new $this->modelClass)->getTable();
             $company = Company::find($this->companyId);

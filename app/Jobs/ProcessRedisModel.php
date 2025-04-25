@@ -24,10 +24,7 @@ class ProcessRedisModel implements ShouldQueue
     }
 
     public function handle(CacheService $cacheService): void
-    {
-        ini_set('memory_limit', '512M');
-        set_time_limit(300);
-
+    { 
         try {
             $table = (new $this->modelClass)->getTable();
             $lastRunKey = $cacheService->generateKey("{$table}:last_date_job_run", [], 'string');
