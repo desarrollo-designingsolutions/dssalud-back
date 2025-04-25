@@ -199,17 +199,22 @@ class AssignmentController extends Controller
                     'status_diff_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_003],
                     'assignment_batch_id' => $request['assignment_batch_id'],
                     'third_id' => $request['third_id'],
+                    'company_id' => $request['company_id'],
+                    'user_id' => $request['user_id'],
                 ]);
 
                 $finalizedInvoices = $this->assignmentRepository->countNumberProviders([
                     'status_iqual_to' => [StatusAssignmentEnum::ASSIGNMENT_EST_003],
                     'assignment_batch_id' => $request['assignment_batch_id'],
                     'third_id' => $request['third_id'],
+                    'company_id' => $request['company_id'],
+                    'user_id' => $request['user_id'],
                 ]);
 
                 $allInvoices = $this->assignmentRepository->countNumberProviders([
                     'assignment_batch_id' => $request['assignment_batch_id'],
                     'third_id' => $request['third_id'],
+                    'company_id' => $request['company_id'],
                     'user_id' => $request['user_id'],
                 ]);
 
