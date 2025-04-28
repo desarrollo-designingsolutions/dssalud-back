@@ -22,7 +22,7 @@ class AssignmentPaginatePatientResource extends JsonResource
             'glosas' => 0,
             'value_glosa' => 0,
             'value_borrowed' => 0,
-            'total_value' => 0,
+            'total_value' => formatNumber($this->total_value),
             'status' => $this->assignmentStatusFor([]),
         ];
     }
