@@ -23,6 +23,8 @@ class AssignmentPaginateThirdsResource extends JsonResource
             'count_invoice_finish' => $this->count_invoice_finish,
             'total_value_sum' => formatNumber($this->total_value_sum),
             'status' => $this->assignmentStatusFor([]),
+            'count_users' => $this->count_users,
+            'user_names' => $this->user_names,
         ];
     }
 }

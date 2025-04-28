@@ -29,10 +29,7 @@ use App\Repositories\UserRepository;
 use App\Services\CacheService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use ReflectionEnumUnitCase;
 
 class AssignmentController extends Controller
 {

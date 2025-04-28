@@ -47,6 +47,7 @@ class AssignmentRepository extends BaseRepository
                         $query->where('assignment_batch_id', $request['assignment_batch_id']);
                         $query->where('status', StatusAssignmentEnum::ASSIGNMENT_EST_003);
                     },
+
                 ])
                 ->addSelect([
                     'total_value_sum' => InvoiceAudit::selectRaw('SUM(total_value)')
@@ -54,12 +55,62 @@ class AssignmentRepository extends BaseRepository
                         ->whereHas('assignment', function ($subQuery) use ($request) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         }),
+                    'user_names' => Assignment::selectRaw('GROUP_CONCAT(DISTINCT CONCAT(users.name, \' \', COALESCE(users.surname, \'\')) SEPARATOR ", ")')
+                        ->join('users', 'users.id', '=', 'assignments.user_id')
+                        ->whereHas('invoiceAudit', function ($subQuery) use ($request) {
+                            $subQuery->whereColumn('third_id', 'thirds.id')
+                                ->whereHas('assignment', function ($subSubQuery) use ($request) {
+                                    $subSubQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                                });
+                        }),
+                    'count_users' => Assignment::selectRaw('COUNT(DISTINCT assignments.user_id)')
+                        ->join('users', 'users.id', '=', 'assignments.user_id')
+                        ->whereHas('invoiceAudit', function ($subQuery) use ($request) {
+                            $subQuery->whereColumn('third_id', 'thirds.id')
+                                ->whereHas('assignment', function ($subSubQuery) use ($request) {
+                                    $subSubQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                                });
+                        }),
                 ])
                 ->allowedFilters([
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->where(function ($subQuery) use ($value) {
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                        $query->where(function ($subQuery) use ($value, $request) {
                             $subQuery->orWhere('nit', 'like', "%$value%");
                             $subQuery->orWhere('name', 'like', "%$value%");
+                            $subQuery->orWhereRaw('EXISTS (
+                            SELECT 1
+                            FROM assignments
+                            INNER JOIN users ON users.id = assignments.user_id
+                            INNER JOIN invoice_audits ON invoice_audits.id = assignments.invoice_audit_id
+                            WHERE invoice_audits.third_id = thirds.id
+                            AND EXISTS (
+                                SELECT 1
+                                FROM assignments a2
+                                WHERE a2.invoice_audit_id = invoice_audits.id
+                                AND a2.assignment_batch_id = ?
+                            )
+                            AND (
+                                users.name LIKE ?
+                                OR COALESCE(users.surname, \'\') LIKE ?
+                            )
+                        )', [$request['assignment_batch_id'], "%$value%", "%$value%"]);
+
+                            // Búsqueda en count_users (numérico, solo si el valor es numérico)
+                            if (is_numeric($value)) {
+                                $subQuery->orWhereRaw('(
+                                SELECT COUNT(DISTINCT assignments.user_id)
+                                FROM assignments
+                                INNER JOIN users ON users.id = assignments.user_id
+                                INNER JOIN invoice_audits ON invoice_audits.id = assignments.invoice_audit_id
+                                WHERE invoice_audits.third_id = thirds.id
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM assignments a2
+                                    WHERE a2.invoice_audit_id = invoice_audits.id
+                                    AND a2.assignment_batch_id = ?
+                                )
+                            ) = ?', [$request['assignment_batch_id'], (int)$value]);
+                            }
                         });
                     }),
 
@@ -71,6 +122,8 @@ class AssignmentRepository extends BaseRepository
                     'count_invoice_pending',
                     'count_invoice_finish',
                     'total_value_sum',
+                    'count_users',
+                    'user_names',
                 ])->where(function ($query) use ($request) {
 
                     $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
@@ -92,47 +145,64 @@ class AssignmentRepository extends BaseRepository
 
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateInvoiceAudit", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for(InvoiceAudit::query())
-                ->withCount(['patients', 'services'])
-                ->addSelect([
-                    'total_value_services' => Service::selectRaw('CAST(SUM(total_value) AS DECIMAL(15,2))')
-                        ->whereColumn('invoice_audit_id', 'invoice_audits.id'), // Vincula los services al InvoiceAudit actual
-                ])
-                ->allowedFilters([
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
-                        $query->orWhere('invoice_number', 'like', "%$value%");
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        $query = QueryBuilder::for(InvoiceAudit::query())
+            ->withCount(['patients', 'services'])
+            ->addSelect([
+                'total_value_services' => Service::selectRaw('CAST(SUM(total_value) AS DECIMAL(15,2))')
+                    ->whereColumn('invoice_audit_id', 'invoice_audits.id'),
+
+                'user_names' => Assignment::selectRaw('GROUP_CONCAT(DISTINCT CONCAT(users.name, \' \', COALESCE(users.surname, \'\')) SEPARATOR ", ")')
+                    ->join('users', 'users.id', '=', 'assignments.user_id')
+                    ->whereColumn('invoice_audit_id', 'invoice_audits.id')
+                    ->when(!empty($request['assignment_batch_id']), function ($subQuery) use ($request) {
+                        $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                    })
+                    ->when(!empty($request['company_id']), function ($subQuery) use ($request) {
+                        $subQuery->where('assignments.company_id', $request['company_id']);
+                    })
+                    ->when(!empty($request['third_id']), function ($subQuery) use ($request) {
+                        $subQuery->whereHas('invoiceAudit', function ($query2) use ($request) {
+                            $query2->where('third_id', $request['third_id']);
+                        });
                     }),
-                ])
+            ])
+            ->allowedFilters([
+                AllowedFilter::callback('inputGeneral', function ($query, $value, $request) {
+                    $query->where(function ($subQuery) use ($value, $request) {
+                        $subQuery->orWhere('invoice_number', 'like', "%$value%");
+                        Assignment::scopeUserNames($subQuery, $value, $request);
+                    });
+                }),
+            ])
 
-                ->allowedSorts([
-                    'invoice_number',
-                ])->where(function ($query) use ($request) {
+            ->allowedSorts([
+                'invoice_number',
+                'user_names',
+            ])->where(function ($query) use ($request) {
 
-                    if (! empty($request['company_id'])) {
-                        $query->whereHas('third.company', function ($subQuery) use ($request) {
-                            $subQuery->where('company_id', $request['company_id']);
-                        });
-                    }
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
 
-                    if (! empty($request['assignment_batch_id'])) {
-                        $query->whereHas('assignment', function ($subQuery) use ($request) {
-                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                        });
-                    }
+                if (! empty($request['assignment_batch_id'])) {
+                    $query->whereHas('assignment', function ($subQuery) use ($request) {
+                        $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                    });
+                }
 
-                    if (! empty($request['third_id'])) {
-                        $query->where('third_id', $request['third_id']);
-                    }
+                if (! empty($request['third_id'])) {
+                    $query->where('third_id', $request['third_id']);
+                }
 
-                    if (! empty($request['user_id'])) {
-                        $query->where('user_id', $request['user_id']);
-                    }
-                })
-                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+                if (! empty($request['user_id'])) {
+                    $query->where('user_id', $request['user_id']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-            return $query;
-        }, Constants::REDIS_TTL);
+        return $query;
+        // }, Constants::REDIS_TTL);
     }
 
     public function paginatePatient($request = [])
