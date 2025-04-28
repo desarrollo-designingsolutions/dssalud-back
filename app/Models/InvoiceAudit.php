@@ -73,8 +73,6 @@ class InvoiceAudit extends Model
             })
             ->exists(); // consulta eficiente, no carga todos los registros :contentReference[oaicite:1]{index=1}
 
-            logMessage($hasPending);
-
         return $hasPending
             ? 'pending' // 'Pendiente'
             : 'finished'; // 'Finalizado'

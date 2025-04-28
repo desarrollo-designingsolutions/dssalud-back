@@ -32,6 +32,11 @@ class Patient extends Model
         );
     }
 
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
+
     public function sumGlosasTotalValue()
     {
         return $this->glosas()->sum('glosa_value');

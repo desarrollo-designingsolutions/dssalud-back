@@ -128,7 +128,7 @@ class InvoiceAuditRepository extends BaseRepository
                     },
                 ])
                 ->addSelect([
-                    'values' => InvoiceAudit::selectRaw('SUM(total_value)')
+                    'total_value_sum' => InvoiceAudit::selectRaw('SUM(total_value)')
                         ->whereColumn('third_id', 'thirds.id')
                         ->whereHas('assignment', function ($subQuery) use ($request) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
@@ -149,7 +149,7 @@ class InvoiceAuditRepository extends BaseRepository
                     'count_invoice_total',
                     'count_invoice_pending',
                     'count_invoice_finish',
-                    'values',
+                    'total_value_sum',
                 ])->where(function ($query) use ($request) {
 
                     $query->whereHas('invoiceAudits.assignment', function ($subQuery) use ($request) {
@@ -209,9 +209,8 @@ class InvoiceAuditRepository extends BaseRepository
         // return $this->cacheService->remember($cacheKey, function () use ($request, $caseStatus) {
         $query = QueryBuilder::for(InvoiceAudit::query())
             ->select('*')
-            // ->addSelect(DB::raw($caseStatus))
             ->addSelect([
-                // 'status' => $caseStatus,
+                'status' => DB::raw($caseStatus),
                 'user_names' => Assignment::selectRaw('CONCAT(users.name, \' \', COALESCE(users.surname, \'\'))')
                     ->join('users', 'users.id', '=', 'assignments.user_id')
                     ->whereColumn('invoice_audit_id', 'invoice_audits.id')
@@ -231,41 +230,40 @@ class InvoiceAuditRepository extends BaseRepository
                     }),
             ])
             ->withCount(['patients', 'services', 'glosas as count_glosas'])
-            ->withSum('services as total_value_services', 'total_value')
-            ->withSum('glosas as value_glosa', 'glosa_value')
+            ->withSum('services as value_glosa', 'value_glosa')
+            ->withSum('services as value_approved', 'value_approved')
             ->allowedFilters([
-                AllowedFilter::callback('inputGeneral', function ($query, $value) use($request) {
+                AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
                     // $query->orWhere(function ($subQuery) use ($value) {
                     //     $number = preg_replace('/[\$\s\.,]/', '', $value);
                     //     $subQuery->orHaving('total_value_services', 'like', $number)
                     //     ->orHaving('value_glosa',        'like', $number);
                     // });
                     $query->where(function ($subQuery) use ($value, $request) {
-                        // $subQuery->orWhere('invoice_number', 'like', "%$value%");
+                        $subQuery->orWhere('invoice_number', 'like', "%$value%");
                         // $subQuery->orWhere('status', 'like', "%$value%");
-                        $subQuery->orWhereRaw('EXISTS (
-                                SELECT 1
-                                FROM assignments
-                                INNER JOIN users ON users.id = assignments.user_id
-                                WHERE assignments.invoice_audit_id = invoice_audits.id
-                                ' . (!empty($request['assignment_batch_id']) ? 'AND assignments.assignment_batch_id = ?' : '') . '
-                                AND (
-                                    users.name LIKE ?
-                                    OR COALESCE(users.surname, \'\') LIKE ?
-                                )
-                            )', array_filter([
-                            !empty($request['assignment_batch_id']) ? $request['assignment_batch_id'] : null,
-                            "%$value%",
-                            "%$value%"
-                        ], fn($val) => !is_null($val)));
+                        $subQuery->orWhere(function ($subQuery) use ($value) {
+                            $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                            $subQuery->orWhere('total_value', 'like', "%$normalizedValue%");
+                        });
+                        
+                        // Búsqueda por nombres y apellidos de usuarios
+                        $subQuery->orWhereHas('assignment.user', function ($userQuery) use ($value) {
+                            $userQuery->where(function ($q) use ($value) {
+                                $q->where('name', 'like', "%$value%")
+                                    ->orWhere('surname', 'like', "%$value%")
+                                    ->orWhereRaw("CONCAT(name, ' ', COALESCE(surname, '')) LIKE ?", ["%$value%"]);
+                            });
+                        });
+
                     });
                 }),
             ])
             ->allowedSorts([
                 'invoice_number',
-                'total_value_services',
                 'value_glosa',
-                'status',
+                'value_approved',
+                'total_value',
                 'user_names',
             ])->where(function ($query) use ($request) {
                 if (! empty($request['company_id'])) {
@@ -362,7 +360,9 @@ class InvoiceAuditRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for(Patient::query())
                 ->withCount(['glosas as count_glosas'])
-                ->withSum('glosas as value_glosa', 'glosa_value')
+                ->withSum('services as value_glosa', 'value_glosa')
+                ->withSum('services as value_approved', 'value_approved')
+                ->withSum('services as total_value', 'total_value')
                 ->allowedFilters([
 
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
@@ -377,6 +377,9 @@ class InvoiceAuditRepository extends BaseRepository
                     AllowedSort::custom('full_name', new DynamicConcatSort("first_name, ' ', second_name, ' ', first_surname, ' ', second_surname")),
                     'identification_number',
                     'gender',
+                    'value_glosa',
+                    'value_approved',
+                    'total_value',
                 ])->where(function ($query) use ($request) {
 
                     if (! empty($request['invoice_audit_id'])) {

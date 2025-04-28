@@ -166,6 +166,8 @@ class InvoiceAuditController extends Controller
 
             $assignment =  $this->assignmentRepository->searchOne($request->all());
 
+            $invoice_audit['total_value'] = formatNumber($invoice_audit['total_value']);
+
             return [
                 'code' => 200,
                 'assignment' => $assignment,

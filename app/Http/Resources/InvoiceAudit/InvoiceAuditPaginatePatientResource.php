@@ -21,8 +21,8 @@ class InvoiceAuditPaginatePatientResource extends JsonResource
             'gender' => $this->gender,
             'glosas' => $this->count_glosas,
             'value_glosa' => formatNumber($this->value_glosa),
-            'value_borrowed' => 0,
-            'total_value' => 0,
+            'value_approved' => formatNumber($this->value_approved),
+            'total_value' => formatNumber($this->total_value),
             'status' => $this->assignmentStatusFor(['user_id' => $request->input('user_id')]),
         ];
     }

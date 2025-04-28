@@ -19,10 +19,10 @@ class InvoiceAuditPaginateInvoiceAuditResource extends JsonResource
             'invoice_number' => $this->invoice_number,
             'count_patients' => $this->patients_count,
             'count_services' => $this->services_count,
-            'total_value_services' => formatNumber($this->total_value_services),
+            'total_value' => formatNumber($this->total_value),
             'glosas' => $this->count_glosas,
             'value_glosa' => formatNumber($this->value_glosa),
-            'spent' => 0,
+            'value_approved' => formatNumber($this->value_approved),
             'status' => $this->status,
             'user_names' => $this->user_names,
         ];

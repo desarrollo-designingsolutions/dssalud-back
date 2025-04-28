@@ -286,8 +286,6 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
             return $match;
         });
 
-        logMessage($data);
-
         return $data ? false : true;
     }
 
