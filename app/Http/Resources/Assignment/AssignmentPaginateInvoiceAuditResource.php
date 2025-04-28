@@ -20,12 +20,12 @@ class AssignmentPaginateInvoiceAuditResource extends JsonResource
             'count_patients' => $this->patients_count,
             'count_services' => $this->services_count,
             'total_value' => formatNumber($this->total_value),
-            'glosas' => 0,
-            'value_glosa' => 0,
-            'spent' => 0,
+            'glosas' => $this->count_glosas,
+            'value_glosa' => formatNumber($this->value_glosa),
+            'value_approved' => formatNumber($this->value_approved),
             'status' => $this->assignmentStatusFor([]),
             'user_names' => $this->user_names,
-
+            'count_users' => $this->count_users,
         ];
     }
 }

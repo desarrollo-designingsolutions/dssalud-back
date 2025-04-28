@@ -19,9 +19,9 @@ class AssignmentPaginatePatientResource extends JsonResource
             'identification_number' => $this->identification_number,
             'full_name' => $this->full_name,
             'gender' => $this->gender,
-            'glosas' => 0,
-            'value_glosa' => 0,
-            'value_borrowed' => 0,
+            'glosas' => $this->count_glosas,
+            'value_glosa' => formatNumber($this->value_glosa),
+            'value_approved' => formatNumber($this->value_approved),
             'total_value' => formatNumber($this->total_value),
             'status' => $this->assignmentStatusFor([]),
         ];

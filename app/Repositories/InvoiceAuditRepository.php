@@ -206,92 +206,91 @@ class InvoiceAuditRepository extends BaseRepository
             ";
         }
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request, $caseStatus) {
-        $query = QueryBuilder::for(InvoiceAudit::query())
-            ->select('*')
-            ->addSelect([
-                'status' => DB::raw($caseStatus),
-                'user_names' => Assignment::selectRaw('CONCAT(users.name, \' \', COALESCE(users.surname, \'\'))')
-                    ->join('users', 'users.id', '=', 'assignments.user_id')
-                    ->whereColumn('invoice_audit_id', 'invoice_audits.id')
-                    ->when(!empty($request['assignment_batch_id']), function ($subQuery) use ($request) {
-                        $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                    })
-                    ->when(!empty($request['company_id']), function ($subQuery) use ($request) {
-                        $subQuery->where('assignments.company_id', $request['company_id']);
-                    })
-                    ->when(!empty($request['user_id']), function ($subQuery) use ($request) {
-                        $subQuery->where('user_id', $request['user_id']);
-                    })
-                    ->when(!empty($request['third_id']), function ($subQuery) use ($request) {
-                        $subQuery->whereHas('invoiceAudit', function ($query2) use ($request) {
-                            $query2->where('third_id', $request['third_id']);
-                        });
-                    }),
-            ])
-            ->withCount(['patients', 'services', 'glosas as count_glosas'])
-            ->withSum('services as value_glosa', 'value_glosa')
-            ->withSum('services as value_approved', 'value_approved')
-            ->allowedFilters([
-                AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                    // $query->orWhere(function ($subQuery) use ($value) {
-                    //     $number = preg_replace('/[\$\s\.,]/', '', $value);
-                    //     $subQuery->orHaving('total_value_services', 'like', $number)
-                    //     ->orHaving('value_glosa',        'like', $number);
-                    // });
-                    $query->where(function ($subQuery) use ($value, $request) {
-                        $subQuery->orWhere('invoice_number', 'like', "%$value%");
-                        // $subQuery->orWhere('status', 'like', "%$value%");
-                        $subQuery->orWhere(function ($subQuery) use ($value) {
-                            $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
-                            $subQuery->orWhere('total_value', 'like', "%$normalizedValue%");
-                        });
-                        
-                        // Búsqueda por nombres y apellidos de usuarios
-                        $subQuery->orWhereHas('assignment.user', function ($userQuery) use ($value) {
-                            $userQuery->where(function ($q) use ($value) {
-                                $q->where('name', 'like', "%$value%")
-                                    ->orWhere('surname', 'like', "%$value%")
-                                    ->orWhereRaw("CONCAT(name, ' ', COALESCE(surname, '')) LIKE ?", ["%$value%"]);
+        return $this->cacheService->remember($cacheKey, function () use ($request, $caseStatus) {
+            $query = QueryBuilder::for(InvoiceAudit::query())
+                ->select('*')
+                ->addSelect([
+                    'status' => DB::raw($caseStatus),
+                    'user_names' => Assignment::selectRaw('CONCAT(users.name, \' \', COALESCE(users.surname, \'\'))')
+                        ->join('users', 'users.id', '=', 'assignments.user_id')
+                        ->whereColumn('invoice_audit_id', 'invoice_audits.id')
+                        ->when(!empty($request['assignment_batch_id']), function ($subQuery) use ($request) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        })
+                        ->when(!empty($request['company_id']), function ($subQuery) use ($request) {
+                            $subQuery->where('assignments.company_id', $request['company_id']);
+                        })
+                        ->when(!empty($request['user_id']), function ($subQuery) use ($request) {
+                            $subQuery->where('user_id', $request['user_id']);
+                        })
+                        ->when(!empty($request['third_id']), function ($subQuery) use ($request) {
+                            $subQuery->whereHas('invoiceAudit', function ($query2) use ($request) {
+                                $query2->where('third_id', $request['third_id']);
+                            });
+                        }),
+                ])
+                ->withCount(['patients', 'services', 'glosas as count_glosas'])
+                ->withSum('services as value_glosa', 'value_glosa')
+                ->withSum('services as value_approved', 'value_approved')
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                        // $query->orWhere(function ($subQuery) use ($value) {
+                        //     $number = preg_replace('/[\$\s\.,]/', '', $value);
+                        //     $subQuery->orHaving('total_value_services', 'like', $number)
+                        //     ->orHaving('value_glosa',        'like', $number);
+                        // });
+                        $query->where(function ($subQuery) use ($value, $request) {
+                            $subQuery->orWhere('invoice_number', 'like', "%$value%");
+                            // $subQuery->orWhere('status', 'like', "%$value%");
+                            $subQuery->orWhere(function ($subQuery) use ($value) {
+                                $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                                $subQuery->orWhere('total_value', 'like', "%$normalizedValue%");
+                            });
+
+                            // Búsqueda por nombres y apellidos de usuarios
+                            $subQuery->orWhereHas('assignment.user', function ($userQuery) use ($value, $request) {
+                                $userQuery->where(function ($q) use ($value, $request) {
+                                    $q->where('name', 'like', "%$value%")
+                                        ->orWhere('surname', 'like', "%$value%")
+                                        ->orWhereRaw("CONCAT(name, ' ', COALESCE(surname, '')) LIKE ?", ["%$value%"]);
+                                });
                             });
                         });
+                    }),
+                ])
+                ->allowedSorts([
+                    'invoice_number',
+                    'value_glosa',
+                    'value_approved',
+                    'total_value',
+                    'user_names',
+                ])->where(column: function ($query) use ($request) {
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
 
-                    });
-                }),
-            ])
-            ->allowedSorts([
-                'invoice_number',
-                'value_glosa',
-                'value_approved',
-                'total_value',
-                'user_names',
-            ])->where(function ($query) use ($request) {
-                if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
-                }
+                    if (! empty($request['assignment_batch_id'])) {
+                        $query->whereHas('assignment', function ($subQuery) use ($request) {
+                            $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
+                        });
+                    }
 
-                if (! empty($request['assignment_batch_id'])) {
-                    $query->whereHas('assignment', function ($subQuery) use ($request) {
-                        $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
-                    });
-                }
+                    if (! empty($request['third_id'])) {
+                        $query->where('third_id', $request['third_id']);
+                    }
 
-                if (! empty($request['third_id'])) {
-                    $query->where('third_id', $request['third_id']);
-                }
+                    if (! empty($request['user_id'])) {
+                        $query->whereHas('assignment', function ($subQuery) use ($request) {
+                            if (! empty($request['user_id'])) {
+                                $subQuery->where('user_id', $request['user_id']);
+                            }
+                        });
+                    }
+                })
+                ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
-                if (! empty($request['user_id'])) {
-                    $query->whereHas('assignment', function ($subQuery) use ($request) {
-                        if (! empty($request['user_id'])) {
-                            $subQuery->where('user_id', $request['user_id']);
-                        }
-                    });
-                }
-            })
-            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-
-        return $query;
-        // }, Constants::REDIS_TTL);
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 
     public function paginateServices($request = [])
