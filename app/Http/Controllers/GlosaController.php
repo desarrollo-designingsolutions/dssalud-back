@@ -294,12 +294,15 @@ class GlosaController extends Controller
 
             $servicesIDs = $request->input('servicesIds');
 
+            $company_id = $request->input('company_id');
+
             foreach ($servicesIDs as $key => $serviceId) {
                 $service = $this->serviceRepository->find($serviceId);
 
                 foreach ($request->input('glosas') as $key => $value) {
                     $data = [
                         'user_id' => $value['user_id'],
+                        'company_id' => $company_id,
                         'service_id' => $service->id,
                         'code_glosa_id' => $value['code_glosa_id'],
                         'glosa_value' => $value['partialValue'] * $service->total_value / 100,

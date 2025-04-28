@@ -45,6 +45,23 @@ class InvoiceAudit extends Model
         return $this->services()->sum('total_value');
     }
 
+    public function glosas()
+    {
+        return $this->hasManyThrough(
+            Glosa::class,   
+            Service::class, 
+            'invoice_audit_id',       
+            'service_id',               
+            'id',                       
+            'id'                       
+        );
+    }
+
+    public function sumGlosasTotalValue()
+    {
+        return $this->glosas()->sum('glosa_value');
+    }
+
     public function assignmentStatusFor($request): string
     {
         $hasPending = $this->assignment()
@@ -55,6 +72,8 @@ class InvoiceAudit extends Model
                 }
             })
             ->exists(); // consulta eficiente, no carga todos los registros :contentReference[oaicite:1]{index=1}
+
+            logMessage($hasPending);
 
         return $hasPending
             ? 'pending' // 'Pendiente'

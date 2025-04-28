@@ -24,6 +24,19 @@ class Patient extends Model
         return $this->belongsTo(InvoiceAudit::class);
     }
 
+    public function glosas()
+    {
+        return $this->hasManyThrough(
+            Glosa::class,    
+            Service::class   
+        );
+    }
+
+    public function sumGlosasTotalValue()
+    {
+        return $this->glosas()->sum('glosa_value');
+    }
+
     public function assignmentStatusFor($request): string
     {
         $hasPending = $this->invoice_audit
