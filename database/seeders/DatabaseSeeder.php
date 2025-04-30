@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             // CompanySeeder::class,
             // UserSeeder::class,
 
-            ThirdSeederXlsx::class,
+            // ThirdSeederXlsx::class,
             // TypeCodeGlosaSeeder::class,
             // GeneralCodeGlosaSeeder::class,
             // CodeGlosaSeeder::class,
@@ -42,18 +42,18 @@ class DatabaseSeeder extends Seeder
 
             // IpsCodHabilitacionSeeder::class,
             // IpsCodHabilitacionSeeder2::class,
-            // IpsCodHabilitacionSeeder3::class,
-            // IpsCodHabilitacionSeeder4::class,
+            IpsCodHabilitacionSeeder3::class,
+            IpsCodHabilitacionSeeder4::class,
 
-            // IpsNoRepsSeeder::class,
-            // LstSiNoSeeder::class,
+            IpsNoRepsSeeder::class,
+            LstSiNoSeeder::class,
 
-            // MunicipioSeeder::class,
-            // PaisSeeder::class,
-            // ServicioSeeder::class,
-            // TipoMedicamentoPosVersion2Seeder::class,
+            MunicipioSeeder::class,
+            PaisSeeder::class,
+            ServicioSeeder::class,
+            TipoMedicamentoPosVersion2Seeder::class,
 
-            // ZonaVersion2Seeder::class,
+            ZonaVersion2Seeder::class,
 
         ]);
 

@@ -58,15 +58,12 @@ class ProcessMassXmlUpload implements ShouldQueue
             $filing_invoice->path_xml = $finalPath;
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_003;
             $filing_invoice->validationXml = null;
-
         } else {
             $filing_invoice->status_xml = StatusFilingInvoiceEnum::FILINGINVOICE_EST_005;
             $filing_invoice->validationXml = json_encode($infoValidation['errorMessages']);
         }
 
         $filing_invoice->save();
-
-        logMessage($filing_invoice);
 
         FilingInvoiceRowUpdatedNow::dispatch($filing_invoice->id);
 

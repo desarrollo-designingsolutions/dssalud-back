@@ -6,6 +6,7 @@ use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
 use App\Events\FilingInvoiceRowUpdated;
+use App\Events\FilingRowUpdatedNow;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Helpers\Constants;
@@ -84,7 +85,7 @@ class FilingController extends Controller
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
-                $ruta = '/companies/company_'.$company_id.'/filings/'.$type->value.'/filing_'.$filing->id; // Ruta donde se guardará la carpeta
+                $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
                 $path_zip = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
                 $filing->path_zip = $path_zip;
@@ -191,8 +192,8 @@ class FilingController extends Controller
                 foreach ($buildDataFinal as $invoice) {
 
                     // genero y guardo el archivo JSON de la factura
-                    $nameFile = $invoice[Constants::KEY_NUMFACT].'.json';
-                    $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice[Constants::KEY_NUMFACT].'/'.$nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = $invoice[Constants::KEY_NUMFACT] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice[Constants::KEY_NUMFACT] . '/' . $nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                     $sumTotalServices = sumVrServicio($invoice);
@@ -242,8 +243,8 @@ class FilingController extends Controller
                     $errorMessagesInvoice = $errorMessages->where('num_invoice', $invoice['numFactura'])->values();
 
                     // genero y guardo el archivo JSON de la factura
-                    $nameFile = $invoice['numFactura'].'.json';
-                    $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice['numFactura'].'/'.$nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = $invoice['numFactura'] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                     // Guardamos la factura y obtenemos el modelo creado
@@ -305,7 +306,7 @@ class FilingController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\'.$modelType;
+            $modelClass = 'App\\Models\\' . $modelType;
             if (! class_exists($modelClass)) {
                 return ['code' => 400, 'message' => 'Modelo no válido'];
             }
@@ -410,7 +411,7 @@ class FilingController extends Controller
                     ProcessFilingValidationTxt::dispatch($filing->id, $jsonData, $lastFile);
                 } catch (\Exception $e) {
                     // Registrar error y continuar
-                    \Log::error("Error procesando archivo {$originalName}: ".$e->getMessage());
+                    \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
 
                     continue;
                 }
@@ -538,9 +539,11 @@ class FilingController extends Controller
             $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($id);
             $this->filingRepository->changeState($id, StatusFilingEnum::FILING_EST_009, 'status');
 
+            FilingRowUpdatedNow::dispatch($id);
+
             return [
                 'code' => 200,
-                'data' => $data,
+                'data' => 111 //$data,
             ];
         });
     }

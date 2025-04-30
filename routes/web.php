@@ -3,6 +3,8 @@
 use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
 use App\Models\SupportType;
+use App\Models\User;
+use App\Notifications\BellNotification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,7 +12,18 @@ use Aws\S3\S3Client;
 
 // $prefix = $prefix .'1032365030/1032365030-JSE933/';
 
+Route::get('/', function () {
 
+    $user = User::find("9e601862-728e-42a1-9efb-b46efaf731ba");
+
+    // Enviar notificación
+    $user->notify(new BellNotification([
+        'title' => "hola",
+        'subtitle' => "chao",
+    ]));
+
+    return view('welcome');
+});
 
 Route::get('/s3-test/{folder?}', function ($folder = null) {
     try {
@@ -26,7 +39,7 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
         // Prepare the prefix (e.g., '02/subfolder/' or '' for root)
         $prefix = $folder ? rtrim($folder, '/') . '/' : '';
 
-        $prefix = $prefix .'1032365030/1032365030-JSE933/';
+        $prefix = $prefix . '1032365030/1032365030-JSE933/';
         $items = ['files' => [], 'folders' => []];
         $continuationToken = null;
 
@@ -86,9 +99,7 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
         return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
     }
 });
-Route::get('/', function () {
-    return view('welcome');
-});
+
 Route::get('/s3', function () {
     try {
         $files = Storage::disk('s3')->files();
@@ -146,13 +157,13 @@ Route::get('/ftp', function () {
 
     // 2. Leer todos los nombres de archivos de la carpeta
     $files = scandir($fullPath);
-    $fileList = array_filter($files, fn ($file) => ! in_array($file, ['.', '..']));
+    $fileList = array_filter($files, fn($file) => ! in_array($file, ['.', '..']));
     if (empty($fileList)) {
         return ['code' => 400, 'message' => 'No se encontraron archivos en la carpeta'];
     }
 
     // Resolver el modelo
-    $modelClass = 'App\\Models\\'.$modelType;
+    $modelClass = 'App\\Models\\' . $modelType;
     if (! class_exists($modelClass)) {
         return ['code' => 400, 'message' => 'Modelo no válido'];
     }
@@ -177,7 +188,7 @@ Route::get('/ftp', function () {
     $seenConsecutives = [];
 
     foreach ($fileList as $index => $fileName) {
-        $fullFilePath = $fullPath.'/'.$fileName;
+        $fullFilePath = $fullPath . '/' . $fileName;
         if (! is_file($fullFilePath)) {
             continue; // Saltar si no es un archivo
         }
@@ -291,7 +302,7 @@ Route::get('/ftp', function () {
     // Respuesta final
     $response = [
         'code' => 200,
-        'message' => 'Se procesaron '.count($validFiles)." de {$fileCount} archivos",
+        'message' => 'Se procesaron ' . count($validFiles) . " de {$fileCount} archivos",
         'upload_id' => $uploadId,
         'count' => count($validFiles),
         'errors' => $errors,
