@@ -44,6 +44,5 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::get('/filing/getCountFilingInvoicePreRadicated/{id}', [FilingController::class, 'getCountFilingInvoicePreRadicated']);
 
-    Route::get('/filing/changeStatusFilingInvoicePreRadicated/{id}', [FilingController::class, 'changeStatusFilingInvoicePreRadicated']);
-
+    Route::post('/filing/changeStatusFilingInvoicePreRadicated', [FilingController::class, 'changeStatusFilingInvoicePreRadicated']);
 });

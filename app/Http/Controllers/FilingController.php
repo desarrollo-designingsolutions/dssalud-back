@@ -17,6 +17,7 @@ use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Jobs\Filing\ProcessMassXmlUpload;
+use App\Notifications\BellNotification;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
 use App\Repositories\SupportTypeRepository;
@@ -532,18 +533,29 @@ class FilingController extends Controller
         });
     }
 
-    public function changeStatusFilingInvoicePreRadicated($id)
+    public function changeStatusFilingInvoicePreRadicated(Request $request)
     {
-        return $this->runTransaction(function () use ($id) {
+        return $this->runTransaction(function () use ($request) {
 
-            $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($id);
-            $this->filingRepository->changeState($id, StatusFilingEnum::FILING_EST_009, 'status');
+            $post = $request->all();
 
-            FilingRowUpdatedNow::dispatch($id);
+            $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($post["filing_id"]);
+            $this->filingRepository->changeState($post["filing_id"], StatusFilingEnum::FILING_EST_009, 'status');
+
+            FilingRowUpdatedNow::dispatch($post["filing_id"]);
+
+            // Enviar notificación
+            $user = $this->userRepository->find($post["user_id"]);
+            if ($user) {
+                $user->notify(new BellNotification([
+                    'title' => "Radicación finalizada",
+                    'subtitle' => "Se ha finalizado la radicación con éxito.",
+                ]));
+            }
 
             return [
                 'code' => 200,
-                'data' => 111 //$data,
+                'data' => $data,
             ];
         });
     }
