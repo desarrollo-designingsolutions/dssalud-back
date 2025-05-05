@@ -2,7 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Helpers\Constants;
 use App\Models\File;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class FileRepository extends BaseRepository
 {
@@ -22,9 +25,8 @@ class FileRepository extends BaseRepository
                     $query->where('fileable_id', $request['fileable_id']);
                 }
                 if (! empty($request['fileable_type'])) {
-                    $query->where('fileable_type', 'App\\Models\\'.$request['fileable_type']);
+                    $query->where('fileable_type', 'App\\Models\\' . $request['fileable_type']);
                 }
-
             });
         if (empty($request['typeData'])) {
             $data = $data->paginate($request['perPage'] ?? 10);
@@ -33,6 +35,44 @@ class FileRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function paginate($request = [])
+    {
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+
+        $query = QueryBuilder::for($this->model->query())
+            ->allowedFilters([
+                AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                    $query->where(function ($query) use ($value, $request) {
+                        $query->orWhere('filename', 'like', "%$value%");
+
+                        $query->orWhereHas('supportType', function ($subQuery) use ($value, $request) {
+                            $subQuery->where('name', 'like', "%$value%");
+                        });
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'observation',
+            ])
+            ->where(function ($query) use ($request) {
+                if (isset($request['company_id']) && ! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
+                if (! empty($request['fileable_id'])) {
+                    $query->where('fileable_id', $request['fileable_id']);
+                }
+                if (! empty($request['fileable_type'])) {
+                    $query->where('fileable_type', 'App\\Models\\' . $request['fileable_type']);
+                }
+            })
+            ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        return $query;
+        // }, Constants::REDIS_TTL);
     }
 
     public function store($request)

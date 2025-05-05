@@ -326,10 +326,10 @@ class FileController extends Controller
         }
     }
 
-    public function listTableV2(Request $request)
+    public function paginate(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $data = $this->fileRepository->list($request->all());
+            $data = $this->fileRepository->paginate($request->all());
             $tableData = FileListTableV2Resource::collection($data);
 
             return [
