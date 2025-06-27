@@ -83,15 +83,16 @@ class BellNotification extends Notification
             return $this->data['img'];
         }
 
+        // Si no hay img, intentar retornar la photo del usuario
+        if (isset($notifiable['photo']) && !empty($notifiable['photo'])) {
+            return $notifiable['photo'];
+        }
+        
         // Si no hay photo del usuario, intentar retornar la foto de la empresa
         if (isset($notifiable->company) && isset($notifiable->company['logo']) && !empty($notifiable->company['logo'])) {
             return $notifiable->company['logo'];
         }
 
-        // Si no hay img, intentar retornar la photo del usuario
-        if (isset($notifiable['photo']) && !empty($notifiable['photo'])) {
-            return $notifiable['photo'];
-        }
 
         // Si no hay photo, retornar null
         return null;

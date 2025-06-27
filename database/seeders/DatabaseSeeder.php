@@ -29,9 +29,9 @@ class DatabaseSeeder extends Seeder
             // UserSeeder::class,
 
             // ThirdSeederXlsx::class,
-            // TypeCodeGlosaSeeder::class,
-            // GeneralCodeGlosaSeeder::class,
-            // CodeGlosaSeeder::class,
+            TypeCodeGlosaSeeder::class,
+            GeneralCodeGlosaSeeder::class,
+            CodeGlosaSeeder::class,
 
 
             // TO VALIDATIONS
@@ -42,26 +42,26 @@ class DatabaseSeeder extends Seeder
 
             // IpsCodHabilitacionSeeder::class,
             // IpsCodHabilitacionSeeder2::class,
-            IpsCodHabilitacionSeeder3::class,
-            IpsCodHabilitacionSeeder4::class,
+            // IpsCodHabilitacionSeeder3::class,
+            // IpsCodHabilitacionSeeder4::class,
 
-            IpsNoRepsSeeder::class,
-            LstSiNoSeeder::class,
+            // IpsNoRepsSeeder::class,
+            // LstSiNoSeeder::class,
 
-            MunicipioSeeder::class,
-            PaisSeeder::class,
-            ServicioSeeder::class,
-            TipoMedicamentoPosVersion2Seeder::class,
+            // MunicipioSeeder::class,
+            // PaisSeeder::class,
+            // ServicioSeeder::class,
+            // TipoMedicamentoPosVersion2Seeder::class,
 
-            ZonaVersion2Seeder::class,
+            // ZonaVersion2Seeder::class,
 
         ]);
 
         // InvoiceAudit::factory()->count(50)->create();
 
-        $client = new ClientRepository;
+        // $client = new ClientRepository;
 
-        $client->createPasswordGrantClient(null, 'Laravel Personal Grant Client', 'https://localhost');
-        $client->createPersonalAccessClient(null, 'Laravel Password Access Client', 'https://localhost');
+        // $client->createPasswordGrantClient(null, 'Laravel Personal Grant Client', 'https://localhost');
+        // $client->createPersonalAccessClient(null, 'Laravel Password Access Client', 'https://localhost');
     }
 }

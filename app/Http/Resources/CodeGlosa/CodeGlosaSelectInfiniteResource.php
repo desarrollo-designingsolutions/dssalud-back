@@ -16,7 +16,7 @@ class CodeGlosaSelectInfiniteResource extends JsonResource
     {
         return [
             'value' => $this->id,
-            'title' => $this->description,
+            'title' => $this->code. ' - '. $this->description,
             'code' => $this->code,
         ];
     }
