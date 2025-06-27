@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Assignment;
 use App\Models\InvoiceAudit;
+use App\Models\User;
 use App\Services\CacheService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,9 +17,9 @@ class ProcessRedisData implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function handle(CacheService $cacheService): void
-    { 
+    {
         try {
-            $models = [InvoiceAudit::class];
+            $models = [InvoiceAudit::class, User::class];
             // $models = [InvoiceAudit::class, Assignment::class];
 
             foreach ($models as $model) {

@@ -27,7 +27,7 @@ class ProcessRedisBatch implements ShouldQueue
     }
 
     public function handle(CacheService $cacheService): void
-    { 
+    {
         try {
             $table = (new $this->modelClass)->getTable();
             $company = Company::find($this->companyId);

@@ -24,7 +24,7 @@ class ProcessRedisModel implements ShouldQueue
     }
 
     public function handle(CacheService $cacheService): void
-    { 
+    {
         try {
             $table = (new $this->modelClass)->getTable();
             $lastRunKey = $cacheService->generateKey("{$table}:last_date_job_run", [], 'string');
