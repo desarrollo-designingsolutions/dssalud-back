@@ -7,6 +7,7 @@ class RoutesApi
     // esto es para las apis que no requieran auth
     public const ROUTES_API = [
         'routes/api.php',
+        'routes/reconciliationGroup.php',
     ];
 
     // esto es para las apis que si requieran auth
