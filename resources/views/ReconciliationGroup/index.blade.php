@@ -1068,10 +1068,6 @@
 
         // Function to show errors in the UI
         function showError(errors) {
-            showMainContent();
-            // Log errors for debugging
-            console.log('Errores recibidos:', errors);
-
             // Clear previous errors
             document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
             document.querySelectorAll('.alert.alert-danger').forEach(el => el.remove());
@@ -1120,8 +1116,6 @@
 
         // Form submission handler with AJAX
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Inicio');
-
             // Check if notification was already sent
             const reconciliationNotification = document.getElementById('reconciliation_notification')?.dataset.value;
             if (reconciliationNotification === 'true') {
@@ -1133,7 +1127,6 @@
             const form = document.getElementById('notificationForm');
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                console.log('Submit');
 
                 const formData = new FormData(form);
                 const emailsInput = formData.get('emails[]') || '';
@@ -1145,7 +1138,6 @@
                 }
                 emails.forEach(email => formData.append('emails[]', email.trim()));
 
-                showLoading();
 
                 try {
                     const response = await fetch(form.action, {
@@ -1160,13 +1152,11 @@
                     const contentType = response.headers.get('content-type');
                     if (!contentType || !contentType.includes('application/json')) {
                         const text = await response.text();
-                        console.error('Respuesta no es JSON:', text);
                         showError('La respuesta del servidor no es JSON');
                         return;
                     }
 
                     const result = await response.json();
-                    console.log('Result:', result);
 
                     if (response.ok) {
                         // Success response (200)
@@ -1176,7 +1166,6 @@
                         showError(result.errors || result.message || 'Error al enviar la notificación');
                     }
                 } catch (error) {
-                    console.error('Error submitting form:', error);
                     showError('No se pudo conectar con el servidor. Por favor, intenta de nuevo.');
                 }
             });
