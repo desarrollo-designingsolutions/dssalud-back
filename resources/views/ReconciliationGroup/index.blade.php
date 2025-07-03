@@ -1068,6 +1068,7 @@
 
         // Function to show errors in the UI
         function showError(errors) {
+            showMainContent();
             // Log errors for debugging
             console.log('Errores recibidos:', errors);
 
