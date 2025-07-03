@@ -75,7 +75,7 @@ class ReconciliationGroupController extends Controller
                         }
                     },
                 ],
-                'reconciliation_group_id' => 'required|integer|exists:reconciliation_groups,id',
+                'reconciliation_group_id' => 'required|string|exists:reconciliation_groups,id',
             ], [
                 'name.required' => 'El campo nombre es obligatorio.',
                 'message.required' => 'El campo mensaje es obligatorio.',

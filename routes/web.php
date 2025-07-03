@@ -27,10 +27,7 @@ Route::get('/', function () {
 });
 
 // // Incluir rutas personalizadas
-// require __DIR__ . '/reconciliationGroup.php';
-
-Route::get('/reconciliationGroup/index/{id}', [ReconciliationGroupController::class, 'index']);
-Route::post('/reconciliationGroup/saveNotification', [ReconciliationGroupController::class, 'saveNotification'])->name('reconciliationGroup.saveNotification');
+require __DIR__ . '/reconciliationGroup.php';
 
 Route::get('/s3-test/{folder?}', function ($folder = null) {
     try {

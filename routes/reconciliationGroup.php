@@ -9,4 +9,6 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/reconciliationGroup/index/{id}', [ReconciliationGroupController::class, 'index']);
+Route::post('/reconciliationGroup/saveNotification', [ReconciliationGroupController::class, 'saveNotification'])->name('reconciliationGroup.saveNotification');
 
