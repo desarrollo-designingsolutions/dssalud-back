@@ -24,4 +24,9 @@ class ReconciliationGroup extends Model
     {
         return $this->belongsToMany(InvoiceAudit::class, 'reconciliation_group_invoices', 'reconciliation_group_id', 'invoice_audit_id');
     }
+
+    public function reconciliationNotification()
+    {
+        return $this->belongsTo(ReconciliationNotification::class, 'id', 'reconciliation_group_id');
+    }
 }

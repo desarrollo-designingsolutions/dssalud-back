@@ -537,6 +537,25 @@
             letter-spacing: -0.01em;
         }
 
+        .form-control {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.6;
+            transition: all 0.2s ease;
+            background: #fafafa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: white;
+        }
+
         .form-textarea {
             width: 100%;
             min-height: 120px;
@@ -558,11 +577,20 @@
             background: white;
         }
 
-        .form-help {
+        .form-error {
             font-size: 12px;
-            color: #6b7280;
             margin-top: 8px;
-            font-weight: 400;
+            min-height: 20px;
+            color: #dc2626;
+        }
+
+        .alert.alert-danger {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 14px;
         }
 
         /* Confirmation Box */
@@ -733,18 +761,6 @@
             border-color: #9ca3af;
         }
 
-        /* Footer */
-        .footer {
-            text-align: center;
-            margin-top: 48px;
-        }
-
-        .footer-text {
-            color: #94a3b8;
-            font-size: 14px;
-            font-weight: 400;
-        }
-
         /* Utility Classes */
         .hidden {
             display: none !important;
@@ -782,6 +798,22 @@
             .process-card {
                 padding: 24px;
             }
+
+            .form-error {
+                font-size: 12px;
+                margin-top: 8px;
+                min-height: 20px;
+                color: #dc2626;
+            }
+
+            .alert.alert-danger {
+                background-color: #fee2e2;
+                color: #dc2626;
+                padding: 10px;
+                margin-bottom: 15px;
+                border-radius: 4px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -802,10 +834,6 @@
             <div class="error-icon">!</div>
             <h2 class="error-title">Error de Conexión</h2>
             <p class="error-message" id="errorMessage">No se pudo conectar con el servidor. Esto puede deberse a restricciones de CORS o problemas de conectividad.</p>
-            <div>
-                <button class="retry-btn" onclick="loadPrestadorData()">Reintentar Consulta</button>
-                <button class="demo-btn" onclick="loadDemoData()">Ver Datos de Prueba</button>
-            </div>
         </div>
     </div>
 
@@ -852,7 +880,7 @@
                                 </div>
                                 <div class="info-field">
                                     <label class="info-label">Razón Social</label>
-                                    <div class="info-value razon-social">{{$third['name']}}</div>
+                                    <div class="info-value razon-social">{{ $third['name'] }}</div>
                                 </div>
                                 <div class="info-field">
                                     <label class="info-label">Cantidad de Facturas</label>
@@ -864,8 +892,8 @@
                                 </div>
                                 <div class="info-field">
                                     <label class="info-label">Valor Total a Conciliar</label>
-                                    <div class="info-value valor" id="valorValue">
-                                        <span class="value-number green">$-</span>
+                                    <div class="info-value valor">
+                                        <span class="value-number green">{{ $sum_value_glosa }}</span>
                                         <span class="value-unit green">COP</span>
                                     </div>
                                 </div>
@@ -879,7 +907,7 @@
                                 </div>
                                 <div class="summary-right">
                                     <div class="summary-label">Total a Conciliar</div>
-                                    <div class="summary-value" id="summaryValue">$- COP</div>
+                                    <div class="summary-value" id="summaryValue">{{ $sum_value_glosa }} COP</div>
                                 </div>
                             </div>
                         </div>
@@ -915,16 +943,29 @@
                             <p class="form-description">Confirma que has completado todo el proceso requerido para la conciliación</p>
                         </div>
                         <div class="form-content">
-                            <form id="notificationForm">
+                            <span class="hidden" id="reconciliation_notification" data-value="{{ $reconciliation_notification }}"></span>
+                            <form id="notificationForm" method="POST" action="{{ route('reconciliationGroup.saveNotification') }}">
+                                @csrf
                                 <div class="form-group">
-                                    <label for="comments" class="form-label">Comentarios Adicionales</label>
-                                    <textarea
-                                        id="comments"
-                                        class="form-textarea"
-                                        placeholder="Puedes agregar cualquier comentario o aclaración sobre el proceso completado, observaciones especiales o información relevante para la revisión..."></textarea>
-                                    <p class="form-help">Este campo es opcional. Úsalo para proporcionar contexto adicional o aclaraciones importantes.</p>
+                                    <label for="name" class="form-label">Nombre de la persona <span class="form-error">(*)</span></label>
+                                    <input id="name" name="name" type="text" class="form-control" placeholder="Nombre de la persona">
+                                    <div class="form-error text-danger" id="name-error"></div>
                                 </div>
-
+                                <div class="hidden">
+                                    <label for="reconciliation_group_id" class="form-label">ID del Grupo de Conciliación</label>
+                                    <input id="reconciliation_group_id" name="reconciliation_group_id" type="text" class="form-control" value="{{ $reconciliation_group_id }}" readonly>
+                                    <div class="form-error text-danger" id="reconciliation_group_id-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="emails" class="form-label">Correos de notificación <span class="form-error">(*)</span></label>
+                                    <input id="emails" name="emails[]" type="text" class="form-control" placeholder="Correos separados por coma">
+                                    <div class="form-error text-danger" id="emails-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="comments" class="form-label">Comentarios Adicionales <span class="form-error">(*)</span></label>
+                                    <textarea id="comments" name="message" class="form-textarea"></textarea>
+                                    <div class="form-error text-danger" id="message-error"></div>
+                                </div>
                                 <div class="confirmation-box">
                                     <div class="confirmation-header">
                                         <div class="confirmation-icon">✓</div>
@@ -937,8 +978,7 @@
                                         <li>La información proporcionada es veraz y completa</li>
                                     </ul>
                                 </div>
-
-                                <button type="submit" class="submit-btn">
+                                <button class="submit-btn">
                                     <div class="btn-icon">✓</div>
                                     Confirmar Finalización del Proceso
                                 </button>
@@ -963,175 +1003,24 @@
             </div>
             <h2 class="success-title">Notificación Enviada Exitosamente</h2>
             <p class="success-message">Hemos recibido tu confirmación de finalización del proceso de conciliación. Nuestro equipo procederá con la revisión correspondiente.</p>
-            <button class="back-btn" onclick="showMainContent()">Enviar Nueva Notificación</button>
+        </div>
+    </div>
+
+    <!-- Success State Notification -->
+    <div id="successNotification" class="success-container hidden">
+        <div class="success-card">
+            <div class="success-icon-wrapper">
+                <div class="success-icon">✓</div>
+            </div>
+            <h2 class="success-title">Esta notificación ya fue enviada exitosamente</h2>
+            <p class="success-message">Hemos recibido la notificación anteriormente.</p>
         </div>
     </div>
 
     <script>
-        // Global variable to store prestador data
-        let prestadorData = null;
-
-        // Function to format currency
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-
-        // Function to format NIT
-        function formatNIT(nit) {
-            // Add dots for better readability: 1032365030 -> 1.032.365.030
-            return nit.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
-        // Function to load demo data (fallback when API fails)
-        function loadDemoData() {
-            const demoData = {
-                "nit": "1032365030",
-                "razon_social": "DROGUERIA GALENA",
-                "cantiddad_facturas": 8,
-                "valor_conciliar": "118015200.00"
-            };
-
-            prestadorData = demoData;
-            updatePrestadorInfo(demoData);
-            showMainContent();
-        }
-
-        // Function to load prestador data from API with CORS proxy
-        async function loadPrestadorData() {
-            try {
-                showLoading();
-
-                // Try multiple approaches to handle CORS
-                const apiUrl = 'https://5dho9ne215.execute-api.us-east-1.amazonaws.com/notify/third/23238203';
-
-                // Method 1: Direct fetch (will fail due to CORS but we try first)
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        mode: 'cors'
-                    });
-
-                    if (response.status === 404) {
-                        throw new Error('Prestador no encontrado');
-                    }
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    prestadorData = data;
-                    updatePrestadorInfo(data);
-                    showMainContent();
-                    return;
-
-                } catch (corsError) {
-                    console.log('CORS error, trying alternative methods...', corsError);
-
-                    // Method 2: Try with a CORS proxy
-                    try {
-                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-                        const proxyResponse = await fetch(proxyUrl);
-
-                        if (!proxyResponse.ok) {
-                            throw new Error('Proxy request failed');
-                        }
-
-                        const proxyData = await proxyResponse.json();
-                        const data = JSON.parse(proxyData.contents);
-
-                        prestadorData = data;
-                        updatePrestadorInfo(data);
-                        showMainContent();
-                        return;
-
-                    } catch (proxyError) {
-                        console.log('Proxy method failed:', proxyError);
-
-                        // Method 3: Try another CORS proxy
-                        try {
-                            const corsProxyUrl = `https://cors-anywhere.herokuapp.com/${apiUrl}`;
-                            const corsResponse = await fetch(corsProxyUrl, {
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            });
-
-                            if (corsResponse.status === 404) {
-                                throw new Error('Prestador no encontrado');
-                            }
-
-                            if (!corsResponse.ok) {
-                                throw new Error(`HTTP error! status: ${corsResponse.status}`);
-                            }
-
-                            const data = await corsResponse.json();
-                            prestadorData = data;
-                            updatePrestadorInfo(data);
-                            showMainContent();
-                            return;
-
-                        } catch (finalError) {
-                            console.log('All methods failed:', finalError);
-                            throw new Error('No se pudo conectar con la API debido a restricciones CORS');
-                        }
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error loading prestador data:', error);
-
-                // Update error message based on error type
-                const errorMessageEl = document.getElementById('errorMessage');
-                if (error.message.includes('Prestador no encontrado')) {
-                    errorMessageEl.textContent = 'Prestador no encontrado. Verifica el NIT e intenta nuevamente.';
-                } else if (error.message.includes('CORS')) {
-                    errorMessageEl.textContent = 'Error de CORS: La API no permite peticiones desde el navegador. Puedes usar los datos de prueba mientras se configura el servidor.';
-                } else {
-                    errorMessageEl.textContent = 'Error de conexión: No se pudo conectar con el servidor. Verifica tu conexión a internet o usa los datos de prueba.';
-                }
-
-                showError();
-            }
-        }
-
-        // Function to update prestador information in the UI
-        function updatePrestadorInfo(data) {
-            // Update NIT
-            document.getElementById('nitValue').textContent = formatNIT(data.nit);
-
-            // Update Razón Social
-            document.getElementById('razonSocialValue').textContent = data.razon_social;
-
-            // Update Cantidad de Facturas
-            const facturasElement = document.getElementById('facturasValue');
-            facturasElement.innerHTML = `
-                <span class="value-number blue">${data.cantiddad_facturas}</span>
-                <span class="value-unit blue">Facturas</span>
-            `;
-
-            // Update Valor a Conciliar
-            const valorFormatted = formatCurrency(parseFloat(data.valor_conciliar));
-            const valorElement = document.getElementById('valorValue');
-            valorElement.innerHTML = `
-                <span class="value-number green">${valorFormatted}</span>
-                <span class="value-unit green">COP</span>
-            `;
-
-            // Update Summary Value
-            document.getElementById('summaryValue').textContent = `${valorFormatted} COP`;
-        }
-
         // Function to show loading state
         function showLoading() {
+            document.getElementById('successNotification').classList.add('hidden');
             document.getElementById('loadingContent').classList.remove('hidden');
             document.getElementById('errorContent').classList.add('hidden');
             document.getElementById('mainContent').classList.add('hidden');
@@ -1139,7 +1028,8 @@
         }
 
         // Function to show error state
-        function showError() {
+        function showErrorState() {
+            document.getElementById('successNotification').classList.add('hidden');
             document.getElementById('loadingContent').classList.add('hidden');
             document.getElementById('errorContent').classList.remove('hidden');
             document.getElementById('mainContent').classList.add('hidden');
@@ -1148,6 +1038,7 @@
 
         // Function to show main content
         function showMainContent() {
+            document.getElementById('successNotification').classList.add('hidden');
             document.getElementById('loadingContent').classList.add('hidden');
             document.getElementById('errorContent').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
@@ -1159,34 +1050,134 @@
 
         // Function to show success content
         function showSuccessContent() {
+            document.getElementById('successNotification').classList.add('hidden');
             document.getElementById('loadingContent').classList.add('hidden');
             document.getElementById('errorContent').classList.add('hidden');
             document.getElementById('mainContent').classList.add('hidden');
             document.getElementById('successContent').classList.remove('hidden');
         }
 
-        // Form submission handler
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load prestador data when page loads
-            // loadPrestadorData();
-            showMainContent();
+        // Function to show success Notification
+        function showSuccessNotification() {
+            document.getElementById('loadingContent').classList.add('hidden');
+            document.getElementById('errorContent').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('successContent').classList.add('hidden');
+            document.getElementById('successNotification').classList.remove('hidden');
+        }
 
+        // Function to show errors in the UI
+        function showError(errors) {
+            // Log errors for debugging
+            console.log('Errores recibidos:', errors);
 
-            // Form submission handler
-            document.getElementById('notificationForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+            // Clear previous errors
+            document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+            document.querySelectorAll('.alert.alert-danger').forEach(el => el.remove());
 
-                // Here you could send the notification data to another API endpoint
-                const notificationData = {
-                    prestador: prestadorData,
-                    comments: document.getElementById('comments').value,
-                    timestamp: new Date().toISOString()
+            // If errors is a string (general message), convert to object with general error
+            if (typeof errors === 'string') {
+                errors = {
+                    general: [errors]
                 };
+            }
 
-                console.log('Notification data:', notificationData);
+            // Aggregate email errors (e.g., emails.0, emails.1, etc.)
+            const emailErrors = Object.keys(errors)
+                .filter(key => key.startsWith('emails.'))
+                .flatMap(key => errors[key]);
 
-                // Show success state
-                showSuccessContent();
+            // Display errors by field
+            if (errors.name) {
+                document.getElementById('name-error').textContent = errors.name.join('; ');
+            }
+            if (errors.emails) {
+                document.getElementById('emails-error').textContent = errors.emails.join('; ');
+            }
+            if (emailErrors.length > 0) {
+                document.getElementById('emails-error').textContent = emailErrors.join('; ');
+            }
+            if (errors.message) {
+                document.getElementById('message-error').textContent = errors.message.join('; ');
+            }
+            if (errors.reconciliation_group_id) {
+                document.getElementById('reconciliation_group_id-error').textContent = errors.reconciliation_group_id.join('; ');
+            }
+
+            // Display general errors at the top of the form
+            if (errors.general) {
+                const errorContainer = document.createElement('div');
+                errorContainer.className = 'alert alert-danger';
+                errorContainer.textContent = errors.general.join('; ');
+                const formContent = document.querySelector('.form-content') || document.getElementById('notificationForm');
+                formContent.prepend(errorContainer);
+
+                // Remove the error message after 5 seconds
+                setTimeout(() => errorContainer.remove(), 5000);
+            }
+        }
+
+        // Form submission handler with AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicio');
+
+            // Check if notification was already sent
+            const reconciliationNotification = document.getElementById('reconciliation_notification')?.dataset.value;
+            if (reconciliationNotification === 'true') {
+                showSuccessNotification();
+            } else {
+                showMainContent();
+            }
+
+            const form = document.getElementById('notificationForm');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('Submit');
+
+                const formData = new FormData(form);
+                const emailsInput = formData.get('emails[]') || '';
+                formData.delete('emails[]');
+                const emails = emailsInput.split(',').filter(email => email.trim() !== '');
+                if (emails.length === 0) {
+                    // showError({ emails: ['Por favor, ingrese al menos un correo electrónico válido.'] });
+                    // return;
+                }
+                emails.forEach(email => formData.append('emails[]', email.trim()));
+
+                showLoading();
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const text = await response.text();
+                        console.error('Respuesta no es JSON:', text);
+                        showError('La respuesta del servidor no es JSON');
+                        return;
+                    }
+
+                    const result = await response.json();
+                    console.log('Result:', result);
+
+                    if (response.ok) {
+                        // Success response (200)
+                        showSuccessContent();
+                    } else {
+                        // Handle validation errors (422) or other errors
+                        showError(result.errors || result.message || 'Error al enviar la notificación');
+                    }
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    showError('No se pudo conectar con el servidor. Por favor, intenta de nuevo.');
+                }
             });
         });
     </script>

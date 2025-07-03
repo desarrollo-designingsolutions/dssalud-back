@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ReconciliationGroupController;
 use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
 use App\Models\SupportType;
@@ -24,6 +25,12 @@ Route::get('/', function () {
 
     return view('welcome');
 });
+
+// // Incluir rutas personalizadas
+// require __DIR__ . '/reconciliationGroup.php';
+
+Route::get('/reconciliationGroup/index/{id}', [ReconciliationGroupController::class, 'index']);
+Route::post('/reconciliationGroup/saveNotification', [ReconciliationGroupController::class, 'saveNotification'])->name('reconciliationGroup.saveNotification');
 
 Route::get('/s3-test/{folder?}', function ($folder = null) {
     try {
