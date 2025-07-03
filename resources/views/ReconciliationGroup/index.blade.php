@@ -1159,10 +1159,12 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        // Success response (200)
-                        showSuccessContent();
+                        if (result.already_sent) {
+                            showSuccessNotification(); // Muestra que ya había sido enviada
+                        } else {
+                            showSuccessContent(); // Muestra mensaje de éxito normal
+                        }
                     } else {
-                        // Handle validation errors (422) or other errors
                         showError(result.errors || result.message || 'Error al enviar la notificación');
                     }
                 } catch (error) {

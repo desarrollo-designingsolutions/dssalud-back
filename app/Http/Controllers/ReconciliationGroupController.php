@@ -62,6 +62,11 @@ class ReconciliationGroupController extends Controller
     public function saveNotification(Request $request)
     {
         try {
+
+            $reconciliationGroup = $this->reconciliationGroupRepository->find($request->input('reconciliation_group_id'), ['reconciliationNotification']);
+            $reconciliationNotification_status = $reconciliationGroup->reconciliationNotification ? 'true' : 'false';
+
+
             // Define validation rules with a custom rule for emails
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
@@ -89,6 +94,14 @@ class ReconciliationGroupController extends Controller
                     'message' => 'Error de validación',
                     'errors' => $validator->errors()->toArray(),
                 ], 422);
+            }
+
+            if ($reconciliationNotification_status === 'true') {
+                return response()->json([
+                    'success' => false,
+                    'already_sent' => true,
+                    'message' => 'La notificación ya fue enviada previamente.',
+                ], 200); // 200 para que el frontend pueda manejarlo como "éxito ya procesado"
             }
 
             DB::beginTransaction();
