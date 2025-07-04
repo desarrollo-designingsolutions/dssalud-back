@@ -132,11 +132,13 @@ class ScheduleController extends Controller
         return $this->execute(function () {
             $users = $this->queryController->selectInfiniteUser(request());
             $typeEvents = $this->queryController->selectTypeEventEnum(request());
+            $thirds = $this->queryController->selectInfiniteThird(request());
 
             return [
                 'code' => 200,
                 ...$users,
                 ...$typeEvents,
+                ...$thirds,
             ];
         });
     }
@@ -151,12 +153,14 @@ class ScheduleController extends Controller
 
             $users = $this->queryController->selectInfiniteUser(request());
             $typeEvents = $this->queryController->selectTypeEventEnum(request());
+            $thirds = $this->queryController->selectInfiniteThird(request());
 
             return [
                 'code' => 200,
                 'form' => $form,
                 ...$users,
                 ...$typeEvents,
+                ...$thirds,
             ];
         });
     }
