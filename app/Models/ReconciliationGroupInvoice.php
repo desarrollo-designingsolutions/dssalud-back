@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\Cacheable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class ReconciliationGroupInvoice extends Model
+{
+    use HasUuids,SoftDeletes, Cacheable;
+
+    protected $customCachePrefixes = [
+        'string:{table}_list*',
+    ];
+
+    public function reconciliationGroup()
+    {
+        return $this->belongsTo(ReconciliationGroup::class, 'reconciliation_group_id');
+    }
+
+    public function invoiceAudit()
+    {
+        return $this->belongsTo(InvoiceAudit::class, 'invoice_audit_id');
+    }
+
+}

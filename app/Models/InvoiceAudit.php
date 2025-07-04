@@ -77,4 +77,14 @@ class InvoiceAudit extends Model
             ? 'pending' // 'Pendiente'
             : 'finished'; // 'Finalizado'
     }
+    
+    public function auditoryFinalReport()
+    {
+        return $this->belongsTo(AuditoryFinalReport::class, 'id', 'factura_id');
+    }
+    
+    public function sumValorGlosa()
+    {
+        return $this->auditoryFinalReport()->sum('valor_glosa');
+    }
 }
