@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Role\RoleTypeEnum;
+use App\Enums\TypeEvent\TypeEventEnum;
 use App\Http\Resources\CodeGlosa\CodeGlosaSelectInfiniteResource;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
 use App\Http\Resources\Third\ThirdSelectInfiniteResource;
+use App\Http\Resources\User\UserSelectInfiniteResource;
 use App\Repositories\CityRepository;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\ContractRepository;
@@ -209,6 +211,24 @@ class QueryController extends Controller
         ];
     }
 
+    public function selectTypeEventEnum(Request $request)
+    {
+        $types = TypeEventEnum::cases();
+
+        $types = collect($types)->map(function ($item) {
+            return [
+                'value' => $item,
+                'title' => $item->description(),
+                'color' => $item->backgroundColor(),
+            ];
+        });
+
+        return [
+            'typeEventEnum_arrayInfo' => $types->values(),
+            'typeEventEnum_countLinks' => 1,
+        ];
+    }
+
     public function selectInfiniteThird(Request $request)
     {
         $third = $this->thirdRepository->list($request->all());
@@ -231,6 +251,19 @@ class QueryController extends Controller
             'code' => 200,
             'codeGlosa_arrayInfo' => $dataCodeGlosa,
             'codeGlosa_countLinks' => $codeGlosa->lastPage(),
+        ];
+    }
+    
+    public function selectInfiniteUser(Request $request)
+    {
+        $request['is_active'] = true;
+        $user = $this->userRepository->list($request->all());
+        $dataUser = UserSelectInfiniteResource::collection($user);
+
+        return [
+            'code' => 200,
+            'user_arrayInfo' => $dataUser,
+            'user_countLinks' => $user->lastPage(),
         ];
     }
 }

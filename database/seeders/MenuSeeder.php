@@ -97,6 +97,15 @@ class MenuSeeder extends Seeder
                 'requiredPermission' => 'invoiceAuditAssignmentBatche.list',
                 'father' => 8,
             ],
+            [
+                'id' => 11,
+                'order' => 110,
+                'title' => 'Calendario Eventos',
+                'to' => 'Schedule-Index',
+                'icon' => 'tabler-calendar-event',
+                'father' => null,
+                'requiredPermission' => 'schedule.menu',
+            ],
         ];
 
         // Inicializar la barra de progreso

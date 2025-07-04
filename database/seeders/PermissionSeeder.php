@@ -77,6 +77,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menu de auditoria',
                 'menu_id' => 10,
             ],
+            [
+                'id' => 11,
+                'name' => 'schedule.menu',
+                'description' => 'Visualizar Menú Eventos',
+                'menu_id' => 11,
+            ],
         ];
 
         // Inicializar la barra de progreso

@@ -587,3 +587,8 @@ function getCronjobHashes($key)
 
     return $results;
 }
+
+function getValueSelectInfinite($field, $value = 'value')
+{
+    return isset($field) && is_array($field) ? $field[$value] : $field;
+}
