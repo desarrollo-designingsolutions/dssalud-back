@@ -2,29 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ReconciliationGroup\ReconciliationGroupStatusEnum;
-use App\Events\FilingInvoiceRowUpdated;
-use App\Helpers\Constants;
-use App\Http\Requests\File\FileStoreRequest;
-use App\Http\Resources\File\FileFormResource;
-use App\Http\Resources\File\FileListResource;
-use App\Http\Resources\File\FileListTableV2Resource;
-use App\Jobs\File\ProcessMassUpload;
-use App\Models\ReconciliationNotification;
-use App\Repositories\FileRepository;
+use App\Http\Requests\ReconciliationGroup\ReconciliationGroupStoreRequest;
+use App\Http\Resources\ReconciliationGroup\ReconciliationGroupFormResource;
+use App\Http\Resources\ReconciliationGroup\ReconciliationGroupPaginateResource;
 use App\Repositories\ReconciliationGroupRepository;
-use App\Repositories\ReconciliationNotificationRepository;
-use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
-use Aws\S3\S3Client;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class ReconciliationGroupController extends Controller
 {
@@ -32,106 +17,160 @@ class ReconciliationGroupController extends Controller
 
     public function __construct(
         protected ReconciliationGroupRepository $reconciliationGroupRepository,
-        protected ReconciliationNotificationRepository $reconciliationNotificationRepository,
-        protected ThirdRepository $thirdRepository,
+        protected QueryController $queryController,
     ) {}
 
-    public function index(Request $request, $id)
+    public function paginate(Request $request)
     {
-        $reconciliationGroup = $this->reconciliationGroupRepository->find($id, ['third', 'reconciliationNotification']);
+        return $this->execute(function () use ($request) {
+            $data = $this->reconciliationGroupRepository->paginate($request->all());
+            $tableData = ReconciliationGroupPaginateResource::collection($data);
 
-        $third = $reconciliationGroup->third;
-
-        $invoices = $reconciliationGroup->invoices;
-
-        $sum_value_glosa = $invoices->sum(function ($invoice) {
-            return $invoice->sumValorGlosa();
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
+            ];
         });
-
-        $reconciliationNotification_status = $reconciliationGroup->reconciliationNotification ? 'true' : 'false';
-
-        return view('ReconciliationGroup.index', [
-            'reconciliation_notification' => $reconciliationNotification_status,
-            'reconciliationGroup' => $reconciliationGroup,
-            'reconciliation_group_id' => $reconciliationGroup->id,
-            'third' => $third,
-            'invoices_count' => $invoices->count(),
-            'sum_value_glosa' => formatNumber($sum_value_glosa),
-        ]);
     }
-    public function saveNotification(Request $request)
+
+
+    public function create()
     {
         try {
 
-            $reconciliationGroup = $this->reconciliationGroupRepository->find($request->input('reconciliation_group_id'), ['reconciliationNotification']);
-            $reconciliationNotification_status = $reconciliationGroup->reconciliationNotification ? 'true' : 'false';
+            $thirds = $this->queryController->selectInfiniteThird(request());
 
-
-            // Define validation rules with a custom rule for emails
-            $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'message' => 'required|string|max:1000',
-                'emails' => 'required|array',
-                'emails.*' => [
-                    function ($attribute, $value, $fail) {
-                        // Check if the value is a valid email
-                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                            $fail("El correo '$value' debe ser válido.");
-                        }
-                    },
-                ],
-                'reconciliation_group_id' => 'required|string|exists:reconciliation_groups,id',
-            ], [
-                'name.required' => 'El campo nombre es obligatorio.',
-                'message.required' => 'El campo mensaje es obligatorio.',
-                'emails.required' => 'El campo correos electrónicos es obligatorio.',
+            return response()->json([
+                'code' => 200,
+                ...$thirds
             ]);
+        } catch (Throwable $th) {
 
-            // Check if validation fails
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()->toArray(),
-                ], 422);
-            }
+            return response()->json(['code' => 500, $th->getMessage(), $th->getLine()]);
+        }
+    }
 
-            if ($reconciliationNotification_status === 'true') {
-                return response()->json([
-                    'success' => false,
-                    'already_sent' => true,
-                    'message' => 'La notificación ya fue enviada previamente.',
-                ], 200); // 200 para que el frontend pueda manejarlo como "éxito ya procesado"
-            }
-
+    public function store(ReconciliationGroupStoreRequest $request)
+    {
+        try {
             DB::beginTransaction();
 
-            $data = $request->except('_token');
-            $emails = $data['emails']; // Array de correos
-            $emails = array_unique($emails); // Eliminar correos duplicados
-            $data['emails'] = json_encode($emails); // Convertir el array a JSON
+            $post = $request->all();
 
-            $notification = $this->reconciliationNotificationRepository->store($data);
+            $stack = $this->reconciliationGroupRepository->store($post);
 
             DB::commit();
-            return response()->json([
-                'success' => true,
-                'message' => 'Notificación enviada exitosamente',
-                'notification' => $notification,
-            ], 200);
-        } catch (ValidationException $e) {
-            // Manejar errores de validación
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->errors(), // Devuelve los mensajes de error por campo
-            ], 422);
-        } catch (Throwable $e) {
+
+            return response()->json(['code' => 200, 'message' => 'Stack agregado correctamente', 'data' => $stack]);
+        } catch (Throwable $th) {
             DB::rollBack();
+
             return response()->json([
-                'success' => false,
-                'message' => 'Error al enviar la notificación: ' . $e->getMessage(),
+                'code' => 500,
+                'message' => 'Algo Ocurrio, Comunicate Con El Equipo De Desarrollo',
+                'error' => $th->getMessage(),
+                'line' => $th->getLine(),
             ], 500);
+        }
+    }
+
+    public function edit($id)
+    {
+        try {
+            $stack = $this->reconciliationGroupRepository->find($id);
+            $form = new ReconciliationGroupFormResource($stack);
+
+            $thirds = $this->queryController->selectInfiniteThird(request());
+
+            return response()->json([
+                'code' => 200,
+                'form' => $form,
+                ...$thirds
+            ]);
+        } catch (Throwable $th) {
+
+            return response()->json(['code' => 500, $th->getMessage(), $th->getLine()]);
+        }
+    }
+
+    public function update(ReconciliationGroupStoreRequest $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $post = $request->all();
+
+            $stack = $this->reconciliationGroupRepository->store($post);
+
+            DB::commit();
+
+            return response()->json(['code' => 200, 'message' => 'Stack modificado correctamente', 'data' => $stack]);
+        } catch (Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'code' => 500,
+                'message' => 'Algo Ocurrio, Comunicate Con El Equipo De Desarrollo',
+                'error' => $th->getMessage(),
+                'line' => $th->getLine(),
+            ], 500);
+        }
+    }
+
+    public function delete($id)
+    {
+        try {
+            DB::beginTransaction();
+            $stack = $this->reconciliationGroupRepository->find($id);
+            if ($stack) {
+
+                // Verificar si hay registros relacionados
+                if (
+                    $stack->tasks()->exists()
+                ) {
+                    throw new \Exception('No se puede eliminar el registro, por que tiene relación de datos en otros módulos');
+                }
+
+                $stack->delete();
+                $msg = 'Registro eliminado correctamente';
+            } else {
+                $msg = 'El registro no existe';
+            }
+            DB::commit();
+
+            return response()->json(['code' => 200, 'message' => $msg]);
+        } catch (Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'code' => 500,
+                'message' => $th->getMessage(),
+                'error' => $th->getMessage(),
+                'line' => $th->getLine(),
+            ], 500);
+        }
+    }
+
+    public function changeStatus(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $model = $this->reconciliationGroupRepository->changeState($request->input('id'), strval($request->input('value')), $request->input('field'));
+
+            ($model->is_active == 1) ? $msg = 'habilitada' : $msg = 'inhabilitada';
+
+            DB::commit();
+
+            return response()->json(['code' => 200, 'message' => 'Stack ' . $msg . ' con éxito']);
+        } catch (Throwable $th) {
+            DB::rollback();
+
+            return response()->json(['code' => 500, 'message' => $th->getMessage()]);
         }
     }
 }

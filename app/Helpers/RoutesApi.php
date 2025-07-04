@@ -27,5 +27,6 @@ class RoutesApi
         'routes/assignment.php',
         'routes/glosa.php',
         'routes/schedule.php',
+        'routes/reconciliationGroup.php',
     ];
 }

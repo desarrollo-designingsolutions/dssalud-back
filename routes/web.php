@@ -27,7 +27,7 @@ Route::get('/', function () {
 });
 
 // // Incluir rutas personalizadas
-require __DIR__ . '/reconciliationGroup.php';
+require __DIR__ . '/reconciliationGroupWeb.php';
 
 Route::get('/s3-test/{folder?}', function ($folder = null) {
     try {

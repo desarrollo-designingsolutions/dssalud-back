@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReconciliationGroup extends Model
 {
-    use HasUuids,SoftDeletes, Cacheable;
+    use HasUuids, SoftDeletes, Cacheable;
 
     protected $customCachePrefixes = [
         'string:{table}_list*',
