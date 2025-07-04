@@ -4,7 +4,9 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\ReconciliationGroup;
+use App\QueryBuilder\Sort\RelatedTableSort;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class ReconciliationGroupRepository extends BaseRepository
@@ -18,19 +20,42 @@ class ReconciliationGroupRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for($this->model->query())
-                ->allowedFilters([])
-                ->allowedSorts([])
-                ->where(function ($query) use ($request) {
-                    if (! empty($request['company_id'])) {
-                        $query->where('company_id', $request['company_id']);
-                    }
-                });
-            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        $query = QueryBuilder::for($this->model->query())
+            ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
 
-            return $query;
-        }, Constants::REDIS_TTL);
+            ->allowedFilters([
+
+                AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                    $query->where(function ($subQuery) use ($value, $request) {
+                        $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
+
+                        $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
+                            $thirdQuery->where(function ($q) use ($value) {
+                                $q->where('name', 'like', "%$value%");
+                            });
+                        });
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                "name",
+                AllowedSort::custom('third_name', new RelatedTableSort(
+                    'reconciliation_groups',
+                    'thirds',
+                    'name',
+                    'third_id',
+                )),
+            ])
+            ->where(function ($query) use ($request) {
+                if (! empty($request['company_id'])) {
+                    $query->where('reconciliation_groups.company_id', $request['company_id']);
+                }
+            });
+        $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+        return $query;
+        // }, Constants::REDIS_TTL);
     }
 
     public function store(array $request)

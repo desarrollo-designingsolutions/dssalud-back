@@ -97,6 +97,14 @@ class MenuSeeder extends Seeder
                 'requiredPermission' => 'invoiceAuditAssignmentBatche.list',
                 'father' => 8,
             ],
+            [
+                'id' => 12,
+                'order' => 120,
+                'title' => 'Grupo de conciliación',
+                'to' => 'ReconciliationGroup-List',
+                'icon' => 'users-group',
+                'requiredPermission' => 'reconciliationGroup.list'
+            ],
         ];
 
         // Inicializar la barra de progreso
