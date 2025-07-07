@@ -9,11 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReconciliationGroupInvoice extends Model
 {
-    use HasUuids,SoftDeletes, Cacheable;
-
-    protected $customCachePrefixes = [
-        'string:{table}_list*',
-    ];
+    use HasUuids, SoftDeletes, Cacheable;
 
     public function reconciliationGroup()
     {
@@ -24,5 +20,4 @@ class ReconciliationGroupInvoice extends Model
     {
         return $this->belongsTo(InvoiceAudit::class, 'invoice_audit_id');
     }
-
 }

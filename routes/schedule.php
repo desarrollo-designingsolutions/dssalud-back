@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ScheduleConciliationController;
 use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,23 +15,34 @@ Route::middleware(['check.permission:schedule.menu'])->group(function () {
 
     Route::get('/schedule/index', [ScheduleController::class, 'index']);
 
-    Route::get('/schedule/getDataEvent/{event_id}', [ScheduleController::class, 'getDataEvent']);
-
     Route::get('/schedule/dataView', [ScheduleController::class, 'dataView']);
 
-    Route::get('/schedule/dataViewForm', [ScheduleController::class, 'dataViewForm']);
 
-    Route::get('/schedule/dataEditForm/{id}', [ScheduleController::class, 'dataEditForm']);
-    
-    Route::post('/schedule/store', [ScheduleController::class, 'store']);
-    
-    Route::post('/schedule/update/{id}', [ScheduleController::class, 'update']);
-    
-    Route::delete('/schedule/delete/{id}', [ScheduleController::class, 'delete']);
+    /*
+    |--------------------------------------------------------------------------
+    | Schedule Type Event Conciliation
+    |--------------------------------------------------------------------------
+    */
 
-    Route::get('/schedule/getAcceptDataEvent/{id}', [ScheduleController::class, 'getAcceptDataEvent']);
+    Route::get('/schedule/conciliation/create', [ScheduleConciliationController::class, 'create']);
 
-    Route::get('/schedule/acceptInvitation/{id}', [ScheduleController::class, 'acceptInvitation']);
+    Route::post('/schedule/conciliation/store', [ScheduleConciliationController::class, 'store']);
 
-    Route::get('/schedule/rejectInvitation/{id}', [ScheduleController::class, 'rejectInvitation']);
+    Route::get('/schedule/conciliation/edit/{id}', [ScheduleConciliationController::class, 'edit']);
+
+    Route::post('/schedule/conciliation/update/{id}', [ScheduleConciliationController::class, 'update']);
+
+    Route::get('/schedule/conciliation/show/{event_id}', [ScheduleConciliationController::class, 'show']);
+
+    Route::delete('/schedule/conciliation/delete/{id}', [ScheduleConciliationController::class, 'delete']);
+
+    Route::get('/schedule/conciliation/getAcceptDataEvent/{id}', [ScheduleConciliationController::class, 'getAcceptDataEvent']);
+
+    Route::get('/schedule/conciliation/acceptInvitation/{id}', [ScheduleConciliationController::class, 'acceptInvitation']);
+
+    Route::get('/schedule/conciliation/rejectInvitation/{id}', [ScheduleConciliationController::class, 'rejectInvitation']);
+
+    Route::get('/schedule/conciliation/paginateAgenda', [ScheduleConciliationController::class, 'paginateAgenda']);
+
+    Route::get('/schedule/conciliation/excelExport', [ScheduleConciliationController::class, 'excelExport']);
 });

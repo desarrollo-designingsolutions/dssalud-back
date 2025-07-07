@@ -2,9 +2,7 @@
 
 namespace App\Http\Resources\Schedule;
 
-use App\Http\Resources\Third\ThirdSelectInfiniteResource;
-use App\Http\Resources\TypeEvent\TypeEventSelectInfiniteResource;
-use App\Http\Resources\User\UserSelectInfiniteResource;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,6 +15,8 @@ class ScheduleAcceptFormResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $response_date = $this->scheduleable?->response_date ? Carbon::parse($this->scheduleable?->response_date)->format('Y-m-d H:i:s') : null;
+
         return [
             'id' => $this->id,
             'user_name' => $this->user?->full_name,
@@ -27,8 +27,8 @@ class ScheduleAcceptFormResource extends JsonResource
             'end_hour' => $this->end_hour,
             'description' => $this->description,
             'link' => $this->link,
-            'response_status' => $this->response_status?->value,
-            'response_date' => $this->response_date,
+            'response_status' => $this->scheduleable?->response_status?->value,
+            'response_date' => $response_date,
         ];
     }
 }

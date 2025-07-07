@@ -4,10 +4,9 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\Schedule;
-use App\QueryBuilder\Filters\QueryFilters;
-use App\QueryBuilder\Sort\IsActiveSort;
+use App\QueryBuilder\Filters\DataSelectFilter;
+use App\QueryBuilder\Filters\DateRangeFilter;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class ScheduleRepository extends BaseRepository
@@ -25,27 +24,17 @@ class ScheduleRepository extends BaseRepository
             $query = QueryBuilder::for($this->model->query())
                 ->select([
                     'id',
-                    'name',
-                    'color',
-                    'is_active',
+                    'title',
                     'company_id',
                 ])->allowedFilters([
-                    'is_active',
                     AllowedFilter::callback('inputGeneral', function ($queryX, $value) {
                         $queryX->where(function ($query) use ($value) {
-                            $query->orWhere('name', 'like', "%$value%");
-
-                            QueryFilters::filterByText($query, $value, 'is_active', [
-                                'activo' => 1,
-                                'inactivo' => 0,
-                            ]);
+                            $query->orWhere('title', 'like', "%$value%");
                         });
                     }),
                 ])
                 ->allowedSorts([
-                    'name',
-                    'color',
-                    AllowedSort::custom('is_active', new IsActiveSort),
+                    'title',
                 ])
                 ->where(function ($query) use ($request) {
                     if (! empty($request['company_id'])) {
@@ -61,6 +50,66 @@ class ScheduleRepository extends BaseRepository
 
             return $query;
         }, Constants::REDIS_TTL);
+    }
+
+    public function paginateAgenda($request = [])
+    {
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateAgenda", $request, 'string');
+
+        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        $query = QueryBuilder::for($this->model->query())
+            ->with(['scheduleable'])
+            ->allowedFilters([
+
+                AllowedFilter::custom('response_status', new DataSelectFilter("scheduleable")),
+
+                AllowedFilter::custom('response_date', new DateRangeFilter("scheduleable")),
+
+                // AllowedFilter::callback('response_status', function ($query, $value) {
+                //     $query->where(function ($subQuery) use ($value) {
+                //         $subQuery->orWhereHas('scheduleable', function ($query2) use ($value) {
+                //             $query2->where('response_status', $value);
+                //         });
+                //     });
+                // }),
+
+                AllowedFilter::callback('inputGeneral', function ($queryX, $value) {
+                    $queryX->where(function ($query) use ($value) {
+                        $query->where(function ($subQuery) use ($value) {
+                            $subQuery->orWhere('title', 'like', "%$value%");
+                        });
+                        $query->orWhereHas('scheduleable.third', function ($subQuery) use ($value) {
+                            $subQuery->where('name', 'like', "%$value%");
+                            $subQuery->orWhere('nit', 'like', "%$value%");
+                        });
+                        $query->orWhereHas('scheduleable.reconciliation_group', function ($subQuery) use ($value) {
+                            $subQuery->where('name', 'like', "%$value%");
+                        });
+                        $query->orWhereHas('scheduleable.user', function ($subQuery) use ($value) {
+                            $subQuery->whereRaw("CONCAT_WS(' ', name, surname) LIKE ?", ["%{$value}%"]);
+                        });
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'title',
+                'response_date',
+                'response_status',
+            ])
+            ->where(function ($query) use ($request) {
+                if (! empty($request['company_id'])) {
+                    $query->where('company_id', $request['company_id']);
+                }
+            });
+
+        if (empty($request['typeData'])) {
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+        } else {
+            $query = $query->get();
+        }
+
+        return $query;
+        // }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'])

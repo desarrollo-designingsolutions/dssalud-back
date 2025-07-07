@@ -15,13 +15,13 @@ use Aws\S3\S3Client;
 
 Route::get('/', function () {
 
-    $user = User::find("9e601862-728e-42a1-9efb-b46efaf731ba");
+    // $user = User::find("9e601862-728e-42a1-9efb-b46efaf731ba");
 
-    // Enviar notificación
-    $user->notify(new BellNotification([
-        'title' => "hola",
-        'subtitle' => "chao",
-    ]));
+    // // Enviar notificación
+    // $user->notify(new BellNotification([
+    //     'title' => "hola",
+    //     'subtitle' => "chao",
+    // ]));
 
     return view('welcome');
 });

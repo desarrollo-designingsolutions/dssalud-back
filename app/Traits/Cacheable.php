@@ -14,6 +14,8 @@ trait Cacheable
     protected $defaultCachePrefixes = [
         'string:{table}_paginate*',
         'string:{table}_find_{id}*',
+        'string:{table}_list*',
+        'string:{table}_paginateAgenda*',
     ];
 
     /**
@@ -51,7 +53,7 @@ trait Cacheable
 
             $project = env('KEY_REDIS_PROJECT');
 
-            $prefix = $project.$prefix;
+            $prefix = $project . $prefix;
 
             $usePattern = str_ends_with($prefix, '*');
             $cleanPrefix = $usePattern ? rtrim($prefix, '*') : $prefix;

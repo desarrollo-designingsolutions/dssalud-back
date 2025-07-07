@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Role\RoleTypeEnum;
+use App\Enums\Schedule\ScheduleResponseStatusEnum;
 use App\Enums\TypeEvent\TypeEventEnum;
 use App\Http\Resources\CodeGlosa\CodeGlosaSelectInfiniteResource;
 use App\Http\Resources\Contract\ContractSelectInfiniteResource;
 use App\Http\Resources\Country\CountrySelectResource;
+use App\Http\Resources\ReconciliationGroup\ReconciliationGroupSelectInfiniteResource;
 use App\Http\Resources\SupportType\SupportTypeSelectInfiniteResource;
 use App\Http\Resources\Third\ThirdSelectInfiniteResource;
 use App\Http\Resources\User\UserSelectInfiniteResource;
@@ -16,6 +18,7 @@ use App\Repositories\CityRepository;
 use App\Repositories\CodeGlosaRepository;
 use App\Repositories\ContractRepository;
 use App\Repositories\CountryRepository;
+use App\Repositories\ReconciliationGroupRepository;
 use App\Repositories\StateRepository;
 use App\Repositories\SupportTypeRepository;
 use App\Repositories\ThirdRepository;
@@ -33,6 +36,7 @@ class QueryController extends Controller
         protected SupportTypeRepository $supportTypeRepository,
         protected ThirdRepository $thirdRepository,
         protected CodeGlosaRepository $codeGlosaRepository,
+        protected ReconciliationGroupRepository $reconciliationGroupRepository,
     ) {}
 
     public function selectInfiniteCountries(Request $request)
@@ -253,7 +257,7 @@ class QueryController extends Controller
             'codeGlosa_countLinks' => $codeGlosa->lastPage(),
         ];
     }
-    
+
     public function selectInfiniteUser(Request $request)
     {
         $request['is_active'] = true;
@@ -264,6 +268,36 @@ class QueryController extends Controller
             'code' => 200,
             'user_arrayInfo' => $dataUser,
             'user_countLinks' => $user->lastPage(),
+        ];
+    }
+
+    public function selectScheduleResponseStatusEnum(Request $request)
+    {
+        $types = ScheduleResponseStatusEnum::cases();
+
+        $types = collect($types)->map(function ($item) {
+            return [
+                'value' => $item,
+                'title' => $item->description(),
+                'color' => $item->backgroundColor(),
+            ];
+        });
+
+        return [
+            'scheduleResponseStatusEnum_arrayInfo' => $types->values(),
+            'sheduleResponseStatusEnum_countLinks' => 1,
+        ];
+    }
+
+    public function selectInfiniteReconciliationGroup(Request $request)
+    {
+        $reconciliationGroup = $this->reconciliationGroupRepository->list($request->all());
+        $dataReconciliationGroup = ReconciliationGroupSelectInfiniteResource::collection($reconciliationGroup);
+
+        return [
+            'code' => 200,
+            'reconciliationGroup_arrayInfo' => $dataReconciliationGroup,
+            'reconciliationGroup_countLinks' => $reconciliationGroup->lastPage(),
         ];
     }
 }

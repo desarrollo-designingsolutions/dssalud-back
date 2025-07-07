@@ -12,9 +12,6 @@ class Third extends Model
 {
     use HasUuids, SoftDeletes, Cacheable;
 
-    protected $customCachePrefixes = [
-        'string:{table}_list*',
-    ];
 
     public function company()
     {

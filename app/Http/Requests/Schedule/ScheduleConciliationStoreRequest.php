@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ScheduleStoreRequest extends FormRequest
+class ScheduleConciliationStoreRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -64,6 +64,10 @@ class ScheduleStoreRequest extends FormRequest
 
         if ($this->has('third_id')) {
             $merge['third_id'] = getValueSelectInfinite($this->third_id);
+        }
+
+        if ($this->has('reconciliation_group_id')) {
+            $merge['reconciliation_group_id'] = getValueSelectInfinite($this->reconciliation_group_id);
         }
 
         $this->merge($merge);

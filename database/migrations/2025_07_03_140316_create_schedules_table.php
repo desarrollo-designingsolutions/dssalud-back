@@ -14,20 +14,19 @@ return new class extends Migration
         Schema::create('schedules', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('company_id')->constrained();
-            $table->foreignUuid('user_id')->constrained();
-            $table->foreignUuid('third_id')->constrained();
-            $table->json('emails')->nullable();
-            $table->string('type_event')->nullable();
             $table->string('title')->nullable();
+            $table->string('type_event')->nullable();
             $table->date('start_date')->nullable();
             $table->string('start_hour')->nullable();
             $table->date('end_date')->nullable();
             $table->string('end_hour')->nullable();
-            $table->string('link')->nullable();
             $table->boolean('all_day')->default(false);
+            $table->json('emails')->nullable();
             $table->text('description')->nullable();
-            $table->string('response_status')->nullable(); 
-            $table->dateTime('response_date')->nullable(); 
+            $table->string('scheduleable_type')->nullable();
+            $table->string('scheduleable_id')->nullable();
+            $table->foreignUuid('rescheduled_from_id')->nullable()->constrained();
+
             $table->timestamps();
             $table->softDeletes();
         });

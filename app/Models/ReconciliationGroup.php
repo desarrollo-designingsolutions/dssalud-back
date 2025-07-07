@@ -11,10 +11,6 @@ class ReconciliationGroup extends Model
 {
     use HasUuids, SoftDeletes, Cacheable;
 
-    protected $customCachePrefixes = [
-        'string:{table}_list*',
-    ];
-
     public function third()
     {
         return $this->belongsTo(Third::class);

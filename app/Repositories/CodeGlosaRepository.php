@@ -18,31 +18,30 @@ class CodeGlosaRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
 
-        $data = $this->model->with($with)->where(function ($query) {})
-            ->where(function ($query) use ($request) {
-                filterComponent($query, $request);
+            $data = $this->model->with($with)->where(function ($query) {})
+                ->where(function ($query) use ($request) {
+                    filterComponent($query, $request);
 
-                if (! empty($request['is_active'])) {
-                    $query->where('is_active', $request['is_active']);
-                }
-            })
-            ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('description', 'like', '%'.$request['searchQueryInfinite'].'%');
-                    $query->orWhere('code', 'like', '%'.$request['searchQueryInfinite'].'%');
-                }
-            });
+                    if (! empty($request['is_active'])) {
+                        $query->where('is_active', $request['is_active']);
+                    }
+                })
+                ->where(function ($query) use ($request) {
+                    if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                        $query->orWhere('description', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('code', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    }
+                });
 
-        $data = $data->orderBy('id', 'desc');
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
+            $data = $data->orderBy('id', 'desc');
+            if (empty($request['typeData'])) {
+                $data = $data->paginate($request['perPage'] ?? 10);
+            } else {
+                $data = $data->get();
+            }
 
-        return $data;
-    }, Constants::REDIS_TTL);
-
+            return $data;
+        }, Constants::REDIS_TTL);
     }
 
     public function store(array $request)

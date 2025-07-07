@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\User;
+namespace App\Http\Resources\ReconciliationGroup;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserSelectInfiniteResource extends JsonResource
+class ReconciliationGroupSelectInfiniteResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,7 +16,7 @@ class UserSelectInfiniteResource extends JsonResource
     {
         return [
             'value' => $this->id,
-            'title' => $this->full_name . ' - ' . $this->role?->description,
+            'title' => $this->name,
         ];
     }
 }

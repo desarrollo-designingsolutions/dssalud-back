@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Schedule\ScheduleResponseStatusEnum;
 use App\Enums\TypeEvent\TypeEventEnum;
 use App\Traits\Cacheable;
 use App\Traits\Searchable;
@@ -17,10 +16,9 @@ class Schedule extends Model
 
     protected $casts = [
         'type_event' => TypeEventEnum::class,
-        'response_status' => ScheduleResponseStatusEnum::class,
     ];
 
-    public function getEmailsFormattedAttribute(): string
+    public function getEmailsFormattedStringAttribute(): string
     {
         $emails = json_decode($this->emails, true) ?? [];
         return collect($emails)->implode(', ');
@@ -31,13 +29,20 @@ class Schedule extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function user()
+    public function scheduleable()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->morphTo(__FUNCTION__, 'scheduleable_type', 'scheduleable_id');
     }
 
-    public function third()
+    // Relationship to the original event (the event this was rescheduled from)
+    public function originalSchedule()
     {
-        return $this->belongsTo(Third::class, 'third_id', 'id');
+        return $this->belongsTo(Schedule::class, 'rescheduled_from_id');
+    }
+
+    // Relationship to events rescheduled from this event
+    public function rescheduledEvents()
+    {
+        return $this->hasMany(Schedule::class, 'rescheduled_from_id');
     }
 }

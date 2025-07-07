@@ -61,11 +61,11 @@ class ReconciliationGroupController extends Controller
 
             $post = $request->all();
 
-            $stack = $this->reconciliationGroupRepository->store($post);
+            $reconciliationGroup = $this->reconciliationGroupRepository->store($post);
 
             DB::commit();
 
-            return response()->json(['code' => 200, 'message' => 'Stack agregado correctamente', 'data' => $stack]);
+            return response()->json(['code' => 200, 'message' => 'Grupo de conciliación agregado correctamente', 'data' => $reconciliationGroup]);
         } catch (Throwable $th) {
             DB::rollBack();
 
@@ -81,8 +81,8 @@ class ReconciliationGroupController extends Controller
     public function edit($id)
     {
         try {
-            $stack = $this->reconciliationGroupRepository->find($id);
-            $form = new ReconciliationGroupFormResource($stack);
+            $reconciliationGroup = $this->reconciliationGroupRepository->find($id);
+            $form = new ReconciliationGroupFormResource($reconciliationGroup);
 
             $thirds = $this->queryController->selectInfiniteThird(request());
 
@@ -104,11 +104,11 @@ class ReconciliationGroupController extends Controller
 
             $post = $request->all();
 
-            $stack = $this->reconciliationGroupRepository->store($post);
+            $reconciliationGroup = $this->reconciliationGroupRepository->store($post);
 
             DB::commit();
 
-            return response()->json(['code' => 200, 'message' => 'Stack modificado correctamente', 'data' => $stack]);
+            return response()->json(['code' => 200, 'message' => 'Grupo de conciliación modificado correctamente', 'data' => $reconciliationGroup]);
         } catch (Throwable $th) {
             DB::rollBack();
 
@@ -125,17 +125,11 @@ class ReconciliationGroupController extends Controller
     {
         try {
             DB::beginTransaction();
-            $stack = $this->reconciliationGroupRepository->find($id);
-            if ($stack) {
+            $reconciliationGroup = $this->reconciliationGroupRepository->find($id);
+            if ($reconciliationGroup) {
 
-                // Verificar si hay registros relacionados
-                if (
-                    $stack->tasks()->exists()
-                ) {
-                    throw new \Exception('No se puede eliminar el registro, por que tiene relación de datos en otros módulos');
-                }
 
-                $stack->delete();
+                $reconciliationGroup->delete();
                 $msg = 'Registro eliminado correctamente';
             } else {
                 $msg = 'El registro no existe';
@@ -166,7 +160,7 @@ class ReconciliationGroupController extends Controller
 
             DB::commit();
 
-            return response()->json(['code' => 200, 'message' => 'Stack ' . $msg . ' con éxito']);
+            return response()->json(['code' => 200, 'message' => 'Grupo de conciliación ' . $msg . ' con éxito']);
         } catch (Throwable $th) {
             DB::rollback();
 

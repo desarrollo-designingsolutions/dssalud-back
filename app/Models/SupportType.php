@@ -9,9 +9,5 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SupportType extends Model
 {
-    use HasUuids,SoftDeletes, Cacheable;
-
-    protected $customCachePrefixes = [
-        'string:{table}_list*',
-    ];
+    use HasUuids, SoftDeletes, Cacheable;
 }

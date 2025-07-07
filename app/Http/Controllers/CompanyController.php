@@ -41,7 +41,26 @@ class CompanyController extends Controller
     public function create()
     {
         return $this->execute(function () {
+
+
+
             $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
+            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
+            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
+            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
+
+
+            if(el roil tiene el permiso "aslkndjkandkjadasd"){
+                $filterEspecial = [
+                    askjdhashdjkasnlkdasd
+                ];
+            }else{
+$filterEspecial = [];
+            }
+
+
+            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
+
 
             $form['start_date'] = Carbon::now()->format('Y-m-d');
 
