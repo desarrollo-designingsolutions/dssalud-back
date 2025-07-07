@@ -25,7 +25,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('scheduleable_type')->nullable();
             $table->string('scheduleable_id')->nullable();
-            $table->foreignUuid('rescheduled_from_id')->nullable()->constrained();
+            $table->foreignUuid('rescheduled_from_id')->nullable()->constrained('schedules');
 
             $table->timestamps();
             $table->softDeletes();
