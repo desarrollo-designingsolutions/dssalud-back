@@ -41,26 +41,7 @@ class CompanyController extends Controller
     public function create()
     {
         return $this->execute(function () {
-
-
-
             $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
-            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
-            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
-            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
-
-
-            if(el roil tiene el permiso "aslkndjkandkjadasd"){
-                $filterEspecial = [
-                    askjdhashdjkasnlkdasd
-                ];
-            }else{
-$filterEspecial = [];
-            }
-
-
-            $selectInfiniteCountries = $this->queryController->selectInfiniteCountries(request());
-
 
             $form['start_date'] = Carbon::now()->format('Y-m-d');
 
@@ -80,7 +61,7 @@ $filterEspecial = [];
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_'.$company->id.$request->input('logo');
+                $ruta = 'companies/company_' . $company->id . $request->input('logo');
 
                 $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
@@ -119,7 +100,7 @@ $filterEspecial = [];
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_'.$company->id.$request->input('logo');
+                $ruta = 'companies/company_' . $company->id . $request->input('logo');
                 $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
                 $company->save();
@@ -169,7 +150,7 @@ $filterEspecial = [];
 
             return [
                 'code' => 200,
-                'message' => 'Compañia '.$msg.' con éxito',
+                'message' => 'Compañia ' . $msg . ' con éxito',
             ];
         });
     }
