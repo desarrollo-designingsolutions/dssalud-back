@@ -18,6 +18,7 @@ class ReconciliationGroupPaginateResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'third_name' => $this->third?->name,
+            'link' => env('SYSTEM_URL_BACK') . 'reconciliationGroup/index/' . $this->id,
         ];
     }
 }
