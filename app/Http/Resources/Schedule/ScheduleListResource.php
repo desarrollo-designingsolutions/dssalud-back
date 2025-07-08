@@ -15,26 +15,19 @@ class ScheduleListResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $start = null;
-        $end = null;
-
-        // Validar que ambas partes de la fecha y hora existan antes de combinar
-        if ($this->start_date && $this->start_hour) {
-            $start = Carbon::parse($this->start_date . ' ' . $this->start_hour)->toIso8601String();
-        }
-
-        if ($this->end_date && $this->end_hour) {
-            $end = Carbon::parse($this->end_date . ' ' . $this->end_hour)->toIso8601String();
-        }
+        // Formatear el día para que sea compatible con FullCalendar
+        $formattedDay = Carbon::createFromFormat('Y-m-d', $this->start_date)->toDateString();
+        $formattedEndDay = Carbon::createFromFormat('Y-m-d', $this->end_date)->toDateString();
 
         return [
             'id' => $this->id,
             'title' => $this->title,
 
-            'start' => $start,
-            'end' => $end,
+            //para que se ordene y arregle en el calendario
+            'start' => $formattedDay . 'T' . $this->start_hour,
+            'end' => $formattedEndDay . 'T' . $this->end_hour,
+
             'backgroundColor' => $this->type_event?->backgroundColor(),
-            'abc' => $this->type_event?->backgroundColor(),
             'type' => 'event', // Agregado para indicar que es un evento
         ];
     }
