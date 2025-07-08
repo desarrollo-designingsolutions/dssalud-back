@@ -63,6 +63,8 @@ class ScheduleRepository extends BaseRepository
 
                 AllowedFilter::custom('response_status', new DataSelectFilter("scheduleable")),
 
+                AllowedFilter::custom('start_date', new DateRangeFilter()),
+
                 AllowedFilter::custom('response_date', new DateRangeFilter("scheduleable")),
 
                 // AllowedFilter::callback('response_status', function ($query, $value) {

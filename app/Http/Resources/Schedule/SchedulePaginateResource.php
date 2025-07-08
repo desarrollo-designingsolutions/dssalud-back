@@ -19,6 +19,7 @@ class SchedulePaginateResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'start_date' => $this->start_date . ' ' . $this->start_hour,
             'response_status_backgroundColor' => $this->scheduleable?->response_status?->backgroundColor(),
             'response_status_description' => $this->scheduleable?->response_status?->description(),
             'response_date' => $response_date,

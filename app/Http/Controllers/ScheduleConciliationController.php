@@ -120,7 +120,7 @@ class ScheduleConciliationController extends Controller
                         'end_date' => $schedule->end_date,
                         'end_hour' => $schedule->end_hour,
                         'description' => $schedule->description,
-                        'link' => $schedule->link,
+                        'link' => $schedule->scheduleable->link,
                         'linkAccept' => env('SYSTEM_URL_FRONT') . 'ViewEventConciliationResponse/' . $schedule->id,
                         'bussines_name' => $schedule->third?->company?->name,
                     ],
@@ -247,6 +247,7 @@ class ScheduleConciliationController extends Controller
                 'reconciliation_group' => $reconciliation_group,
                 'guests' => $data->emails ? json_decode($data->emails, true) : [],
                 'response_status' => $data->scheduleable?->response_status,
+                'link' => $data->scheduleable?->link,
             ];
 
             return [
