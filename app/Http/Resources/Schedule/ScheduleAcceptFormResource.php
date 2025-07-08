@@ -26,7 +26,7 @@ class ScheduleAcceptFormResource extends JsonResource
             'end_date' => $this->end_date,
             'end_hour' => $this->end_hour,
             'description' => $this->description,
-            'link' => $this->link,
+            'link' => $this->scheduleable->link,
             'response_status' => $this->scheduleable?->response_status?->value,
             'response_date' => $response_date,
         ];
