@@ -6,7 +6,10 @@ use App\Helpers\Constants;
 use App\Models\Schedule;
 use App\QueryBuilder\Filters\DataSelectFilter;
 use App\QueryBuilder\Filters\DateRangeFilter;
+use App\QueryBuilder\Sort\RelatedTableSort;
+use App\QueryBuilder\Sort\RelatedModelSort;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class ScheduleRepository extends BaseRepository
@@ -56,7 +59,6 @@ class ScheduleRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateAgenda", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
         $query = QueryBuilder::for($this->model->query())
             ->with(['scheduleable'])
             ->allowedFilters([
@@ -67,13 +69,6 @@ class ScheduleRepository extends BaseRepository
 
                 AllowedFilter::custom('response_date', new DateRangeFilter("scheduleable")),
 
-                // AllowedFilter::callback('response_status', function ($query, $value) {
-                //     $query->where(function ($subQuery) use ($value) {
-                //         $subQuery->orWhereHas('scheduleable', function ($query2) use ($value) {
-                //             $query2->where('response_status', $value);
-                //         });
-                //     });
-                // }),
 
                 AllowedFilter::callback('inputGeneral', function ($queryX, $value) {
                     $queryX->where(function ($query) use ($value) {
@@ -97,6 +92,27 @@ class ScheduleRepository extends BaseRepository
                 'title',
                 'response_date',
                 'response_status',
+                AllowedSort::custom('third_name', new RelatedModelSort(
+                    relationship: 'scheduleable.third',
+                    relatedTable: 'thirds',
+                    relatedColumn: 'name',
+                    morphType: 'scheduleable_type',
+                    morphClass: 'App\Models\ScheduleConciliation'
+                )),
+                AllowedSort::custom('user_name', new RelatedModelSort(
+                    relationship: 'scheduleable.user',
+                    relatedTable: 'users',
+                    relatedColumn: 'name',
+                    morphType: 'scheduleable_type',
+                    morphClass: 'App\Models\ScheduleConciliation'
+                )),
+                AllowedSort::custom('reconciliation_group_name', new RelatedModelSort(
+                    relationship: 'scheduleable.reconciliation_group',
+                    relatedTable: 'reconciliation_groups',
+                    relatedColumn: 'name',
+                    morphType: 'scheduleable_type',
+                    morphClass: 'App\Models\ScheduleConciliation'
+                )),
             ])
             ->where(function ($query) use ($request) {
                 if (! empty($request['company_id'])) {
@@ -111,7 +127,6 @@ class ScheduleRepository extends BaseRepository
         }
 
         return $query;
-        // }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'])
