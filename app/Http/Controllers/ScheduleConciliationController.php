@@ -371,7 +371,7 @@ class ScheduleConciliationController extends Controller
         return $this->execute(function () use ($request) {
             $request['typeData'] = 'all';
 
-             $data = $this->scheduleRepository->paginateAgenda($request->all());
+            $data = $this->scheduleRepository->paginateAgenda($request->all());
 
             $excel = Excel::raw(new ScheduleAgendaListExport($data), \Maatwebsite\Excel\Excel::XLSX);
 

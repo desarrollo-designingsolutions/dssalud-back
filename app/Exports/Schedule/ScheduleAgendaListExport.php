@@ -30,8 +30,8 @@ class ScheduleAgendaListExport implements FromView, ShouldAutoSize, WithEvents
             return [
                 'id' => $value->id,
                 'title' => $value->title,
-                'response_status_backgroundColor' => $value->response_status?->backgroundColor(),
-                'response_status_description' => $value->response_status?->description(),
+                'response_status_backgroundColor' => $value->scheduleable->response_status?->backgroundColor(),
+                'response_status_description' => $value->scheduleable->response_status?->description(),
                 'response_date' => $response_date,
 
 

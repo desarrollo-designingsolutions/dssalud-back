@@ -13,7 +13,7 @@
         @foreach ($data as $item)
             <tr>
                 <td> {{ $item['title'] }}</td>
-                <td style="color: {{ $item['response_status_backgroundColor'] }} }}">
+                <td style="background: {{ $item['response_status_backgroundColor'] }} }}">
                     {{ $item['response_status_description'] }}</td>
                 <td> {{ $item['response_date'] }}</td>
                 <td> {{ $item['third_name'] }}</td>
