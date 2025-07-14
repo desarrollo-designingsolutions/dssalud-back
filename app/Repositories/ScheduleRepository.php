@@ -61,6 +61,7 @@ class ScheduleRepository extends BaseRepository
 
         $query = QueryBuilder::for($this->model->query())
             ->with(['scheduleable'])
+            // ->select(['schedules.id', 'schedules.company_id', 'schedules.title', 'schedules.start_date', 'schedules.start_hour'])
             ->allowedFilters([
 
                 AllowedFilter::custom('response_status', new DataSelectFilter("scheduleable")),
@@ -116,7 +117,7 @@ class ScheduleRepository extends BaseRepository
             ])
             ->where(function ($query) use ($request) {
                 if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
+                    $query->where('schedules.company_id', $request['company_id']);
                 }
             });
 
