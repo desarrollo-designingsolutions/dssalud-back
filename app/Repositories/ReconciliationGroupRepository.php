@@ -20,7 +20,7 @@ class ReconciliationGroupRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
         $query = QueryBuilder::for($this->model->query())
             ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
 
@@ -55,14 +55,14 @@ class ReconciliationGroupRepository extends BaseRepository
         $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
         return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
 
         $data = $this->model->with($with)->where(function ($query) {})
             ->where(function ($query) use ($request) {
@@ -85,7 +85,7 @@ class ReconciliationGroupRepository extends BaseRepository
         }
 
         return $data;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function store(array $request)

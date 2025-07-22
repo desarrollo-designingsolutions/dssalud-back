@@ -25,7 +25,7 @@ class AssignmentBatcheRepository extends BaseRepository
 
         $data = request();
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for($this->model->query())
                 ->withCount([
                     'assignments as count_invoice',
@@ -61,7 +61,7 @@ class AssignmentBatcheRepository extends BaseRepository
             $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
             return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function list($request = [], $with = [], $select = ['*'], $idsAllowed = [], $idsNotAllowed = [])

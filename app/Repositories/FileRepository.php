@@ -41,7 +41,7 @@ class FileRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
-        // return $this->cacheService->remember($cacheKey, function () use ($request) {
+        return $this->cacheService->remember($cacheKey, function () use ($request) {
 
         $query = QueryBuilder::for($this->model->query())
             ->allowedFilters([
@@ -72,7 +72,7 @@ class FileRepository extends BaseRepository
             ->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
 
         return $query;
-        // }, Constants::REDIS_TTL);
+        }, Constants::REDIS_TTL);
     }
 
     public function store($request)

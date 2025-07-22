@@ -228,10 +228,17 @@ class ScheduleConciliationController extends Controller
 
             $reconciliation_group = $data->scheduleable?->reconciliation_group;
 
-            $reconciliation_group = [
-                'id' => $reconciliation_group->id,
-                'name' => $reconciliation_group->name,
-            ];
+            if($reconciliation_group) {
+                $reconciliation_group = [
+                    'id' => $reconciliation_group->id,
+                    'name' => $reconciliation_group->name,
+                ];
+            } else {
+                $reconciliation_group = [
+                'id' => null,
+                'name' => null,
+                ];
+            }
 
             $schedule = [
                 'id' => $data->id,
