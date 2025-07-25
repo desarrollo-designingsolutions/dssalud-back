@@ -27,4 +27,7 @@ Route::middleware(['check.permission:reconciliationGroup.list'])->group(function
     Route::delete('/reconciliationGroup/delete/{id}', [ReconciliationGroupController::class, 'delete']);
 
     Route::post('/reconciliationGroup/changeStatus', [ReconciliationGroupController::class, 'changeStatus']);
+
+    Route::get('/reconciliationGroup/excelExport', [ReconciliationGroupController::class, 'excelExport']);
+
 });

@@ -21,40 +21,46 @@ class ReconciliationGroupRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
-        $query = QueryBuilder::for($this->model->query())
-            ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
+            $query = QueryBuilder::for($this->model->query())
+                ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
 
-            ->allowedFilters([
+                ->allowedFilters([
 
-                AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                    $query->where(function ($subQuery) use ($value, $request) {
-                        $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                        $query->where(function ($subQuery) use ($value, $request) {
+                            $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
 
-                        $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
-                            $thirdQuery->where(function ($q) use ($value) {
-                                $q->where('name', 'like', "%$value%");
+                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
+                                $thirdQuery->where(function ($q) use ($value) {
+                                    $q->where('name', 'like', "%$value%");
+                                });
                             });
                         });
-                    });
-                }),
-            ])
-            ->allowedSorts([
-                "name",
-                AllowedSort::custom('third_name', new RelatedTableSort(
-                    'reconciliation_groups',
-                    'thirds',
-                    'name',
-                    'third_id',
-                )),
-            ])
-            ->where(function ($query) use ($request) {
-                if (! empty($request['company_id'])) {
-                    $query->where('reconciliation_groups.company_id', $request['company_id']);
-                }
-            });
-        $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+                    }),
+                ])
+                ->allowedSorts([
+                    "name",
+                    AllowedSort::custom('third_name', new RelatedTableSort(
+                        'reconciliation_groups',
+                        'thirds',
+                        'name',
+                        'third_id',
+                    )),
+                ])
+                ->where(function ($query) use ($request) {
+                    if (! empty($request['company_id'])) {
+                        $query->where('reconciliation_groups.company_id', $request['company_id']);
+                    }
+                });
 
-        return $query;
+            if (empty($request['typeData'])) {
+                $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            } else {
+                $query = $query->get();
+            }
+
+
+            return $query;
         }, Constants::REDIS_TTL);
     }
 
@@ -64,27 +70,27 @@ class ReconciliationGroupRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
 
-        $data = $this->model->with($with)->where(function ($query) {})
-            ->where(function ($query) use ($request) {
+            $data = $this->model->with($with)->where(function ($query) {})
+                ->where(function ($query) use ($request) {
 
-                if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
-                }
-            })
-            ->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
-                }
-            });
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
+                })
+                ->where(function ($query) use ($request) {
+                    if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
+                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    }
+                });
 
-        $data = $data->orderBy('id', 'desc');
-        if (empty($request['typeData'])) {
-            $data = $data->paginate($request['perPage'] ?? 10);
-        } else {
-            $data = $data->get();
-        }
+            $data = $data->orderBy('id', 'desc');
+            if (empty($request['typeData'])) {
+                $data = $data->paginate($request['perPage'] ?? 10);
+            } else {
+                $data = $data->get();
+            }
 
-        return $data;
+            return $data;
         }, Constants::REDIS_TTL);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ReconciliationGroup\ReconciliationGroupExcelExport;
 use App\Http\Requests\ReconciliationGroup\ReconciliationGroupStoreRequest;
 use App\Http\Resources\ReconciliationGroup\ReconciliationGroupFormResource;
 use App\Http\Resources\ReconciliationGroup\ReconciliationGroupPaginateResource;
@@ -10,6 +11,8 @@ use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class ReconciliationGroupController extends Controller
 {
@@ -166,5 +169,23 @@ class ReconciliationGroupController extends Controller
 
             return response()->json(['code' => 500, 'message' => $th->getMessage()]);
         }
+    }
+
+      public function excelExport(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $request['typeData'] = 'all';
+
+            $data = $this->reconciliationGroupRepository->paginate($request->all());
+
+            $excel = Excel::raw(new ReconciliationGroupExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
     }
 }
