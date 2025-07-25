@@ -27,6 +27,7 @@ class ReconciliationGroupExcelExport implements FromView, ShouldAutoSize, WithEv
             return [
                 'id' => $value->id,
                 'name' => $value->name,
+                'third_nit' => $value->third?->nit,
                 'third_name' => $value->third?->name,
                 'link' => env('SYSTEM_URL_BACK') . 'reconciliationGroup/index/' . $value->id,
             ];

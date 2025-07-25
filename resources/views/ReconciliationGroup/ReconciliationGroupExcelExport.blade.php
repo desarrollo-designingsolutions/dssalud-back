@@ -11,6 +11,7 @@
             @foreach ($data as $row)
                 <tr class="">
                     <td>{{ $row['name'] }}</td>
+                    <td>{{ $row['third_nit'] }}</td>
                     <td>{{ $row['third_name'] }}</td>
                     <td>{{ $row['link'] }}</td>
                 </tr>
