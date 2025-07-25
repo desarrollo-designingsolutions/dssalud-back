@@ -35,6 +35,11 @@ class ReconciliationGroupRepository extends BaseRepository
                                     $q->where('name', 'like', "%$value%");
                                 });
                             });
+                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
+                                $thirdQuery->where(function ($q) use ($value) {
+                                    $q->where('nit', 'like', "%$value%");
+                                });
+                            });
                         });
                     }),
                 ])
