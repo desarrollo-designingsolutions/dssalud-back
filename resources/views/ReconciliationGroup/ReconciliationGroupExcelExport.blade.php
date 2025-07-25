@@ -3,6 +3,7 @@
         <thead>
             <tr>
                 <th>Nombre</th>
+                <th>Nit</th>
                 <th>Tercero</th>
                 <th>Link</th>
             </tr>
