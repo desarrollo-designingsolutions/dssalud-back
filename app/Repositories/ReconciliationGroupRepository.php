@@ -45,6 +45,12 @@ class ReconciliationGroupRepository extends BaseRepository
                 ])
                 ->allowedSorts([
                     "name",
+                    AllowedSort::custom('third_nit', new RelatedTableSort(
+                        'reconciliation_groups',
+                        'thirds',
+                        'nit',
+                        'third_id',
+                    )),
                     AllowedSort::custom('third_name', new RelatedTableSort(
                         'reconciliation_groups',
                         'thirds',
