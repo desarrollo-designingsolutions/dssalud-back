@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ConciliationController;
 use App\Http\Controllers\ReconciliationGroupController;
 use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
@@ -319,3 +320,5 @@ Route::get('/ftp', function () {
 
     return $response;
 });
+
+// Route::get('/conciliation/uploadFile', [ConciliationController::class, 'uploadFile']);
