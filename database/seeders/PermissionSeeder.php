@@ -89,6 +89,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menu Grupo de conciliación',
                 'menu_id' => 12,
             ],
+            [
+                'id' => 13,
+                'name' => 'conciliation.list',
+                'description' => 'Visualizar Menu Conciliación',
+                'menu_id' => 13,
+            ],
         ];
 
         // Inicializar la barra de progreso

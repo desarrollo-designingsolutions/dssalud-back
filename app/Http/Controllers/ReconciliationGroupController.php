@@ -171,7 +171,7 @@ class ReconciliationGroupController extends Controller
         }
     }
 
-      public function excelExport(Request $request)
+    public function excelExport(Request $request)
     {
         return $this->execute(function () use ($request) {
             $request['typeData'] = 'all';

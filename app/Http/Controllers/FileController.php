@@ -300,6 +300,7 @@ class FileController extends Controller
     {
         // Caso genérico por defecto
         $basePath = "companies/company_{$company_id}/{$modelType}/{$modelInstance->id}/files/{$originalName}";
+        $finalName = $originalName;
 
         // Caso específico para FilingInvoice
         if ($modelType === 'FilingInvoice') {
@@ -431,5 +432,101 @@ class FileController extends Controller
                 'fileUrlS3' => $fileUrlS3,
             ];
         });
+    }
+
+    public function uploadFiles(Request $request)
+    {
+        try {
+            $request->validate([
+                'files.*' => 'required|file|max:30720',
+                'user_id' => 'required',
+                'company_id' => 'required',
+                'fileable_type' => 'required',
+                'fileable_id' => 'required',
+                'support_type_id' => 'required',
+            ]);
+
+            $user_id = $request->input('user_id');
+            $company_id = $request->input('company_id');
+            $modelType = $request->input('fileable_type');
+            $modelId = $request->input('fileable_id');
+            $support_type_id = $request->input('support_type_id');
+
+            // Validar parámetros requeridos
+            if (! $user_id || ! $company_id || ! $modelType || ! $modelId) {
+                return response()->json(['code' => 400, 'message' => 'Faltan parámetros requeridos'], 400);
+            }
+
+            $files = $request->file('files');
+            $files = is_array($files) ? $files : [$files];
+
+            // Resolver el modelo completo
+            $modelClass = 'App\\Models\\' . $modelType;
+            if (! class_exists($modelClass)) {
+                return response()->json(['code' => 400, 'message' => 'Modelo no válido'], 400);
+            }
+            $modelInstance = $modelClass::find($modelId);
+            if (! $modelInstance) {
+                return response()->json(['code' => 404, 'message' => 'Instancia no encontrada'], 404);
+            }
+
+            $uploadedFiles = [];
+
+            foreach ($request->file('files') as $index => $file) {
+
+                $tempPath = $file->store('temp', Constants::DISK_FILES);
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+                $fileSize = $file->getSize();
+
+                // Construcción dinámica del finalPath pasando todos los parámetros del request
+                $buildFile = $this->buildFinalPath(
+                    $company_id,
+                    $modelType,
+                    $modelInstance,
+                    $originalName,
+                    $request->all(), // Pasamos todos los parámetros
+                    $index,
+                    $extension
+                );
+
+                // Usar la ruta relativa del disco, no la absoluta
+                $disk = Constants::DISK_FILES;
+                $finalPath = $buildFile['basePath'];
+                $fileName = $buildFile['finalName'];
+
+                // Crear el directorio destino si no existe
+                $directory = dirname($finalPath);
+                if (! Storage::disk($disk)->exists($directory)) {
+                    Storage::disk($disk)->makeDirectory($directory);
+                }
+
+                // Mover el archivo usando rutas relativas
+                $moved = Storage::disk($disk)->move($tempPath, $finalPath);
+
+                if (! $moved) {
+                    throw new \Exception('No se pudo mover el archivo');
+                }
+
+                $this->fileRepository->store([
+                    'user_id' => $user_id,
+                    'company_id' => $company_id,
+                    'fileable_type' => $modelClass,
+                    'fileable_id' => $modelId,
+                    'support_type_id' => $support_type_id,
+                    'size' => $fileSize,
+                    'ext' => $extension,
+                    'pathname' => $finalPath,
+                    'filename' => $fileName,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'files' => $uploadedFiles,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 500, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 }

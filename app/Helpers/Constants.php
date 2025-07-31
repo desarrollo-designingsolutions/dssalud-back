@@ -22,7 +22,7 @@ class Constants
 
     public const DISK_FILES = 'public'; // sistema de archivos
 
-    public const CHUNKSIZE = 10;
+    public const CHUNKSIZE = 1;
 
     public const NUMBER_CASE_INITIAL = 100;
 

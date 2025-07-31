@@ -9,7 +9,6 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 
 class ImportProgressEvent implements ShouldBroadcastNow
 {
@@ -22,7 +21,6 @@ class ImportProgressEvent implements ShouldBroadcastNow
         public string $currentAction,
         public array $metadata = []
     ) {
-        // ✅ ESTRUCTURA COMPLETA CON TODOS LOS DATOS NECESARIOS
         $this->metadata = array_merge([
             'sheet' => 0,
             'chunk' => 0,
@@ -35,7 +33,6 @@ class ImportProgressEvent implements ShouldBroadcastNow
             'cancelled' => false,
             'connection_type' => 'websocket',
             'server_time' => now()->toDateTimeString(),
-            // ✅ NUEVOS DATOS PARA METADATA COMPLETA
             'current_sheet' => 1,
             'total_sheets' => 1,
             'errors_count' => 0,
@@ -46,18 +43,16 @@ class ImportProgressEvent implements ShouldBroadcastNow
             'memory_usage' => 0,
             'cpu_usage' => 0,
             'connection_status' => 'connected',
-            // ✅ CAMPOS CALCULADOS PARA TIEMPO ESTIMADO
             'processing_speed' => 0,
             'estimated_time_remaining' => 0,
+            'total_errors' => 0, // Nuevo campo unificado
+            'records_with_errors' => 0, // Nuevo campo unificado
         ], $metadata);
 
-        // Guardar en cache y Redis
         $this->storeProgressData();
-        
-        // // Log::debug("🔌 [WEBSOCKET] Event created for batch {$this->batchId} with progress {$this->metadata['general_progress']}% | ETA: {$this->metadata['estimated_time_remaining']}s");
     }
 
-    protected function storeProgressData()
+    protected function storeProgressData(): void
     {
         $progressData = [
             'batch_id' => $this->batchId,
@@ -68,19 +63,15 @@ class ImportProgressEvent implements ShouldBroadcastNow
             'timestamp' => now()->toDateTimeString()
         ];
 
-        // Guardar en cache (fallback)
-        Cache::put("batch_progress_{$this->batchId}", $progressData, now()->addHours(2));
-
-        // Guardar en Redis (principal)
         try {
-            Redis::setex(
-                "websocket_progress_{$this->batchId}",
-                7200, // 2 horas
-                json_encode($progressData)
+            Cache::put(
+                "import_progress_{$this->batchId}",
+                $progressData,
+                now()->addHours(2) // TTL de 2 horas
             );
-            // Log::debug("📦 [REDIS] Progress stored for batch {$this->batchId}");
+
         } catch (\Exception $e) {
-            // Log::warning("⚠️ [REDIS] Failed to store progress: " . $e->getMessage());
+            Log::error("Failed to store progress data: " . $e->getMessage());
         }
     }
 
@@ -94,17 +85,9 @@ class ImportProgressEvent implements ShouldBroadcastNow
         return 'progress.update';
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
-        // 🔥 LOG SÚPER VISIBLE EN PHP
-        // Log::info("🔥🔥🔥 [PHP-WEBSOCKET] EMITIENDO EVENTO PARA BATCH: {$this->batchId}");
-        // Log::info("📊 [PHP-WEBSOCKET] PORCENTAJE: {$this->metadata['general_progress']}%");
-        // Log::info("👤 [PHP-WEBSOCKET] ESTUDIANTE: {$this->currentStudent}");
-        // Log::info("⚡ [PHP-WEBSOCKET] ACCIÓN: {$this->currentAction}");
-        // Log::info("⏱️ [PHP-WEBSOCKET] TIEMPO ESTIMADO: {$this->metadata['estimated_time_remaining']}s");
-        // Log::info("🚀 [PHP-WEBSOCKET] VELOCIDAD: {$this->metadata['processing_speed']} reg/s");
-
-        $broadcastData = [
+        return [
             'batch_id' => $this->batchId,
             'progress' => $this->progress,
             'current_student' => $this->currentStudent,
@@ -121,38 +104,31 @@ class ImportProgressEvent implements ShouldBroadcastNow
                 'cancelled' => $this->metadata['cancelled'] ?? false,
                 'connection_type' => 'websocket',
                 'server_time' => $this->metadata['server_time'],
-                // ✅ NUEVOS DATOS PARA EL FRONTEND
                 'current_sheet' => $this->metadata['current_sheet'],
                 'total_sheets' => $this->metadata['total_sheets'],
                 'errors_count' => $this->metadata['errors_count'],
                 'warnings_count' => $this->metadata['warnings_count'],
+                'total_errors' => $this->metadata['total_errors'] ?? 0,
+                'records_with_errors' => $this->metadata['records_with_errors'] ?? 0,
                 'file_size' => $this->metadata['file_size'],
                 'processing_start_time' => $this->metadata['processing_start_time'],
                 'last_activity' => $this->metadata['last_activity'],
                 'memory_usage' => $this->metadata['memory_usage'],
                 'cpu_usage' => $this->metadata['cpu_usage'],
                 'connection_status' => $this->metadata['connection_status'],
-                // ✅ CAMPOS CALCULADOS PARA TIEMPO ESTIMADO
                 'processing_speed' => $this->metadata['processing_speed'],
                 'estimated_time_remaining' => $this->metadata['estimated_time_remaining'],
             ],
             'timestamp' => now()->toDateTimeString()
         ];
-
-        // Log::info("📡 [PHP-WEBSOCKET] DATOS COMPLETOS A ENVIAR:", $broadcastData);
-        return $broadcastData;
     }
 
-    /**
-     * Obtener datos desde Redis
-     */
-    public static function getProgressFromRedis(string $batchId): ?array
+    public static function getProgressData(string $batchId): ?array
     {
         try {
-            $data = Redis::get("websocket_progress_{$batchId}");
-            return $data ? json_decode($data, true) : null;
+            return Cache::get("import_progress_{$batchId}");
         } catch (\Exception $e) {
-            // Log::warning("⚠️ [REDIS] Failed to get progress: " . $e->getMessage());
+            Log::warning("Failed to get progress data: " . $e->getMessage());
             return null;
         }
     }

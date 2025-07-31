@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Storage;
 
 use Aws\S3\S3Client;
 
+Route::get('/conciliation/errors/{batchId}', [ConciliationController::class, 'getErrors']);
+
+
 // $prefix = $prefix .'1032365030/1032365030-JSE933/';
 
 Route::get('/', function () {

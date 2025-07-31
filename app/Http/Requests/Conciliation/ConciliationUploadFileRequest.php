@@ -25,8 +25,7 @@ class ConciliationUploadFileRequest extends FormRequest
     {
         $rules = [
             'file' => 'required|file|mimes:xlsx,xls|max:10240',
-            'teacher_id' => 'nullable|string',
-            'type_education_id' => 'nullable|string',
+            'user_id' => 'nullable|string',
             'company_id' => 'nullable|string'
         ];
 
@@ -40,8 +39,7 @@ class ConciliationUploadFileRequest extends FormRequest
             'file.file' => 'El archivo proporcionado no es válido.',
             'file.mimes' => 'El archivo debe ser de tipo Excel (.xlsx o .xls).',
             'file.max' => 'El archivo no debe exceder los 10 MB.',
-            'teacher_id.string' => 'El ID del docente debe ser una cadena de texto.',
-            'type_education_id.string' => 'El ID del tipo de educación debe ser una cadena de texto.',
+            'user_id.string' => 'El ID del docente debe ser una cadena de texto.',
             'company_id.string' => 'El ID de la compañía debe ser una cadena de texto.',
         ];
     }

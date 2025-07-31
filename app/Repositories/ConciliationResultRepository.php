@@ -9,7 +9,7 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class ReconciliationGroupRepository extends BaseRepository
+class ConciliationResultRepository extends BaseRepository
 {
     public function __construct(ReconciliationGroup $modelo)
     {
@@ -22,45 +22,19 @@ class ReconciliationGroupRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for($this->model->query())
-                ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
 
                 ->allowedFilters([
-
                     AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
                         $query->where(function ($subQuery) use ($value, $request) {
-                            $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
 
-                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
-                                $thirdQuery->where(function ($q) use ($value) {
-                                    $q->where('name', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
-                                $thirdQuery->where(function ($q) use ($value) {
-                                    $q->where('nit', 'like', "%$value%");
-                                });
-                            });
                         });
                     }),
                 ])
                 ->allowedSorts([
-                    "name",
-                    AllowedSort::custom('third_nit', new RelatedTableSort(
-                        'reconciliation_groups',
-                        'thirds',
-                        'nit',
-                        'third_id',
-                    )),
-                    AllowedSort::custom('third_name', new RelatedTableSort(
-                        'reconciliation_groups',
-                        'thirds',
-                        'name',
-                        'third_id',
-                    )),
                 ])
                 ->where(function ($query) use ($request) {
                     if (! empty($request['company_id'])) {
-                        $query->where('reconciliation_groups.company_id', $request['company_id']);
+                        $query->where('company_id', $request['company_id']);
                     }
                 });
 
@@ -153,64 +127,5 @@ class ReconciliationGroupRepository extends BaseRepository
         });
 
         return $data;
-    }
-
-    public function paginateConciliation($request = [])
-    {
-        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateConciliation", $request, 'string');
-
-        return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for($this->model->query())
-                ->select(['reconciliation_groups.id', 'reconciliation_groups.company_id', 'reconciliation_groups.name', 'reconciliation_groups.third_id'])
-
-                ->allowedFilters([
-
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                        $query->where(function ($subQuery) use ($value, $request) {
-                            $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
-
-                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
-                                $thirdQuery->where(function ($q) use ($value) {
-                                    $q->where('name', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
-                                $thirdQuery->where(function ($q) use ($value) {
-                                    $q->where('nit', 'like', "%$value%");
-                                });
-                            });
-                        });
-                    }),
-                ])
-                ->allowedSorts([
-                    "name",
-                    AllowedSort::custom('third_nit', new RelatedTableSort(
-                        'reconciliation_groups',
-                        'thirds',
-                        'nit',
-                        'third_id',
-                    )),
-                    AllowedSort::custom('third_name', new RelatedTableSort(
-                        'reconciliation_groups',
-                        'thirds',
-                        'name',
-                        'third_id',
-                    )),
-                ])
-                ->where(function ($query) use ($request) {
-                    if (! empty($request['company_id'])) {
-                        $query->where('reconciliation_groups.company_id', $request['company_id']);
-                    }
-                });
-
-            if (empty($request['typeData'])) {
-                $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-            } else {
-                $query = $query->get();
-            }
-
-
-            return $query;
-        }, Constants::REDIS_TTL);
     }
 }

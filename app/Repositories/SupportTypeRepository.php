@@ -25,6 +25,9 @@ class SupportTypeRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
+                    if (! empty($request['module'])) {
+                        $query->where('module', $request['module']);
+                    }
                 })->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
                         $query->orWhere('code', 'like', '%' . $request['searchQueryInfinite'] . '%');

@@ -16,6 +16,8 @@ trait Cacheable
         'string:{table}_find_{id}*',
         'string:{table}_list*',
         'string:{table}_paginateAgenda*',
+        'string:{table}_paginateConciliation*',
+        'string:{table}_paginateConciliationInvoices*',
     ];
 
     /**

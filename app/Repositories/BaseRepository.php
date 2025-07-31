@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Services\CacheService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class BaseRepository
 {
@@ -335,5 +336,72 @@ class BaseRepository
     public function getModelClass()
     {
         return get_class($this->model);
+    }
+
+
+    /**
+     * Inserta múltiples registros en lotes
+     *
+     * @param array $data Array de arrays con los datos a insertar
+     * @param int $batchSize Número de registros por lote (por defecto 1000)
+     * @return bool
+     */
+    public function insertBatch(array $data, int $batchSize = 1000): bool
+    {
+        if (empty($data)) {
+            return false;
+        }
+
+        // Dividir los datos en lotes
+        $batches = array_chunk($data, $batchSize);
+
+        foreach ($batches as $batch) {
+            // Insertar registros en el lote actual
+            if (!$this->model->newQuery()->insert($batch)) {
+                throw new \Exception('Failed to insert batch of records.');
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Actualiza múltiples registros con los mismos campos en lotes
+     *
+     * @param array $data Array de arrays con los datos a actualizar, cada uno debe incluir el 'id'
+     * @param int $batchSize Número de registros por lote (por defecto 1000)
+     * @return bool
+     */
+    public function updateBatch(array $data, int $batchSize = 1000): bool
+    {
+        if (empty($data)) {
+            return false;
+        }
+
+        // Validar que todos los registros tengan 'id'
+        $ids = array_column($data, 'id');
+        if (empty($ids)) {
+            throw new \Exception('Each item in the batch must contain an "id" field.');
+        }
+
+        // Obtener los valores a actualizar (tomar el primer registro como referencia)
+        $firstItem = reset($data);
+        $updates = Arr::except($firstItem, ['id']);
+
+        // Dividir los ids en lotes
+        $idBatches = array_chunk($ids, $batchSize);
+
+        foreach ($idBatches as $batchIds) {
+            // Actualizar registros en el lote actual
+            $affected = $this->model->whereIn('id', $batchIds)->update($updates);
+
+            // Verificar que se actualizaron los registros esperados
+            if ($affected !== count($batchIds)) {
+                throw new \Exception('Not all records in the batch were updated.');
+            }
+        }
+
+        return true;
     }
 }

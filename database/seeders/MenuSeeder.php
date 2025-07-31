@@ -114,6 +114,14 @@ class MenuSeeder extends Seeder
                 'icon' => 'users-group',
                 'requiredPermission' => 'reconciliationGroup.list'
             ],
+            [
+                'id' => 13,
+                'order' => 130,
+                'title' => 'Conciliaciones',
+                'to' => 'Conciliation-List',
+                'icon' => 'users-group',
+                'requiredPermission' => 'conciliation.list'
+            ],
         ];
 
         // Inicializar la barra de progreso

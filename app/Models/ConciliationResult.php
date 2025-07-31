@@ -2,20 +2,14 @@
 
 namespace App\Models;
 
-use App\Enums\SupportType\SupportTypeModuleEnum;
 use App\Traits\Cacheable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class SupportType extends Model
+class ConciliationResult extends Model
 {
     use HasUuids, SoftDeletes, Cacheable;
 
-    protected function casts(): array
-    {
-        return [
-            'module' => SupportTypeModuleEnum::class,
-        ];
-    }
+    protected $guarded=[];
 }

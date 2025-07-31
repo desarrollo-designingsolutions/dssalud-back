@@ -3,45 +3,118 @@
 namespace App\Http\Controllers;
 
 use App\Events\ImportProgressEvent;
-use App\Exports\ReconciliationGroup\ReconciliationGroupExcelExport;
+use App\Exports\Conciliation\ConciliationExcelExport;
+use App\Exports\Conciliation\ConciliationInvoicesExcelExport;
 use App\Helpers\Constants;
 use App\Http\Requests\Conciliation\ConciliationUploadFileRequest;
-use App\Http\Requests\ReconciliationGroup\ReconciliationGroupStoreRequest;
-use App\Http\Resources\ReconciliationGroup\ReconciliationGroupFormResource;
-use App\Http\Resources\ReconciliationGroup\ReconciliationGroupPaginateResource;
+use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
+use App\Http\Resources\Conciliation\ConciliationPaginateResource;
+use App\Http\Resources\Conciliation\ConciliationShowResource;
+use App\Models\ReconciliationGroupInvoice;
+use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
 use App\Services\Conciliation\ExcelStructureValidator;
 use App\Services\Conciliation\ExcelConciliationProcessor;
+use App\Services\ProcessBatchService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 use Maatwebsite\Excel\Facades\Excel;
-
 
 class ConciliationController extends Controller
 {
     use HttpResponseTrait;
 
     public function __construct(
+        protected ReconciliationGroupRepository $reconciliationGroupRepository,
+        protected ReconciliationGroupInvoiceRepository $reconciliationGroupInvoiceRepository,
         protected ExcelStructureValidator $excelStructureValidator,
         protected ExcelConciliationProcessor $excelConciliationProcessor,
     ) {}
 
+
+    public function paginateConciliation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $data = $this->reconciliationGroupRepository->paginateConciliation($request->all());
+            $tableData = ConciliationPaginateResource::collection($data);
+
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
+            ];
+        });
+    }
+
+    public function show($id)
+    {
+        try {
+            $reconciliationGroup = $this->reconciliationGroupRepository->find($id);
+            $form = new ConciliationShowResource($reconciliationGroup);
+
+            return response()->json([
+                'code' => 200,
+                'form' => $form,
+            ]);
+        } catch (Throwable $th) {
+
+            return response()->json(['code' => 500, $th->getMessage(), $th->getLine()]);
+        }
+    }
+
+    public function excelExportConciliation(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $request['typeData'] = 'all';
+
+            $data = $this->reconciliationGroupRepository->paginate($request->all());
+
+            $excel = Excel::raw(new ConciliationExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
+    }
+
+    public function paginateConciliationInvoices(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $data = $this->reconciliationGroupInvoiceRepository->paginateConciliationInvoices($request->all());
+            $tableData = ConciliationInvoicePaginateResource::collection($data);
+
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
+            ];
+        });
+    }
+
     public function uploadFile(ConciliationUploadFileRequest $request)
     {
-        $company_id = $request->input('company_id', '9e5aec58-a962-4670-8188-b41c6d0149a3');
+        $company_id = $request->input('company_id');
+        $user_id = $request->input('user_id');
 
-        $fullPath = public_path('Libro1.xlsx');
-        // $uploadedFile = $request->file('file');
+        // $fullPath = public_path('Libro1.xlsx');
+        $uploadedFile = $request->file('file');
 
-        // // Guardar archivo temporalmente
-        // $fileName = time() . '_' . $uploadedFile->getClientOriginalName();
-        // $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        // $fullPath = storage_path('app/public/' . $filePath);
+        // Guardar archivo temporalmente
+        $fileName = time() . '_' . $uploadedFile->getClientOriginalName();
+        $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
+        $fullPath = storage_path('app/public/' . $filePath);
 
         try {
             Log::info("🔍 [CONTROLLER] Starting validation for: {$fullPath}");
@@ -67,7 +140,8 @@ class ConciliationController extends Controller
             // Procesamiento asíncrono
             $result = $this->excelConciliationProcessor->processFile(
                 $fullPath,
-                $company_id
+                $company_id,
+                $user_id,
             );
 
             if (!$result['success']) {
@@ -143,5 +217,78 @@ class ConciliationController extends Controller
                 'message' => 'Error procesando el archivo: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+
+    public function getErrors(string $batchId)
+    {
+        try {
+            $errors = Cache::get("conciliation_errors_{$batchId}");
+
+            if (!$errors) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No se encontraron errores para este batch o ya expiraron'
+                ], 404);
+            }
+
+            $decodedErrors = $errors; // Ya no necesita json_decode
+            $errorCount = count($decodedErrors);
+
+            $recordsWithErrors = count(array_unique(array_column($decodedErrors, 'row')));
+
+            return response()->json([
+                'status' => 'success',
+                'total_errors' => $errorCount,
+                'records_with_errors' => $recordsWithErrors,
+                'errors' => $decodedErrors,
+                'count' => $errorCount,
+                'cache_driver' => config('cache.default') // Info adicional
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al recuperar errores: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function showErrors(string $batchId, Request $request)
+    {
+        $page = $request->get('page', 1);
+        $perPage = min($request->get('per_page', 200), 500); // Máximo 500 por página
+
+        try {
+            $result = ProcessBatchService::getErrors($batchId, $page, $perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $result['data'],
+                'meta' => $result['meta']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar los errores'
+            ], 500);
+        }
+    }
+
+    public function excelExportConciliationInvoices(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $request['typeData'] = 'all';
+
+            $data = $this->reconciliationGroupInvoiceRepository->paginateConciliationInvoices($request->all());
+
+            $excel = Excel::raw(new ConciliationInvoicesExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+            $excelBase64 = base64_encode($excel);
+
+            return [
+                'code' => 200,
+                'excel' => $excelBase64,
+            ];
+        });
     }
 }

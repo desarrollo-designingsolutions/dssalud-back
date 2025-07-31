@@ -14,7 +14,43 @@ class ExcelStructureValidator
 
     public function validate($filePath)
     {
-        $expectedHeaders = ['NRO', 'PDF', 'SOLVENTE'];
+        $expectedHeaders = [
+            "ID", //obligatorio
+            "FACTURA_ID", //obligatorio
+            "SERVICIO_ID",
+            "ORIGIN",
+            "NIT",
+            "RAZON_SOCIAL",
+            "NUMERO_FACTURA",
+            "FECHA_INICIO",
+            "FECHA_FIN",
+            "MODALIDAD",
+            "REGIMEN",
+            "COBERTURA",
+            "CONTRATO",
+            "TIPO_DOCUMENTO",
+            "NUMERO_DOCUMENTO",
+            "PRIMER_NOMBRE",
+            "SEGUNDO_NOMBRE",
+            "PRIMER_APELLIDO",
+            "SEGUNDO_APELLIDO",
+            "GENERO",
+            "CODIGO_SERVICIO",
+            "DESCRIPCION_SERVICIO",
+            "CANTIDAD_SERVICIO",
+            "VALOR_UNITARIO_SERVICIO",
+            "VALOR_TOTAL_SERVICIO",
+            "CODIGOS_GLOSA",
+            "OBSERVACIONES_GLOSAS",
+            "VALOR_GLOSA",
+            "VALOR_APROBADO",
+            "ESTADO_RESPUESTA", // obligatorio
+            "NUMERO_DE_AUTORIZACION",
+            "VALOR_ACEPTADO_IPS", //obligatorio
+            "VALOR_ACEPTADO_EPS", //obligatorio
+            "VALOR_RATIFICADO_EPS", //obligatorio
+            "OBSERVACIONES", //obligatorio
+        ];
 
         try {
             $sheets = Excel::toArray([], $filePath, null, \Maatwebsite\Excel\Excel::XLSX);

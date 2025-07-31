@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SupportType\SupportTypeModuleEnum;
 use App\Helpers\Constants;
 use App\Models\SupportType;
 use Illuminate\Database\Seeder;
@@ -15,14 +16,50 @@ class SupportTypeSeeder extends Seeder
     {
         $arrayData = [
             [
-                'code' => '001',
+                'code' => 'f',
                 'company_id' => Constants::COMPANY_UUID,
                 'name' => 'Facturas',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_001->value,
             ],
             [
-                'code' => '002',
+                'code' => 's',
                 'company_id' => Constants::COMPANY_UUID,
                 'name' => 'Historia clinica',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_001->value,
+            ],
+            [
+                'code' => '003',
+                'company_id' => Constants::COMPANY_UUID,
+                'name' => 'GF-F-16 Acta de conciliación PDF',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_002->value,
+
+            ],
+            [
+                'code' => '004',
+                'company_id' => Constants::COMPANY_UUID,
+                'name' => 'GF-F-16 Acta de conciliación EXCEL',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_002->value,
+
+            ],
+            [
+                'code' => '005',
+                'company_id' => Constants::COMPANY_UUID,
+                'name' => 'Acta de reunión',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_002->value,
+
+            ],
+            [
+                'code' => '006',
+                'company_id' => Constants::COMPANY_UUID,
+                'name' => 'Sabana',
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_002->value,
+
+            ],
+            [
+                'code' => '007',
+                'company_id' => Constants::COMPANY_UUID,
+                'module' => SupportTypeModuleEnum::SUPPORT_TYPE_MODULE_002->value,
+                'name' => 'Otros',
             ],
 
         ];
@@ -32,7 +69,11 @@ class SupportTypeSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $key => $value) {
-            $data = new SupportType;
+            $data = SupportType::where("code", $value['code'])->first();
+            if (! $data) {
+                $data = new SupportType;
+            }
+
             $data->code = $value['code'];
             $data->company_id = $value['company_id'];
             $data->name = $value['name'];
