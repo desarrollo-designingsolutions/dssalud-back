@@ -123,10 +123,8 @@ class ProcessChunkJob implements ShouldQueue
                 }
             });
 
-             logMessage("batch in handle");
-            logMessage($this->batch()->finished());
 
-            $this->checkIfCompleted($batchMetadata);
+            // $this->checkIfCompleted($batchMetadata);// ya no se usaria ya que esta en el callback del batch inicial
         } catch (\Exception $e) {
             Cache::increment("batch_total_errors_{$this->batch()->id}", 1);
             throw $e;
@@ -165,12 +163,10 @@ class ProcessChunkJob implements ShouldQueue
     protected function checkIfCompleted(array $batchMetadata): void
     {
         $batch = $this->batch();
-            logMessage("batch in checkIfCompleted");
-            logMessage($batch->finished());
 
 
         if ($batch->pendingJobs <= 1) {
-        // if ($batch->finished()) {
+            // if ($batch->finished()) {
             $finalProcessedRecords = Cache::get("batch_processed_{$batch->id}", $this->totalRecords);
             $finalTotalErrors = Cache::get("batch_total_errors_{$batch->id}", 0);
             $finalRecordsWithErrors = Cache::get("batch_records_with_errors_{$batch->id}", 0);
@@ -196,7 +192,6 @@ class ProcessChunkJob implements ShouldQueue
                 $metadata
             ));
 
-            logMessage("aaaaaa");
 
 
             if ($finalTotalErrors > 0) {
@@ -204,20 +199,16 @@ class ProcessChunkJob implements ShouldQueue
                 ProcessBatchService::saveErrors($this->batch()->id, $allErrors);
             }
 
-            logMessage(000000);
 
             // Guardar en la base de datos si no hay errores
             if ($finalTotalErrors == 0) {
-                logMessage(1111);
                 $dataExcel = Cache::get("batch_data_excel_{$batch->id}", []);
                 if (empty($dataExcel)) {
                     Log::warning("No data found in cache for batch_id: {$batch->id}");
                 } else {
-                    logMessage(2222);
 
                     foreach (array_chunk($dataExcel, 1000) as $batchIndex => $chunk) {
                         $insertData = [];
-                        logMessage(33333);
 
                         foreach ($chunk as $row) {
                             if ($formattedRow = array_combine($this->headers, $row)) {
@@ -244,8 +235,6 @@ class ProcessChunkJob implements ShouldQueue
 
                         if (!empty($insertData)) {
                             try {
-                                logMessage(4444);
-                                logMessage($insertData);
 
                                 // DB::transaction(function () use ($insertData, $batch, $batchIndex) {
                                 \App\Models\ConciliationResult::insert($insertData);

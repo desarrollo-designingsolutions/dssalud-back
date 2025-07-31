@@ -13,10 +13,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
+use Illuminate\Support\Str;
+
 
 class ExcelConciliationProcessor
 {
     protected $chunkSize = Constants::CHUNKSIZE;
+    protected $headers;
 
     public function processFile(
         string $filePath,
@@ -63,7 +66,7 @@ class ExcelConciliationProcessor
 
             // PASO 2: Crear los jobs con el total correcto
             foreach ($sheets as $sheetIndex => $sheet) {
-                $headers = $this->normalizeHeaders($sheet[0]);
+                $this->headers = $this->normalizeHeaders($sheet[0]);
                 $dataRows = array_slice($sheet, 1);
                 $chunks = array_chunk($dataRows, $this->chunkSize);
 
@@ -73,7 +76,7 @@ class ExcelConciliationProcessor
                     $batchJobs[] = new ProcessChunkJob(
                         $companyId,
                         $user_id,
-                        $headers,
+                        $this->headers,
                         $chunk,
                         $sheetIndex,
                         $chunkIndex,
@@ -91,10 +94,68 @@ class ExcelConciliationProcessor
                 // ->onQueue('imports') // Cola específica
                 ->allowFailures()
                 ->then(function (Batch $batch) {
+
+                    // All jobs completed successfully...
+                    $finalTotalErrors = Cache::get("batch_total_errors_{$batch->id}", 0);
+
+                    if ($finalTotalErrors == 0) {
+                        $dataExcel = Cache::get("batch_data_excel_{$batch->id}", []);
+                        if (empty($dataExcel)) {
+                            Log::warning("No data found in cache for batch_id: {$batch->id}");
+                        } else {
+
+                            foreach (array_chunk($dataExcel, 1000) as $batchIndex => $chunk) {
+                                $insertData = [];
+
+                                foreach ($chunk as $row) {
+                                    if ($formattedRow = array_combine($this->headers, $row)) {
+                                        $formattedRow = array_map('trim', $formattedRow);
+                                        $insertData[] = [
+                                            'id' =>  Str::uuid(),
+                                            'auditory_final_report_id' => $formattedRow['ID'] ?? null,
+                                            'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
+                                            'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
+                                            'accepted_value_ips' => (float) $formattedRow['VALOR_ACEPTADO_IPS'],
+                                            'accepted_value_eps' => (float) $formattedRow['VALOR_ACEPTADO_EPS'],
+                                            'eps_ratified_value' => (float) $formattedRow['VALOR_RATIFICADO_EPS'],
+                                            'created_at' => now(),
+                                            'updated_at' => now(),
+                                        ];
+                                    } else {
+                                        Log::error("Invalid row data: headers and row length mismatch", [
+                                            'batch_id' => $batch->id,
+                                            'row' => $row,
+                                            'headers' => $this->headers,
+                                        ]);
+                                    }
+                                }
+
+                                if (!empty($insertData)) {
+                                    try {
+
+                                        // DB::transaction(function () use ($insertData, $batch, $batchIndex) {
+                                        \App\Models\ConciliationResult::insert($insertData);
+                                        // });
+                                        Log::info("Successfully inserted batch {$batchIndex} with " . count($insertData) . " records for batch_id: {$batch->id}");
+                                    } catch (\Exception $e) {
+                                        Log::error("Failed to insert batch {$batchIndex} for batch_id: {$batch->id}", [
+                                            'error' => $e->getMessage(),
+                                            'batch_size' => count($insertData),
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // $batch = Bus::batch($batchJobs)
+                    //     ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
+                    //     // ->onQueue('imports') // Cola específica
+                    //     ->allowFailures()
+                    //     ->dispatch();
                     // Log::info("✅ [then]");
                     // Log::info($batch);
 
-                    // All jobs completed successfully...
                 })->catch(function (Batch $batch, Throwable $e) {
                     // Log::info("✅ [catch]");
                     // Log::info($e);
