@@ -44,10 +44,10 @@ class ProcessChunkJob implements ShouldQueue
 
 
             $cacheKey = "batch_data_excel_{$this->batch()->id}";
-            $lock = Cache::lock("lock_{$cacheKey}", 10);
+            $lock = Cache::lock("lock_{$cacheKey}", 30);
 
             try {
-                $lock->block(5); // Espera hasta 5 segundos para obtener el bloqueo
+                $lock->block(30); // Espera hasta 5 segundos para obtener el bloqueo
                 $existingRows = Cache::get($cacheKey, []);
                 $newRows = array_merge($existingRows, $this->rows);
                 Cache::put($cacheKey, $newRows, now()->addHours(2));
