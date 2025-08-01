@@ -55,7 +55,7 @@ class ConciliationValidator
         // Validación de integridad de datos
         if ($this->validationRules['data_integrity'] || $this->validationRules['cross_amount_validation']) {
             if (isset($row['ID']) && !empty($row['ID'])) {
-                $cacheKey = "auditory_report:{$row['ID']}";
+                $cacheKey = "auditory_report:{$row['ID']}". ":{$this->batchId}";
 
                 $reportData = Cache::remember($cacheKey, self::CACHE_TTL_MINUTES, function () use ($row) {
                     try {

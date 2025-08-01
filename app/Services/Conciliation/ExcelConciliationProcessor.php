@@ -4,6 +4,7 @@ namespace App\Services\Conciliation;
 
 use App\Helpers\Constants;
 use App\Jobs\Conciliation\ProcessChunkJob;
+use App\Models\ProcessBatch;
 use App\Services\ProcessBatchService;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Artisan;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 use Illuminate\Support\Str;
@@ -91,9 +93,24 @@ class ExcelConciliationProcessor
             // USAR COLA ESPECÍFICA PARA IMPORTACIONES
             $batch = Bus::batch($batchJobs)
                 ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
-                // ->onQueue('imports') // Cola específica
+                ->onQueue('imports') // Cola específica
                 ->allowFailures()
                 ->then(function (Batch $batch) {
+
+
+                    $metadata_path = ProcessBatchService::saveMetaData($batch->id);
+
+                    $processBatch = ProcessBatch::where("batch_id", $batch->id)->first();
+                    $processBatch->status = "completed";
+                    $processBatch->metadata_path = $metadata_path["path"];
+                    $processBatch->save();
+
+
+                    //          if ($finalTotalErrors > 0) {
+                    //     $allErrors = Cache::get("conciliation_errors_{$batch->id}");
+                    //     ProcessBatchService::saveErrors($this->batch()->id, $allErrors);
+                    // }
+
 
                     // All jobs completed successfully...
                     $finalTotalErrors = Cache::get("batch_total_errors_{$batch->id}", 0);
@@ -147,15 +164,6 @@ class ExcelConciliationProcessor
                             }
                         }
                     }
-
-                    // $batch = Bus::batch($batchJobs)
-                    //     ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
-                    //     // ->onQueue('imports') // Cola específica
-                    //     ->allowFailures()
-                    //     ->dispatch();
-                    // Log::info("✅ [then]");
-                    // Log::info($batch);
-
                 })->catch(function (Batch $batch, Throwable $e) {
                     // Log::info("✅ [catch]");
                     // Log::info($e);

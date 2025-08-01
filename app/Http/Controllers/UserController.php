@@ -6,11 +6,13 @@ use App\Helpers\Constants;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Resources\User\UserFormResource;
 use App\Http\Resources\User\UserPaginateResource;
+use App\Models\ProcessBatch;
 use App\Repositories\CompanyRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -133,7 +135,7 @@ class UserController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'User '.$msg.' con éxito',
+                'message' => 'User ' . $msg . ' con éxito',
             ];
         });
     }
@@ -164,7 +166,7 @@ class UserController extends Controller
             // Cambiar la photo
             if ($request->file('photo')) {
                 $file = $request->file('photo');
-                $ruta = 'companies/company_'.$user->company_id.'/'.$user->id.$request->input('photo');
+                $ruta = 'companies/company_' . $user->company_id . '/' . $user->id . $request->input('photo');
                 $photo = $file->store($ruta, Constants::DISK_FILES);
                 $user->photo = $photo;
                 $user->save();
@@ -176,5 +178,69 @@ class UserController extends Controller
                 'photo' => $user->photo,
             ];
         });
+    }
+
+
+    public function getUserProcesses(Request $request, $id)
+    {
+        $processes = ProcessBatch::where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($batch) {
+
+                if ($batch->status == 'completed') {
+                    $progress = 100;
+                } else {
+
+                    $progress = $batch->total_records > 0 ? ($batch->processed_records / $batch->total_records) * 100 : 0;
+                }
+
+                $metadata = json_decode(Storage::disk(Constants::DISK_FILES)->get($batch->metadata_path), true);
+
+                return [
+                    'batch_id' => $batch->batch_id,
+                    'file_name' => $metadata ? $metadata["file_name"] : 'Archivo desconocido',
+                    'progress' => round($progress, 2),
+                    'status' => $batch->status,
+                    'started_at' => $batch->created_at->toIso8601String(),
+                    'completed_at' => in_array($batch->status, ['completed', 'error']) ? $batch->updated_at->toIso8601String() : null,
+                    'metadata' => [
+                        'total_records' => $batch->total_records,
+                        'processed_records' => $batch->processed_records,
+                        'errors_count' => $batch->error_count,
+                        'processing_start_time' => $batch->created_at->toIso8601String(),
+                        'connection_status' => $batch->error_count,
+                    ],
+                ];
+            });
+
+
+        //   progress: number
+        //   current_student: string
+        //   current_action: string
+        //   status: "active" | "completed" | "error" | "queued"
+        //   started_at?: string
+        //   completed_at?: string
+        //   websocket_channel?: any
+        //   // ✅ METADATA DETALLADA
+        //   metadata?: {
+        //     total_records?: number
+        //     processed_records?: number
+        //     current_sheet?: number
+        //     total_sheets?: number
+        //     errors_count?: number
+        //     warnings_count?: number
+        //     processing_speed?: number // registros por segundo
+        //     estimated_time_remaining?: number // en segundos
+        //     file_size?: number // en bytes
+        //     connection_status?: "connected" | "connecting" | "reconnecting" | "error" | "disconnected"
+        //     last_activity?: string
+        //     memory_usage?: number
+        //     cpu_usage?: number
+        //     processing_start_time?: string
+        //   }
+        // }
+
+        return response()->json(['processes' => $processes], 200);
     }
 }

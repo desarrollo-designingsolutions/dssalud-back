@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\Constants;
 use App\Models\ProcessBatch;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -14,13 +15,16 @@ class ProcessBatchService
 
     public static function initProcess(string $batchId, string $companyId, string $user_id, int $totalRecords)
     {
+        $processBatch = ProcessBatch::where("status", "active")->where("user_id", $user_id)->count();
+
+        $status = $processBatch > 0 ? "queued" : "active";
         // Crear registro en BD
         $log = ProcessBatch::create([
             'batch_id' => $batchId,
             'company_id' => $companyId,
             'user_id' => $user_id,
             'total_records' => $totalRecords,
-            'status' => 'processing',
+            'status' => $status, //active / queued
             'errors_root_path' => '', // Se actualizará luego
             'metadata_path' => '', // Se actualizará luego
         ]);
@@ -38,18 +42,8 @@ class ProcessBatchService
                 ? self::BASE_PATH . "/{$batchId}/errors/"
                 : self::BASE_PATH . "/{$batchId}/errors.json";
 
-            // 1. Guardar en archivo (como antes)
-            $metadata = [
-                'batch_id' => $batchId,
-                'total_errors' => $totalErrors,
-                'has_chunks' => $needsChunking,
-                'created_at' => now()->toDateTimeString()
-            ];
 
-            $metadata_path = Storage::disk(Constants::DISK_FILES)->put(
-                self::BASE_PATH . "/{$batchId}/metadata.json",
-                json_encode($metadata, JSON_PRETTY_PRINT)
-            );
+            $metadata_path = self::saveMetaData($batchId);
 
             if ($needsChunking) {
                 self::saveChunkedErrors($batchId, $errors);
@@ -66,7 +60,7 @@ class ProcessBatchService
             $log->update([
                 'error_count' => $totalErrors,
                 'errors_root_path' => $errors_root_path,
-                'metadata_path' => $metadata_path,
+                'metadata_path' => $metadata_path["path"],
                 'status' => $totalErrors > 0 ? 'completed_with_errors' : 'completed'
             ]);
 
@@ -81,6 +75,31 @@ class ProcessBatchService
             Log::error("Error guardando proceso: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    public static function saveMetaData($batchId)
+    {
+        $totalErrors = Cache::get("conciliation_errors_{$batchId}");
+        $needsChunking = $totalErrors > ProcessBatchService::CHUNK_SIZE;
+
+        $batchMetadata = Cache::get("batch_metadata_{$batchId}");
+
+        $metadata = [
+            'batch_id' => $batchId,
+            'total_errors' => $totalErrors,
+            'has_chunks' => $needsChunking,
+            'file_name' => $batchMetadata["file_name"],
+            'created_at' => now()->toDateTimeString()
+        ];
+
+        $metadata_path = Storage::disk(Constants::DISK_FILES)->put(
+            self::BASE_PATH . "/{$batchId}/metadata.json",
+            json_encode($metadata, JSON_PRETTY_PRINT)
+        );
+        return [
+            "success" => $metadata_path,
+            "path" => self::BASE_PATH . "/{$batchId}/metadata.json",
+        ];
     }
 
     protected static function countErrorTypes(array $errors): array
@@ -123,12 +142,12 @@ class ProcessBatchService
     public static function getErrors(string $batchId, int $page = 1, int $perPage = 200)
     {
 
-        $processBatch= ProcessBatch::where("batch_id",$batchId)->first();
+        $processBatch = ProcessBatch::where("batch_id", $batchId)->first();
 
-    //    return $metadata = json_decode(
-    //         Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/metadata.json"),
-    //         true
-    //     );
+        //    return $metadata = json_decode(
+        //         Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/metadata.json"),
+        //         true
+        //     );
 
         // Caso 1: Archivo único (<= 1k errores)
         if (!$processBatch['has_chunks']) {
