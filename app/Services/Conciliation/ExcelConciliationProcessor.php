@@ -90,12 +90,51 @@ class ExcelConciliationProcessor
 
             // Log::info("🚀 [PROCESSOR] Creando batch con " . count($batchJobs) . " jobs");
 
+            // Definir un conjunto de colas disponibles
+            $availableQueues = [
+                'imports_1',
+                'imports_2',
+                'imports_3',
+                'imports_4',
+                'imports_5',
+            ];
+
+            // Obtener colas en uso desde la caché
+            $usedQueues = Cache::get('used_queues', []);
+
+            // Obtener colas en uso desde la caché
+            $usedQueues = Cache::get('used_queues', []);
+
+            // Seleccionar una cola que no esté en uso
+            $selectedQueue = null;
+            foreach ($availableQueues as $queue) {
+                if (!in_array($queue, $usedQueues)) {
+                    $selectedQueue = $queue;
+                    break;
+                }
+            }
+
+            // Si no hay colas disponibles, puedes manejar este caso según tus necesidades
+            if (!$selectedQueue) {
+                throw new \Exception("No hay colas disponibles en este momento.");
+            }
+
+            // Marcar la cola como en uso
+            Cache::put('used_queues', array_merge($usedQueues, [$selectedQueue]), now()->addHours(2));
+
+
+
             // USAR COLA ESPECÍFICA PARA IMPORTACIONES
             $batch = Bus::batch($batchJobs)
                 ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
-                ->onQueue('imports') // Cola específica
+                ->onQueue($selectedQueue)
                 ->allowFailures()
                 ->then(function (Batch $batch) {
+
+                    // Liberar la cola una vez que el lote se haya completado
+                    $usedQueues = Cache::get('used_queues', []);
+                    $usedQueues = array_diff($usedQueues, [$batch->queue]);
+                    Cache::put('used_queues', $usedQueues, now()->addHours(2));
 
 
                     $metadata_path = ProcessBatchService::saveMetaData($batch->id);
