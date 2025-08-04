@@ -25,14 +25,14 @@ class ConciliationValidator
 
     // Campos obligatorios explícitos
     protected $requiredFields = [
-        'ID',
-        'FACTURA_ID',
-        'ESTADO_RESPUESTA',
-        'NUMERO_DE_AUTORIZACION',
-        'VALOR_ACEPTADO_IPS',
-        'VALOR_ACEPTADO_EPS',
-        'VALOR_RATIFICADO_EPS',
-        'OBSERVACIONES',
+        // 'ID',
+        // 'FACTURA_ID',
+        // 'ESTADO_RESPUESTA',
+        // 'NUMERO_DE_AUTORIZACION',
+        // 'VALOR_ACEPTADO_IPS',
+        // 'VALOR_ACEPTADO_EPS',
+        // 'VALOR_RATIFICADO_EPS',
+        // 'OBSERVACIONES',
     ];
 
     // Clave para almacenar el conteo de facturas en cache (para DB counts)
