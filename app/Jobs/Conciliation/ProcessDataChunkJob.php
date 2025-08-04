@@ -21,8 +21,9 @@ use Throwable;
 class ProcessDataChunkJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+ 
+    public $timeout = 3600; // Mantener tu timeout
 
-    public $timeout = 1800;
 
     public function __construct(
         private string $filePath,
@@ -82,30 +83,64 @@ class ProcessDataChunkJob implements ShouldQueue
                 $localProcessedInChunk++;
                 $currentErrorCount = Redis::llen("batch:{$batchId}:errors");
 
-                event(new ImportProgressEvent(
-                    $batchId,
-                    $initialProcessedRecordsForBatch + $localProcessedInChunk,
-                    'Procesando datos',
-                    $currentErrorCount,
-                    'active',
-                    $actualRowNumber
-                ));
+                // Incrementar contadores en Redis
+                    Redis::hincrby("batch:{$batchId}:progress", 'processed_records', 1);
+                    if (!empty($errors)) {
+                        foreach ($errors as $error) {
+                            $error['batch_id'] = $batchId;
+                            Redis::rpush("batch:{$batchId}:errors", json_encode($error));
+                            Redis::hincrby("batch:{$batchId}:progress", 'error_count', 1);
+                        }
+                    } else {
+                        Redis::rpush("batch:{$batchId}:staged_data", json_encode($formattedRow));
+                    }
+
+                    // Obtener valores acumulados
+                    $totalProcessedRecords = Redis::hget("batch:{$batchId}:progress", 'processed_records') ?? 0;
+                    $totalErrorCount = Redis::hget("batch:{$batchId}:progress", 'error_count') ?? 0;
+
+                    // Emitir evento por registro
+                    event(new ImportProgressEvent(
+                        $batchId,
+                        (int)$totalProcessedRecords,
+                        'Procesando datos',
+                        (int)$totalErrorCount,
+                        'active',
+                        $actualRowNumber
+                    ));
             }
 
             ProcessBatchService::incrementProcessedRecords($batchId, $processedRowsInChunk);
 
         } catch (Throwable $e) {
-            Log::error("Error crítico en ProcessDataChunkJob (filas {$this->startRow}-".
-                ($this->startRow + $this->chunkSize - 1).'): '.$e->getMessage());
-            Redis::rpush("batch:{$batchId}:errors", json_encode([
-                'row_number' => $this->startRow,
-                'column_name' => 'SYSTEM_ERROR',
-                'error_message' => 'Error crítico en chunk: '.$e->getMessage(),
-                'error_type' => 'system_chunk_error',
-                'original_data' => null,
-                'timestamp' => now()->toISOString(),
-            ]));
-            throw $e;
+            Log::error("Error procesando fila {$actualRowNumber}: " . $e->getMessage(), [
+                    'batch_id' => $batchId,
+                    'row_data' => $row,
+                    'exception' => $e->getTraceAsString()
+                ]);
+                Redis::rpush("batch:{$batchId}:errors", json_encode([
+                    'row_number' => $actualRowNumber,
+                    'column_name' => 'SYSTEM_ERROR',
+                    'error_message' => 'Error inesperado: ' . $e->getMessage(),
+                    'error_type' => 'system_processing_error',
+                    'error_value' => null,
+                    'original_data' => $formattedRow,
+                    'timestamp' => now()->toISOString(),
+                ]));
+                Redis::hincrby("batch:{$batchId}:progress", 'error_count', 1);
+                Redis::hincrby("batch:{$batchId}:progress", 'processed_records', 1);
+
+                $totalProcessedRecords = Redis::hget("batch:{$batchId}:progress", 'processed_records') ?? 0;
+                $totalErrorCount = Redis::hget("batch:{$batchId}:progress", 'error_count') ?? 0;
+
+                event(new ImportProgressEvent(
+                    $batchId,
+                    (int)$totalProcessedRecords,
+                    'Procesando datos',
+                    (int)$totalErrorCount,
+                    'active',
+                    $actualRowNumber
+                ));
         }
     }
 

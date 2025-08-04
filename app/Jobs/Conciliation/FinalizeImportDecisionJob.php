@@ -35,6 +35,7 @@ class FinalizeImportDecisionJob implements ShouldQueue
         $finalErrorCount = 0; // Inicializar aquí para asegurar que siempre tenga un valor
 
         try {
+            log::info("FinalizeImportDecisionJob iniciado para batch {$batchIdToUse}");
             // Obtener el registro ProcessBatch para acceder a todos los datos necesarios
             $processBatchRecord = ProcessBatch::where('batch_id', $batchIdToUse)->first();
             $totalRecords = $processBatchRecord ? $processBatchRecord->total_records : 0;
@@ -42,6 +43,9 @@ class FinalizeImportDecisionJob implements ShouldQueue
 
             // Obtener la cuenta de errores acumulados hasta ahora (antes de la validación final)
             $initialRedisErrorCount = Redis::llen("batch:{$batchIdToUse}:errors");
+
+            log::info("FinalizeImportDecisionJob: Procesando batch {$batchIdToUse} con {$processedRecords} registros procesados y {$initialRedisErrorCount} errores acumulados.");
+
 
             // Emitir evento de progreso: Finalizando
             event(new ImportProgressEvent(
@@ -52,6 +56,7 @@ class FinalizeImportDecisionJob implements ShouldQueue
                 'finalizing', // backendStatus
                 $processedRecords // currentElement (último registro procesado)
             ));
+            Log::info("message: Finalizando importación para batch {$batchIdToUse}");
 
             // Ejecutar validaciones finales que puedan añadir más errores a Redis
             $conciliationValidator = new ConciliationValidator($batchIdToUse);

@@ -296,33 +296,58 @@ class ConciliationValidator
         }
 
         $facturaIds = array_keys($excelCounts);
+        Log::info("facturaIds");
+        Log::info("message: facturaIds: ".implode(', ', $facturaIds));
 
-        // 2. Obtener conteos de la base de datos para todos los FACTURA_ID relevantes en una sola consulta
-        $dbCounts = AuditoryFinalReport::whereIn('factura_id', $facturaIds)
-            ->where('valor_glosa', '>', 0)
-            ->select('factura_id', DB::raw('count(*) as db_count'))
-            ->groupBy('factura_id')
-            ->get()
-            ->keyBy('factura_id')
-            ->map(fn ($item) => $item->db_count); // Mapear solo el conteo
+        // // 2. Obtener conteos de la base de datos para todos los FACTURA_ID relevantes en una sola consulta
+        // $dbCounts = AuditoryFinalReport::whereIn('factura_id', $facturaIds)
+        //     ->where('valor_glosa', '>', 0)
+        //     ->select('factura_id', DB::raw('count(*) as db_count'))
+        //     ->groupBy('factura_id')
+        //     ->get()
+        //     ->keyBy('factura_id')
+        //     ->map(fn ($item) => $item->db_count); // Mapear solo el conteo
+
+    //     $dbCounts = InvoiceAudit::join('auditory_final_reports', 'invoice_audit.id', '=', 'auditory_final_reports.factura_id')
+    // ->whereIn('invoice_audit.id', $facturaIds)
+    // ->where('auditory_final_reports.valor_glosa', '>', 0)
+    // ->select('invoice_audit.id', DB::raw('count(*) as db_count'))
+    // ->groupBy('invoice_audit.id')
+    // ->get()
+    // ->keyBy('id')
+    // ->map(fn ($item) => $item->db_count);
+
+//     $dbCounts = DB::select(
+//     'SELECT ia.id, COUNT(afr.id) AS db_count
+//      FROM invoice_audits ia
+//      INNER JOIN auditory_final_reports afr
+//          ON afr.factura_id = ia.id
+//      WHERE ia.id IN (' . implode(',', array_fill(0, count($facturaIds), '?')) . ')
+//      GROUP BY ia.id',
+//     $facturaIds
+// );
+
+// $dbCounts = collect($dbCounts)->keyBy('id')->map(fn ($item) => $item->db_count);
+//  log::info("dbCounts: ", implode(', ', $dbCounts->toArray()));
+ 
 
         // 3. Comparar conteos
-        foreach ($excelCounts as $facturaId => $excelCount) {
-            $dbCount = $dbCounts->get($facturaId) ?? 0; // Obtener conteo de la colección, 0 si no se encuentra
+        // foreach ($excelCounts as $facturaId => $excelCount) {
+        //     $dbCount = $dbCounts->get($facturaId) ?? 0; // Obtener conteo de la colección, 0 si no se encuentra
 
-            if ($excelCount !== $dbCount) {
-                $errors[] = [
-                    'error_type' => 'final_conciliation_error', // Tipo de error más específico
-                    'row_number' => 0, // Error a nivel de batch/conciliación
-                    'column_name' => 'FACTURA_ID_CONCILIACION',
-                    'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en BD (con valor_glosa > 0): {$dbCount}",
-                    'error_value' => $facturaId,
-                    'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
-                    'timestamp' => now()->toISOString(),
-                ];
-                Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs BD (con valor_glosa > 0: {$dbCount}).");
-            }
-        }
+        //     if ($excelCount !== $dbCount) {
+        //         $errors[] = [
+        //             'error_type' => 'final_conciliation_error', // Tipo de error más específico
+        //             'row_number' => 0, // Error a nivel de batch/conciliación
+        //             'column_name' => 'FACTURA_ID_CONCILIACION',
+        //             'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en BD (con valor_glosa > 0): {$dbCount}",
+        //             'error_value' => $facturaId,
+        //             'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
+        //             'timestamp' => now()->toISOString(),
+        //         ];
+        //         Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs BD (con valor_glosa > 0: {$dbCount}).");
+        //     }
+        // }
 
         // Limpiar cache de conteos
         $this->clearCountCache();

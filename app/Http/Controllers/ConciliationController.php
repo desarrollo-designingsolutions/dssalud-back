@@ -163,7 +163,7 @@ class ConciliationController extends Controller
         $batch = Bus::batch($initialJobs)
             ->name('ProcessConciliation_'.now()->format('Y-m-d_H-i-s'))
             ->onQueue($selectedQueue)
-            // ->allowFailures()
+            ->allowFailures()
             ->before(function (Batch $batch) use ($fullPath, $totalRows, $originalFileName, $fileSize) {
 
                 // Guardar totalRows en Redis usando tu ID temporal
