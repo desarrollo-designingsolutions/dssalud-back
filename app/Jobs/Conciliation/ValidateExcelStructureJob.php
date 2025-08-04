@@ -51,19 +51,15 @@ class ValidateExcelStructureJob implements ShouldQueue
             $config = array_merge($defaultConfig, $this->validationConfig);
 
             $validationRules = [
-                'ID' => ['required' => true], 'FACTURA_ID' => ['required' => true],
-                'NIT' => ['required' => true, 'numeric' => ['min' => 1000, 'max' => 999999999999]],
-                'NUMERO_DOCUMENTO' => ['required' => true, 'numeric' => ['min' => 1000000, 'max' => 9999999999]],
-                'FECHA_INICIO' => ['required' => true, 'date' => ['format' => 'm/d/Y']],
-                'FECHA_FIN' => ['required' => true, 'date' => ['format' => 'm/d/Y']],
-                'VALOR_UNITARIO_SERVICIO' => ['required' => true, 'numeric' => ['min' => 0]],
-                'VALOR_TOTAL_SERVICIO' => ['required' => true, 'numeric' => ['min' => 0]],
+                'ID' => ['required' => true],
+                'FACTURA_ID' => ['required' => true],
+                'SERVICIO_ID' => ['required' => true],
                 'ESTADO_RESPUESTA' => ['required' => true],
-                'VALOR_ACEPTADO_IPS' => ['required' => true, 'numeric' => ['min' => 0]],
-                'VALOR_ACEPTADO_EPS' => ['required' => true, 'numeric' => ['min' => 0]],
-                'VALOR_RATIFICADO_EPS' => ['required' => true, 'numeric' => ['min' => 0]],
-                'GENERO' => ['required' => true, 'in' => ['M', 'F', 'MASCULINO', 'FEMENINO']],
+                'VALOR_ACEPTADO_IPS' => ['required' => true],
+                'VALOR_ACEPTADO_EPS' => ['required' => true],
+                'VALOR_RATIFICADO_EPS' => ['required' => true],
                 'OBSERVACIONES' => ['required' => true],
+
             ];
 
             if ($config['validate_headers'] && ! $config['validate_data']) {
