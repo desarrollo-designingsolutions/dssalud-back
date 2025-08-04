@@ -17,6 +17,9 @@ Route::get('/conciliation/errors/{batchId}', [ConciliationController::class, 'ge
 
 // $prefix = $prefix .'1032365030/1032365030-JSE933/';
 
+Route::get('/phpinfo', function () {
+    phpinfo();
+});
 Route::get('/', function () {
 
     // $user = User::find("9e601862-728e-42a1-9efb-b46efaf731ba");
