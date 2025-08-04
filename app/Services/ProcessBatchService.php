@@ -2,219 +2,123 @@
 
 namespace App\Services;
 
-use App\Helpers\Constants;
 use App\Models\ProcessBatch;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class ProcessBatchService
 {
     const CHUNK_SIZE = 1000;
+
     const BASE_PATH = 'process_logs';
 
-    public static function initProcess(string $batchId, string $companyId, string $user_id, int $totalRecords)
-    {
-        $processBatch = ProcessBatch::where("status", "active")->where("user_id", $user_id)->count();
+    const REDIS_USED_QUEUES_KEY = 'import_system:used_queues';
 
-        $status = $processBatch > 0 ? "queued" : "active";
-        // Crear registro en BD
+    public static function initProcess(string $batchId, string $companyId, string $user_id, int $totalRecords, array $metadata)
+    {
+        $status = 'active';
+        $metadata = json_encode($metadata);
+
         $log = ProcessBatch::create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
             'batch_id' => $batchId,
             'company_id' => $companyId,
             'user_id' => $user_id,
             'total_records' => $totalRecords,
-            'status' => $status, //active / queued
-            'errors_root_path' => '', // Se actualizará luego
-            'metadata_path' => '', // Se actualizará luego
+            'processed_records' => 0,
+            'error_count' => 0,
+            'status' => $status,
+            'metadata' => $metadata,
         ]);
 
-        Log::info("Proceso iniciado en BD", ['batch_id' => $batchId]);
         return $log;
     }
 
-    public static function saveErrors(string $batchId, array $errors)
+    /**
+     * Incrementa el número de registros procesados para un batch.
+     *
+     * @param  int  $count  El número de registros a añadir al contador.
+     * @return int El nuevo total de registros procesados.
+     */
+    public static function incrementProcessedRecords(string $batchId, int $count): int
     {
         try {
-            $totalErrors = count($errors);
-            $needsChunking = $totalErrors > self::CHUNK_SIZE;
-            $errors_root_path = $needsChunking
-                ? self::BASE_PATH . "/{$batchId}/errors/"
-                : self::BASE_PATH . "/{$batchId}/errors.json";
+            $processBatch = ProcessBatch::where('batch_id', $batchId)->first();
+            if ($processBatch) {
+                // <-- Aquí se actualiza el contador de registros procesados en la DB
+                $processBatch->increment('processed_records', $count);
 
-
-            $metadata_path = self::saveMetaData($batchId);
-
-            if ($needsChunking) {
-                self::saveChunkedErrors($batchId, $errors);
-            } else {
-                Storage::disk(Constants::DISK_FILES)->put(
-                    self::BASE_PATH . "/{$batchId}/errors.json",
-                    json_encode($errors, JSON_PRETTY_PRINT)
-                );
+                return $processBatch->processed_records;
             }
+        } catch (\Exception $e) {
+            Log::error("Error incrementando registros procesados para batch {$batchId}: ".$e->getMessage());
+        }
 
-            // 2. Actualizar BD
-            $log = ProcessBatch::where('batch_id', $batchId)->firstOrFail();
+        return 0;
+    }
 
-            $log->update([
-                'error_count' => $totalErrors,
-                'errors_root_path' => $errors_root_path,
-                'metadata_path' => $metadata_path["path"],
-                'status' => $totalErrors > 0 ? 'completed_with_errors' : 'completed'
-            ]);
+    /**
+     * Finaliza el proceso de un batch, actualizando el estado final y rutas de errores/metadata.
+     */
+    public static function finalizeProcess(string $batchId, int $finalErrorCount, string $finalStatus)
+    {
+        try {
+            $processBatch = ProcessBatch::where('batch_id', $batchId)->firstOrFail();
 
-            Log::info("Proceso finalizado en BD", [
-                'batch_id' => $batchId,
-                'errors' => $totalErrors
+            $processBatch->update([
+                'error_count' => $finalErrorCount,
+                'status' => $finalStatus,
             ]);
         } catch (\Exception $e) {
-            ProcessBatch::where('batch_id', $batchId)
-                ->update(['status' => 'failed']);
-
-            Log::error("Error guardando proceso: " . $e->getMessage());
+            Log::error("Error finalizando proceso para batch {$batchId}: ".$e->getMessage());
+            ProcessBatch::where('batch_id', $batchId)->update(['status' => 'failed']);
             throw $e;
         }
     }
 
-    public static function saveMetaData($batchId)
-    {
-        $totalErrors = Cache::get("conciliation_errors_{$batchId}");
-        $needsChunking = $totalErrors > ProcessBatchService::CHUNK_SIZE;
-
-        $batchMetadata = Cache::get("batch_metadata_{$batchId}");
-
-        $metadata = [
-            'batch_id' => $batchId,
-            'total_errors' => $totalErrors,
-            'has_chunks' => $needsChunking,
-            'file_name' => $batchMetadata["file_name"],
-            'created_at' => now()->toDateTimeString()
-        ];
-
-        $metadata_path = Storage::disk(Constants::DISK_FILES)->put(
-            self::BASE_PATH . "/{$batchId}/metadata.json",
-            json_encode($metadata, JSON_PRETTY_PRINT)
-        );
-        return [
-            "success" => $metadata_path,
-            "path" => self::BASE_PATH . "/{$batchId}/metadata.json",
-        ];
-    }
-
     protected static function countErrorTypes(array $errors): array
     {
-        return collect($errors)->groupBy('tipo_de_error')
+        return collect($errors)->groupBy('error_type')
             ->map->count()
             ->sortDesc()
             ->toArray();
     }
 
-
-
-    protected static function saveChunkedErrors(string $batchId, array $errors)
+    /**
+     * Selects an available queue from a given list using Redis for atomic claiming.
+     *
+     * @param  array  $availableQueues  List of queue names, e.g., ['imports_1', 'imports_2']
+     * @return string The name of the selected queue.
+     *
+     * @throws \Exception If no queues are available.
+     */
+    public static function selectAvailableQueue(array $availableQueues): string
     {
-        $chunks = array_chunk($errors, self::CHUNK_SIZE);
-        $chunkInfo = [];
-
-        foreach ($chunks as $index => $chunk) {
-            $chunkNumber = $index + 1;
-            $filename = "chunk_{$chunkNumber}.json";
-            $path = self::BASE_PATH . "/{$batchId}/errors/{$filename}";
-
-            Storage::disk(Constants::DISK_FILES)->put($path, json_encode($chunk, JSON_PRETTY_PRINT));
-
-            $chunkInfo[] = [
-                'file' => $filename,
-                'count' => count($chunk),
-                'min_row' => min(array_column($chunk, 'fila')),
-                'max_row' => max(array_column($chunk, 'fila'))
-            ];
-        }
-
-        // Guardar índice de chunks
-        Storage::disk(Constants::DISK_FILES)->put(
-            self::BASE_PATH . "/{$batchId}/chunks_index.json",
-            json_encode($chunkInfo, JSON_PRETTY_PRINT)
-        );
-    }
-
-    public static function getErrors(string $batchId, int $page = 1, int $perPage = 200)
-    {
-
-        $processBatch = ProcessBatch::where("batch_id", $batchId)->first();
-
-        //    return $metadata = json_decode(
-        //         Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/metadata.json"),
-        //         true
-        //     );
-
-        // Caso 1: Archivo único (<= 1k errores)
-        if (!$processBatch['has_chunks']) {
-            $allErrors = json_decode(
-                Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/errors.json"),
-                true
-            );
-            return [
-                'data' => array_slice($allErrors, ($page - 1) * $perPage, $perPage),
-                'meta' => [
-                    'total' => $processBatch['error_count'],
-                    'current_page' => $page,
-                    'per_page' => $perPage,
-                    'is_chunked' => false
-                ]
-            ];
-        }
-
-        // Caso 2: Sistema de chunks (>1k errores)
-        return self::getPaginatedFromChunks($batchId, $page, $perPage);
-    }
-
-    protected static function getPaginatedFromChunks(string $batchId, int $page, int $perPage)
-    {
-        $index = json_decode(
-            Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/chunks_index.json"),
-            true
-        );
-
-        // Cálculo de chunks necesarios
-        $errors = [];
-        $remaining = $perPage;
-        $currentChunk = 0;
-        $totalCollected = 0;
-        $totalToSkip = ($page - 1) * $perPage;
-
-        while ($remaining > 0 && $currentChunk < count($index)) {
-            $currentChunk++;
-            $chunkData = json_decode(
-                Storage::disk(Constants::DISK_FILES)->get(self::BASE_PATH . "/{$batchId}/errors/chunk_{$currentChunk}.json"),
-                true
-            );
-
-            // Saltar chunks completos si es necesario
-            if ($totalToSkip >= count($chunkData)) {
-                $totalToSkip -= count($chunkData);
-                continue;
+        foreach ($availableQueues as $queue) {
+            // SADD retorna 1 si el elemento fue añadido (significa que no estaba antes)
+            // SADD retorna 0 si el elemento ya existía en el set (significa que está en uso)
+            if (Redis::sadd(self::REDIS_USED_QUEUES_KEY, $queue) === 1) {
+                return $queue;
             }
-
-            // Saltar elementos dentro del chunk
-            $chunkData = array_slice($chunkData, $totalToSkip);
-            $totalToSkip = 0;
-
-            // Agregar al resultado
-            $errors = array_merge($errors, array_slice($chunkData, 0, $remaining));
-            $remaining = $perPage - count($errors);
         }
 
-        return [
-            'data' => $errors,
-            'meta' => [
-                'total' => array_reduce($index, fn($carry, $item) => $carry + $item['count'], 0),
-                'current_page' => $page,
-                'per_page' => $perPage,
-                'is_chunked' => true,
-                'chunks_accessed' => $currentChunk
-            ]
-        ];
+        Log::warning('No available queues found.');
+        throw new \Exception('No hay colas disponibles en este momento.');
+    }
+
+    /**
+     * Releases a queue, marking it as available again in Redis.
+     *
+     * @param  string  $queueName  The name of the queue to release.
+     */
+    public static function releaseQueue(string $queueName): void
+    {
+        // SREM retorna 1 si el elemento fue removido (significa que existía)
+        // SREM retorna 0 si el elemento no fue encontrado en el set
+        if (Redis::srem(self::REDIS_USED_QUEUES_KEY, $queueName) === 1) {
+        } else {
+            Log::warning("Attempted to release queue '{$queueName}' but it was not found in the used queues set. It might have already been released or never acquired.");
+        }
     }
 }

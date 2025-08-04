@@ -16,7 +16,7 @@ class UserSelectInfiniteResource extends JsonResource
     {
         return [
             'value' => $this->id,
-            'title' => $this->full_name . ' - ' . $this->role?->description,
+            'title' => $this->full_name.' - '.$this->role?->description,
         ];
     }
 }

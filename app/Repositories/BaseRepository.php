@@ -4,8 +4,8 @@ namespace App\Repositories;
 
 use App\Services\CacheService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class BaseRepository
 {
@@ -338,13 +338,11 @@ class BaseRepository
         return get_class($this->model);
     }
 
-
     /**
      * Inserta múltiples registros en lotes
      *
-     * @param array $data Array de arrays con los datos a insertar
-     * @param int $batchSize Número de registros por lote (por defecto 1000)
-     * @return bool
+     * @param  array  $data  Array de arrays con los datos a insertar
+     * @param  int  $batchSize  Número de registros por lote (por defecto 1000)
      */
     public function insertBatch(array $data, int $batchSize = 1000): bool
     {
@@ -357,7 +355,7 @@ class BaseRepository
 
         foreach ($batches as $batch) {
             // Insertar registros en el lote actual
-            if (!$this->model->newQuery()->insert($batch)) {
+            if (! $this->model->newQuery()->insert($batch)) {
                 throw new \Exception('Failed to insert batch of records.');
             }
         }
@@ -365,13 +363,11 @@ class BaseRepository
         return true;
     }
 
-
     /**
      * Actualiza múltiples registros con los mismos campos en lotes
      *
-     * @param array $data Array de arrays con los datos a actualizar, cada uno debe incluir el 'id'
-     * @param int $batchSize Número de registros por lote (por defecto 1000)
-     * @return bool
+     * @param  array  $data  Array de arrays con los datos a actualizar, cada uno debe incluir el 'id'
+     * @param  int  $batchSize  Número de registros por lote (por defecto 1000)
      */
     public function updateBatch(array $data, int $batchSize = 1000): bool
     {

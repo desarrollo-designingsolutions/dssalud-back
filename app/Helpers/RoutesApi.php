@@ -28,7 +28,7 @@ class RoutesApi
         'routes/glosa.php',
         'routes/schedule.php',
         'routes/reconciliationGroup.php',
-        'routes/websocket.php',
         'routes/conciliation.php',
+        'routes/processBatch.php',
     ];
 }

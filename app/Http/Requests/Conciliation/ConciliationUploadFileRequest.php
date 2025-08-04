@@ -26,7 +26,7 @@ class ConciliationUploadFileRequest extends FormRequest
         $rules = [
             'file' => 'required|file|mimes:xlsx,xls|max:10240',
             'user_id' => 'nullable|string',
-            'company_id' => 'nullable|string'
+            'company_id' => 'nullable|string',
         ];
 
         return $rules;

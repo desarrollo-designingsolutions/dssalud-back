@@ -40,8 +40,6 @@ class Assignment extends Model
         );
     }
 
-
-
     public static function scopeUserNamesForThirds($query, string $value, array $request)
     {
         $query->orWhereExists(function ($existsQuery) use ($value, $request) {
@@ -55,15 +53,15 @@ class Assignment extends Model
                         ->orWhere('users.surname', 'like', "%$value%");
                 });
 
-            if (!empty($request['assignment_batch_id'])) {
+            if (! empty($request['assignment_batch_id'])) {
                 $existsQuery->where('assignments.assignment_batch_id', $request['assignment_batch_id']);
             }
 
-            if (!empty($request['company_id'])) {
+            if (! empty($request['company_id'])) {
                 $existsQuery->where('assignments.company_id', $request['company_id']);
             }
 
-            if (!empty($request['user_id'])) {
+            if (! empty($request['user_id'])) {
                 $existsQuery->where('assignments.user_id', $request['user_id']);
             }
         });

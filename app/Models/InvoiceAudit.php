@@ -48,12 +48,12 @@ class InvoiceAudit extends Model
     public function glosas()
     {
         return $this->hasManyThrough(
-            Glosa::class,   
-            Service::class, 
-            'invoice_audit_id',       
-            'service_id',               
-            'id',                       
-            'id'                       
+            Glosa::class,
+            Service::class,
+            'invoice_audit_id',
+            'service_id',
+            'id',
+            'id'
         );
     }
 
@@ -77,12 +77,12 @@ class InvoiceAudit extends Model
             ? 'pending' // 'Pendiente'
             : 'finished'; // 'Finalizado'
     }
-    
+
     public function auditoryFinalReport()
     {
         return $this->belongsTo(AuditoryFinalReport::class, 'id', 'factura_id');
     }
-    
+
     public function sumValorGlosa()
     {
         return $this->auditoryFinalReport()->sum('valor_glosa');

@@ -16,7 +16,7 @@ class CodeGlosaRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with) {
 
             $data = $this->model->with($with)->where(function ($query) {})
                 ->where(function ($query) use ($request) {
@@ -28,8 +28,8 @@ class CodeGlosaRepository extends BaseRepository
                 })
                 ->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('description', 'like', '%' . $request['searchQueryInfinite'] . '%');
-                        $query->orWhere('code', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('description', 'like', '%'.$request['searchQueryInfinite'].'%');
+                        $query->orWhere('code', 'like', '%'.$request['searchQueryInfinite'].'%');
                     }
                 });
 

@@ -10,9 +10,8 @@ use App\Repositories\ReconciliationGroupRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Throwable;
 
 class ReconciliationGroupController extends Controller
 {
@@ -40,7 +39,6 @@ class ReconciliationGroupController extends Controller
         });
     }
 
-
     public function create()
     {
         try {
@@ -49,7 +47,7 @@ class ReconciliationGroupController extends Controller
 
             return response()->json([
                 'code' => 200,
-                ...$thirds
+                ...$thirds,
             ]);
         } catch (Throwable $th) {
 
@@ -92,7 +90,7 @@ class ReconciliationGroupController extends Controller
             return response()->json([
                 'code' => 200,
                 'form' => $form,
-                ...$thirds
+                ...$thirds,
             ]);
         } catch (Throwable $th) {
 
@@ -131,7 +129,6 @@ class ReconciliationGroupController extends Controller
             $reconciliationGroup = $this->reconciliationGroupRepository->find($id);
             if ($reconciliationGroup) {
 
-
                 $reconciliationGroup->delete();
                 $msg = 'Registro eliminado correctamente';
             } else {
@@ -163,7 +160,7 @@ class ReconciliationGroupController extends Controller
 
             DB::commit();
 
-            return response()->json(['code' => 200, 'message' => 'Grupo de conciliación ' . $msg . ' con éxito']);
+            return response()->json(['code' => 200, 'message' => 'Grupo de conciliación '.$msg.' con éxito']);
         } catch (Throwable $th) {
             DB::rollback();
 

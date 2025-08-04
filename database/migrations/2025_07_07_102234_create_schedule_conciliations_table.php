@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schedule_conciliations', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
 
             $table->foreignUuid('user_id')->constrained();
             $table->foreignUuid('third_id')->constrained();

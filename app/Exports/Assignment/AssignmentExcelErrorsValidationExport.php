@@ -12,6 +12,7 @@ class AssignmentExcelErrorsValidationExport implements FromCollection, WithCusto
     use Exportable;
 
     public $data;
+
     protected $removeLastColumn;
 
     protected $includeHeadings;
@@ -30,6 +31,7 @@ class AssignmentExcelErrorsValidationExport implements FromCollection, WithCusto
             if ($this->removeLastColumn) {
                 array_pop($values); // Eliminar la última columna
             }
+
             return $values;
         });
     }

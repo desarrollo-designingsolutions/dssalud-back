@@ -26,8 +26,8 @@ class ReconciliationGroupRepository extends BaseRepository
 
                 ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                        $query->where(function ($subQuery) use ($value, $request) {
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($subQuery) use ($value) {
                             $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
 
                             $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
@@ -44,7 +44,7 @@ class ReconciliationGroupRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
-                    "name",
+                    'name',
                     AllowedSort::custom('third_nit', new RelatedTableSort(
                         'reconciliation_groups',
                         'thirds',
@@ -70,7 +70,6 @@ class ReconciliationGroupRepository extends BaseRepository
                 $query = $query->get();
             }
 
-
             return $query;
         }, Constants::REDIS_TTL);
     }
@@ -79,7 +78,7 @@ class ReconciliationGroupRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with) {
 
             $data = $this->model->with($with)->where(function ($query) {})
                 ->where(function ($query) use ($request) {
@@ -90,7 +89,7 @@ class ReconciliationGroupRepository extends BaseRepository
                 })
                 ->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                     }
                 });
 
@@ -165,8 +164,8 @@ class ReconciliationGroupRepository extends BaseRepository
 
                 ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                        $query->where(function ($subQuery) use ($value, $request) {
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($subQuery) use ($value) {
                             $subQuery->orWhere('reconciliation_groups.name', 'like', "%$value%");
 
                             $subQuery->orWhereHas('third', function ($thirdQuery) use ($value) {
@@ -183,7 +182,7 @@ class ReconciliationGroupRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
-                    "name",
+                    'name',
                     AllowedSort::custom('third_nit', new RelatedTableSort(
                         'reconciliation_groups',
                         'thirds',
@@ -208,7 +207,6 @@ class ReconciliationGroupRepository extends BaseRepository
             } else {
                 $query = $query->get();
             }
-
 
             return $query;
         }, Constants::REDIS_TTL);

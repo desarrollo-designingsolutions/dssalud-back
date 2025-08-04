@@ -47,7 +47,6 @@ class ProcessMassXmlUpload implements ShouldQueue
         // Validar datos del XML
         $infoValidation = validateDataFilesXml($this->data['tempPath'], $data);
 
-
         // Determinar el estado y la ruta del archivo XML
         $finalName = "{$this->data['originalName']}";
         $finalPath = "companies/company_{$this->data['company_id']}/filings/{$filing_invoice->filing->type->value}/filing_{$filing_invoice->filing->id}/invoices/{$filing_invoice->invoice_number}/xml/{$finalName}";

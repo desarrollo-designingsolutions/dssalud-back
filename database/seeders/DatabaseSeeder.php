@@ -33,7 +33,6 @@ class DatabaseSeeder extends Seeder
             GeneralCodeGlosaSeeder::class,
             CodeGlosaSeeder::class,
 
-
             // TO VALIDATIONS
 
             // Cie10Seeder::class,

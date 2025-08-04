@@ -8,9 +8,13 @@ use Spatie\QueryBuilder\Sorts\Sort;
 class RelatedTableSort implements Sort
 {
     private string $primaryTable;      // Tabla principal (ej: inspections)
+
     private string $relatedTable;      // Tabla relacionada (ej: vehicles)
+
     private string $sortField;         // Campo por el que se ordena (ej: license_plate)
+
     private string $foreignKey;        // Llave foránea en la tabla principal (ej: vehicle_id)
+
     private string $alias;             // Alias único para la tabla relacionada
 
     public function __construct(string $primaryTable, string $relatedTable, string $sortField, string $foreignKey)

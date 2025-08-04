@@ -6,7 +6,6 @@ use App\Helpers\Constants;
 use App\Models\Schedule;
 use App\QueryBuilder\Filters\DataSelectFilter;
 use App\QueryBuilder\Filters\DateRangeFilter;
-use App\QueryBuilder\Sort\RelatedTableSort;
 use App\QueryBuilder\Sort\RelatedModelSort;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
@@ -64,12 +63,11 @@ class ScheduleRepository extends BaseRepository
             // ->select(['schedules.id', 'schedules.company_id', 'schedules.title', 'schedules.start_date', 'schedules.start_hour'])
             ->allowedFilters([
 
-                AllowedFilter::custom('response_status', new DataSelectFilter("scheduleable")),
+                AllowedFilter::custom('response_status', new DataSelectFilter('scheduleable')),
 
-                AllowedFilter::custom('start_date', new DateRangeFilter()),
+                AllowedFilter::custom('start_date', new DateRangeFilter),
 
-                AllowedFilter::custom('response_date', new DateRangeFilter("scheduleable")),
-
+                AllowedFilter::custom('response_date', new DateRangeFilter('scheduleable')),
 
                 AllowedFilter::callback('inputGeneral', function ($queryX, $value) {
                     $queryX->where(function ($query) use ($value) {
@@ -147,7 +145,7 @@ class ScheduleRepository extends BaseRepository
                 }
             })->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 

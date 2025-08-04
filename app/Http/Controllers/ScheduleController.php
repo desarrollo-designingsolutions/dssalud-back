@@ -18,7 +18,6 @@ class ScheduleController extends Controller
         protected QueryController $queryController,
     ) {}
 
-
     public function index(Request $request)
     {
 
@@ -51,7 +50,6 @@ class ScheduleController extends Controller
             ...$typeEvents,
         ];
     }
-
 
     public function dataView()
     {

@@ -21,91 +21,90 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginateConciliationInvoices", $request, 'string');
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
-            $query = QueryBuilder::for($this->model->query())
+        $query = QueryBuilder::for($this->model->query())
 
-                ->allowedFilters([
+            ->allowedFilters([
 
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                        $query->where(function ($subQuery) use ($value, $request) {
+                AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                    $query->where(function ($subQuery) use ($value) {
 
-                            $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
-                                $invoiceAuditQuery->where(function ($q) use ($value) {
-                                    $q->where('invoice_number', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
-                                $invoiceAuditQuery->where(function ($q) use ($value) {
-                                    $q->where('total_value', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
-                                $invoiceAuditQuery->where(function ($q) use ($value) {
-                                    $q->where('origin', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
-                                $invoiceAuditQuery->where(function ($q) use ($value) {
-                                    $q->where('modality', 'like', "%$value%");
-                                });
-                            });
-                            $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
-                                $invoiceAuditQuery->where(function ($q) use ($value) {
-                                    $q->where('contract_number', 'like', "%$value%");
-                                });
+                        $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
+                            $invoiceAuditQuery->where(function ($q) use ($value) {
+                                $q->where('invoice_number', 'like', "%$value%");
                             });
                         });
-                    }),
-                ])
-                ->allowedSorts([
-                    AllowedSort::custom('invoice_number', new RelatedTableSort(
-                        'reconciliation_group_invoices',
-                        'invoice_audits',
-                        'invoice_number',
-                        'invoice_audit_id',
-                    )),
-                    AllowedSort::custom('total_value', new RelatedTableSort(
-                        'reconciliation_group_invoices',
-                        'invoice_audits',
-                        'total_value',
-                        'invoice_audit_id',
-                    )),
-                    AllowedSort::custom('origin', new RelatedTableSort(
-                        'reconciliation_group_invoices',
-                        'invoice_audits',
-                        'origin',
-                        'invoice_audit_id',
-                    )),
-                    AllowedSort::custom('modality', new RelatedTableSort(
-                        'reconciliation_group_invoices',
-                        'invoice_audits',
-                        'modality',
-                        'invoice_audit_id',
-                    )),
-                    AllowedSort::custom('contract_number', new RelatedTableSort(
-                        'reconciliation_group_invoices',
-                        'invoice_audits',
-                        'contract_number',
-                        'invoice_audit_id',
-                    )),
+                        $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
+                            $invoiceAuditQuery->where(function ($q) use ($value) {
+                                $q->where('total_value', 'like', "%$value%");
+                            });
+                        });
+                        $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
+                            $invoiceAuditQuery->where(function ($q) use ($value) {
+                                $q->where('origin', 'like', "%$value%");
+                            });
+                        });
+                        $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
+                            $invoiceAuditQuery->where(function ($q) use ($value) {
+                                $q->where('modality', 'like', "%$value%");
+                            });
+                        });
+                        $subQuery->orWhereHas('invoiceAudit', function ($invoiceAuditQuery) use ($value) {
+                            $invoiceAuditQuery->where(function ($q) use ($value) {
+                                $q->where('contract_number', 'like', "%$value%");
+                            });
+                        });
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                AllowedSort::custom('invoice_number', new RelatedTableSort(
+                    'reconciliation_group_invoices',
+                    'invoice_audits',
+                    'invoice_number',
+                    'invoice_audit_id',
+                )),
+                AllowedSort::custom('total_value', new RelatedTableSort(
+                    'reconciliation_group_invoices',
+                    'invoice_audits',
+                    'total_value',
+                    'invoice_audit_id',
+                )),
+                AllowedSort::custom('origin', new RelatedTableSort(
+                    'reconciliation_group_invoices',
+                    'invoice_audits',
+                    'origin',
+                    'invoice_audit_id',
+                )),
+                AllowedSort::custom('modality', new RelatedTableSort(
+                    'reconciliation_group_invoices',
+                    'invoice_audits',
+                    'modality',
+                    'invoice_audit_id',
+                )),
+                AllowedSort::custom('contract_number', new RelatedTableSort(
+                    'reconciliation_group_invoices',
+                    'invoice_audits',
+                    'contract_number',
+                    'invoice_audit_id',
+                )),
 
                 ])
-                ->where(function ($query) use ($request) {
-                    if (! empty($request['company_id'])) {
-                        // $query->where('reconciliation_groups.company_id', $request['company_id']);
-                    }
-                    if (! empty($request['reconciliation_group_id'])) {
-                        $query->where('reconciliation_group_id', $request['reconciliation_group_id']);
-                    }
-                });
+            ->where(function ($query) use ($request) {
+                if (! empty($request['company_id'])) {
+                    // $query->where('reconciliation_groups.company_id', $request['company_id']);
+                }
+                if (! empty($request['reconciliation_group_id'])) {
+                    $query->where('reconciliation_group_id', $request['reconciliation_group_id']);
+                }
+            });
 
-            if (empty($request['typeData'])) {
-                $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-            } else {
-                $query = $query->get();
-            }
+        if (empty($request['typeData'])) {
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+        } else {
+            $query = $query->get();
+        }
 
-
-            return $query;
+        return $query;
         // }, Constants::REDIS_TTL);
     }
 
@@ -113,7 +112,7 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with) {
 
             $data = $this->model->with($with)->where(function ($query) {})
                 ->where(function ($query) use ($request) {
@@ -124,7 +123,7 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
                 })
                 ->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                     }
                 });
 

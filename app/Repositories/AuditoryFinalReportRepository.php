@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\AuditoryFinalReport;
-use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class AuditoryFinalReportRepository extends BaseRepository

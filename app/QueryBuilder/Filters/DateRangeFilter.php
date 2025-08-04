@@ -18,9 +18,7 @@ class DateRangeFilter implements Filter
     /**
      * Apply the filter to the query.
      *
-     * @param Builder $query
-     * @param mixed $value
-     * @param string $property
+     * @param  mixed  $value
      * @return void
      */
     public function __invoke(Builder $query, $value, string $property)
@@ -32,8 +30,7 @@ class DateRangeFilter implements Filter
                 $start = Carbon::parse($startDate)->startOfDay();
                 $end = Carbon::parse($endDate)->endOfDay();
 
-
-                if (!empty($this->relation)) {
+                if (! empty($this->relation)) {
                     $query->whereHas($this->relation, function ($q) use ($property, $start, $end) {
                         $q->whereBetween($property, [$start, $end]);
                     });
@@ -47,7 +44,7 @@ class DateRangeFilter implements Filter
             try {
                 $date = Carbon::parse($value);
 
-                if (!empty($this->relation)) {
+                if (! empty($this->relation)) {
                     $query->whereHas($this->relation, function ($q) use ($property, $date) {
                         $q->whereDate($property, '=', $date);
                     });

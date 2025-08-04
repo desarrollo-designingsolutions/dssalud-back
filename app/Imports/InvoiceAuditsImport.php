@@ -7,9 +7,10 @@ use App\Models\InvoiceAudit;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithHeadingRow; // Agrega esta interfaz
 
-class InvoiceAuditsImport implements ToModel, ShouldQueue, WithChunkReading
+// Agrega esta interfaz
+
+class InvoiceAuditsImport implements ShouldQueue, ToModel, WithChunkReading
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null

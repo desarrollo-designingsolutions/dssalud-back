@@ -12,17 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('process_batches', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->string('batch_id')->unique();
             $table->foreignUuid('company_id')->constrained();
             $table->foreignUuid('user_id')->constrained();
+
             $table->integer('total_records');
-            $table->integer('processed_records')->default(0);
+            $table->integer('processed_records');
             $table->integer('error_count')->default(0);
-            $table->string('errors_root_path');
-            $table->string('metadata_path');
-            $table->boolean('has_chunks')->default(0);
             $table->string('status');
+            $table->json('metadata');
             $table->timestamps();
 
             $table->index(['company_id', 'user_id', 'status']);

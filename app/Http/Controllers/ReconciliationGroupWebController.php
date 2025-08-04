@@ -8,9 +8,9 @@ use App\Repositories\ThirdRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ReconciliationGroupWebController extends Controller
 {
@@ -45,13 +45,13 @@ class ReconciliationGroupWebController extends Controller
             'sum_value_glosa' => formatNumber($sum_value_glosa),
         ]);
     }
+
     public function saveNotification(Request $request)
     {
         try {
 
             $reconciliationGroup = $this->reconciliationGroupRepository->find($request->input('reconciliation_group_id'), ['reconciliationNotification']);
             $reconciliationNotification_status = $reconciliationGroup->reconciliationNotification ? 'true' : 'false';
-
 
             // Define validation rules with a custom rule for emails
             $validator = Validator::make($request->all(), [
@@ -61,7 +61,7 @@ class ReconciliationGroupWebController extends Controller
                 'emails.*' => [
                     function ($attribute, $value, $fail) {
                         // Check if the value is a valid email
-                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $fail("El correo '$value' debe ser válido.");
                         }
                     },
@@ -100,6 +100,7 @@ class ReconciliationGroupWebController extends Controller
             $notification = $this->reconciliationNotificationRepository->store($data);
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Notificación enviada exitosamente',
@@ -114,9 +115,10 @@ class ReconciliationGroupWebController extends Controller
             ], 422);
         } catch (Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al enviar la notificación: ' . $e->getMessage(),
+                'message' => 'Error al enviar la notificación: '.$e->getMessage(),
             ], 500);
         }
     }

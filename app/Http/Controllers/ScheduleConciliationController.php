@@ -74,29 +74,29 @@ class ScheduleConciliationController extends Controller
         return $this->runTransaction(function () use ($request) {
 
             $post = [
-                "user_id" => $request['user_id'],
-                "third_id" => $request['third_id'],
-                "link" => $request['link'],
-                "reconciliation_group_id" => $request['reconciliation_group_id'],
-                "response_status" => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_001->value,
-                "response_date" => null,
+                'user_id' => $request['user_id'],
+                'third_id' => $request['third_id'],
+                'link' => $request['link'],
+                'reconciliation_group_id' => $request['reconciliation_group_id'],
+                'response_status' => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_001->value,
+                'response_date' => null,
             ];
 
             $scheduleConciliation = $this->scheduleConciliationRepository->store($post);
 
             $post = [
-                "company_id" => $request['company_id'],
-                "title" => $request['title'],
-                "description" => $request['description'],
-                "start_date" => $request['start_date'],
-                "start_hour" => $request['start_hour'],
-                "end_date" => $request['end_date'],
-                "end_hour" => $request['end_hour'],
-                "emails" => json_encode($request['emails'] ?? []),
-                "all_day" => $request['all_day'] ?? 0,
-                "scheduleable_id" => $scheduleConciliation->id,
-                "scheduleable_type" => "App\\Models\\ScheduleConciliation",
-                "type_event" => TypeEventEnum::TYPE_EVENT_001->value,
+                'company_id' => $request['company_id'],
+                'title' => $request['title'],
+                'description' => $request['description'],
+                'start_date' => $request['start_date'],
+                'start_hour' => $request['start_hour'],
+                'end_date' => $request['end_date'],
+                'end_hour' => $request['end_hour'],
+                'emails' => json_encode($request['emails'] ?? []),
+                'all_day' => $request['all_day'] ?? 0,
+                'scheduleable_id' => $scheduleConciliation->id,
+                'scheduleable_type' => 'App\\Models\\ScheduleConciliation',
+                'type_event' => TypeEventEnum::TYPE_EVENT_001->value,
             ];
 
             $schedule = $this->scheduleRepository->store($post);
@@ -121,7 +121,7 @@ class ScheduleConciliationController extends Controller
                         'end_hour' => $schedule->end_hour,
                         'description' => $schedule->description,
                         'link' => $schedule->scheduleable->link,
-                        'linkAccept' => env('SYSTEM_URL_FRONT') . 'ViewEventConciliationResponse/' . $schedule->id,
+                        'linkAccept' => env('SYSTEM_URL_FRONT').'ViewEventConciliationResponse/'.$schedule->id,
                         'bussines_name' => $schedule->third?->company?->name,
                     ],
                 );
@@ -139,30 +139,30 @@ class ScheduleConciliationController extends Controller
         return $this->runTransaction(function () use ($request) {
 
             $post = [
-                "user_id" => $request['user_id'],
-                "third_id" => $request['third_id'],
-                "link" => $request['link'],
-                "reconciliation_group_id" => $request['reconciliation_group_id'],
-                "response_status" => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_001->value,
-                "response_date" => null,
+                'user_id' => $request['user_id'],
+                'third_id' => $request['third_id'],
+                'link' => $request['link'],
+                'reconciliation_group_id' => $request['reconciliation_group_id'],
+                'response_status' => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_001->value,
+                'response_date' => null,
             ];
 
             $scheduleConciliation = $this->scheduleConciliationRepository->store($post);
 
             $post = [
-                "id" => $request['id'],
-                "company_id" => $request['company_id'],
-                "title" => $request['title'],
-                "description" => $request['description'],
-                "start_date" => $request['start_date'],
-                "start_hour" => $request['start_hour'],
-                "end_date" => $request['end_date'],
-                "end_hour" => $request['end_hour'],
-                "emails" => json_encode($request['emails'] ?? []),
-                "all_day" => $request['all_day'] ?? 0,
-                "scheduleable_id" => $scheduleConciliation->id,
-                "scheduleable_type" => "App\\Models\\ScheduleConciliation",
-                "type_event" => TypeEventEnum::TYPE_EVENT_001->value,
+                'id' => $request['id'],
+                'company_id' => $request['company_id'],
+                'title' => $request['title'],
+                'description' => $request['description'],
+                'start_date' => $request['start_date'],
+                'start_hour' => $request['start_hour'],
+                'end_date' => $request['end_date'],
+                'end_hour' => $request['end_hour'],
+                'emails' => json_encode($request['emails'] ?? []),
+                'all_day' => $request['all_day'] ?? 0,
+                'scheduleable_id' => $scheduleConciliation->id,
+                'scheduleable_type' => 'App\\Models\\ScheduleConciliation',
+                'type_event' => TypeEventEnum::TYPE_EVENT_001->value,
             ];
 
             $schedule = $this->scheduleRepository->store($post);
@@ -186,7 +186,7 @@ class ScheduleConciliationController extends Controller
                         'end_hour' => $schedule->end_hour,
                         'description' => $schedule->description,
                         'link' => $schedule->link,
-                        'linkAccept' => env('SYSTEM_URL_FRONT') . 'ViewEventConciliationResponse/' . $schedule->id,
+                        'linkAccept' => env('SYSTEM_URL_FRONT').'ViewEventConciliationResponse/'.$schedule->id,
                         'bussines_name' => $schedule->third?->company?->name,
                     ],
                 );
@@ -203,10 +203,10 @@ class ScheduleConciliationController extends Controller
     {
         return $this->execute(function () use ($event_id) {
             $data = $this->scheduleRepository->find($event_id, [
-                "scheduleable.user:id,name,surname,photo,role_id",
-                "scheduleable.user.role:id,description",
-                "scheduleable.third:id,nit,name",
-                "scheduleable.reconciliation_group:id,name",
+                'scheduleable.user:id,name,surname,photo,role_id',
+                'scheduleable.user.role:id,description',
+                'scheduleable.third:id,nit,name',
+                'scheduleable.reconciliation_group:id,name',
             ]);
 
             $user = $data->scheduleable?->user;
@@ -228,15 +228,15 @@ class ScheduleConciliationController extends Controller
 
             $reconciliation_group = $data->scheduleable?->reconciliation_group;
 
-            if($reconciliation_group) {
+            if ($reconciliation_group) {
                 $reconciliation_group = [
                     'id' => $reconciliation_group->id,
                     'name' => $reconciliation_group->name,
                 ];
             } else {
                 $reconciliation_group = [
-                'id' => null,
-                'name' => null,
+                    'id' => null,
+                    'name' => null,
                 ];
             }
 
@@ -313,14 +313,14 @@ class ScheduleConciliationController extends Controller
             $schedule = $this->scheduleRepository->find($id);
 
             $schedule = $this->scheduleConciliationRepository->store([
-                "id" => $schedule->scheduleable->id,
-                "response_status" => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_002,
-                "response_date" => now(),
+                'id' => $schedule->scheduleable->id,
+                'response_status' => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_002,
+                'response_date' => now(),
             ]);
 
             $event_data = [
-                "response_status" => $schedule->response_status,
-                "response_date" => Carbon::parse($schedule->response_date)->format('Y-m-d H:i:s'),
+                'response_status' => $schedule->response_status,
+                'response_date' => Carbon::parse($schedule->response_date)->format('Y-m-d H:i:s'),
             ];
 
             return [
@@ -338,14 +338,14 @@ class ScheduleConciliationController extends Controller
             $schedule = $this->scheduleRepository->find($id);
 
             $schedule = $this->scheduleConciliationRepository->store([
-                "id" => $schedule->scheduleable->id,
-                "response_status" => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_003->value,
-                "response_date" => now(),
+                'id' => $schedule->scheduleable->id,
+                'response_status' => ScheduleResponseStatusEnum::SCHEDULE_RESPONSE_STATUS_003->value,
+                'response_date' => now(),
             ]);
 
             $event_data = [
-                "response_status" => $schedule->response_status,
-                "response_date" => Carbon::parse($schedule->response_date)->format('Y-m-d H:i:s'),
+                'response_status' => $schedule->response_status,
+                'response_date' => Carbon::parse($schedule->response_date)->format('Y-m-d H:i:s'),
             ];
 
             return [

@@ -18,22 +18,22 @@ class ScheduleConciliationRepository extends BaseRepository
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
-        $query = QueryBuilder::for($this->model->query())
-            ->allowedFilters([])
-            ->allowedSorts([])
-            ->where(function ($query) use ($request) {
-                if (! empty($request['company_id'])) {
-                    $query->where('company_id', $request['company_id']);
-                }
-            });
+            $query = QueryBuilder::for($this->model->query())
+                ->allowedFilters([])
+                ->allowedSorts([])
+                ->where(function ($query) use ($request) {
+                    if (! empty($request['company_id'])) {
+                        $query->where('company_id', $request['company_id']);
+                    }
+                });
 
-        if (empty($request['typeData'])) {
-            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
-        } else {
-            $query = $query->get();
-        }
+            if (empty($request['typeData'])) {
+                $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            } else {
+                $query = $query->get();
+            }
 
-        return $query;
+            return $query;
         }, Constants::REDIS_TTL);
     }
 

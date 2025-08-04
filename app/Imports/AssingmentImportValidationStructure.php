@@ -21,10 +21,10 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
+class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithChunkReading, WithCustomCsvSettings, WithEvents
 {
-
     private $key_redis_project;
+
     private $cacheService;
 
     private $keyErrorRedis;
@@ -41,7 +41,7 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
         protected $file_path,
         protected $expectedColumns = 5,
     ) {
-        $this->cacheService = new CacheService();
+        $this->cacheService = new CacheService;
 
         $this->key_redis_project = env('KEY_REDIS_PROJECT');
         $this->keyErrorRedis = "string:assignment_import_errors_{$this->user_id}";
@@ -62,7 +62,7 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:assignments*');
 
                 Redis::del("integer:assignments_import_total_{$this->user_id}");
                 Redis::del("integer:assignments_import_processed_{$this->user_id}");
@@ -101,7 +101,6 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
         $total = Redis::get("integer:assignments_import_total_{$this->user_id}") ?: 1;
         $progress = ($processed / $total) * 100;
 
-
         if ($this->validations($row, $processed)) {
 
             // Emitir evento de progreso
@@ -132,7 +131,8 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
 
         // Omitir filas vacías
         if (empty(array_filter($row))) {
-            $this->logError(null, $processed, $rowString, "La fila está vacía.");
+            $this->logError(null, $processed, $rowString, 'La fila está vacía.');
+
             return true;
         }
 
@@ -158,7 +158,7 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
     private function validateFile($event)
     {
         // Verificar si el archivo existe
-        if (!Storage::disk(Constants::DISK_FILES)->exists($this->file_path)) {
+        if (! Storage::disk(Constants::DISK_FILES)->exists($this->file_path)) {
             $this->logError('general', 0, null, "El archivo {$this->file_path} no existe.");
         }
 
@@ -233,8 +233,8 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
 
         $routeJson = null;
         if (count($errorsFormatted) > 0) {
-            $nameFile = 'error_' . $this->user_id . '.json';
-            $routeJson = 'companies/company_' . $this->company_id . "/assignments/import_temp/{$this->user_id}/" . $nameFile; // Ruta donde se guardará la carpeta
+            $nameFile = 'error_'.$this->user_id.'.json';
+            $routeJson = 'companies/company_'.$this->company_id."/assignments/import_temp/{$this->user_id}/".$nameFile; // Ruta donde se guardará la carpeta
             Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
         }
 
@@ -271,7 +271,6 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
         // Obtener el objeto User a partir del ID
         $user = User::find($userId);
 
-
         if ($user) {
             // Enviar notificación
             $user->notify(new BellNotification($data));
@@ -282,18 +281,18 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
             BrevoProcessSendEmail::dispatch(
                 emailTo: [
                     [
-                        "name" => $user->full_name,
-                        "email" => $user->email,
-                    ]
+                        'name' => $user->full_name,
+                        'email' => $user->email,
+                    ],
                 ],
                 subject: $data['title'],
                 templateId: 11,  // El ID de la plantilla de Brevo que quieres usar
                 params: [
-                    "full_name" => $user->full_name,
-                    "subtitle" => $data['subtitle'],
-                    "bussines_name" => $user->company?->name,
-                    "data_import" => $data['data_import'],
-                    "show_table_errors" => count($data['data_import']) > 0 ? true : false,
+                    'full_name' => $user->full_name,
+                    'subtitle' => $data['subtitle'],
+                    'bussines_name' => $user->company?->name,
+                    'data_import' => $data['data_import'],
+                    'show_table_errors' => count($data['data_import']) > 0 ? true : false,
                 ],
                 attachments: [
                     [
@@ -323,7 +322,6 @@ class AssingmentImportValidationStructure implements ShouldQueue, ToModel, WithC
             // Tomar el primer elemento del grupo y devolver solo su 'data'
             return $group->first()['data'] ?? null;
         })->values();
-
 
         // Generar el CSV con Laravel Excel
         $csv = Excel::raw(new AssignmentExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);

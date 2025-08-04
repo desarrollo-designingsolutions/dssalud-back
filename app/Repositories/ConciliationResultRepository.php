@@ -4,9 +4,7 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\ReconciliationGroup;
-use App\QueryBuilder\Sort\RelatedTableSort;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class ConciliationResultRepository extends BaseRepository
@@ -24,10 +22,8 @@ class ConciliationResultRepository extends BaseRepository
             $query = QueryBuilder::for($this->model->query())
 
                 ->allowedFilters([
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
-                        $query->where(function ($subQuery) use ($value, $request) {
-
-                        });
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($subQuery) {});
                     }),
                 ])
                 ->allowedSorts([
@@ -44,7 +40,6 @@ class ConciliationResultRepository extends BaseRepository
                 $query = $query->get();
             }
 
-
             return $query;
         }, Constants::REDIS_TTL);
     }
@@ -53,7 +48,7 @@ class ConciliationResultRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $select, $idsAllowed, $idsNotAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with) {
 
             $data = $this->model->with($with)->where(function ($query) {})
                 ->where(function ($query) use ($request) {
@@ -64,7 +59,7 @@ class ConciliationResultRepository extends BaseRepository
                 })
                 ->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                     }
                 });
 

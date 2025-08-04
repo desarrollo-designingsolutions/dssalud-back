@@ -9,5 +9,5 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contract extends Model
 {
-    use HasUuids, SoftDeletes, Cacheable;
+    use Cacheable, HasUuids, SoftDeletes;
 }

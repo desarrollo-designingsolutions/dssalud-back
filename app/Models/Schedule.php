@@ -21,6 +21,7 @@ class Schedule extends Model
     public function getEmailsFormattedStringAttribute(): string
     {
         $emails = json_decode($this->emails, true) ?? [];
+
         return collect($emails)->implode(', ');
     }
 

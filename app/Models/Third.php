@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Third extends Model
 {
-    use HasUuids, SoftDeletes, Cacheable;
-
+    use Cacheable, HasUuids, SoftDeletes;
 
     public function company()
     {

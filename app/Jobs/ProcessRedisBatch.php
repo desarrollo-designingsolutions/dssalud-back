@@ -16,7 +16,9 @@ class ProcessRedisBatch implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $companyId;
+
     protected $modelClass;
+
     protected $elements;
 
     public function __construct($companyId, $modelClass, $elements)
@@ -27,7 +29,7 @@ class ProcessRedisBatch implements ShouldQueue
     }
 
     public function handle(CacheService $cacheService): void
-    { 
+    {
         try {
             $table = (new $this->modelClass)->getTable();
             $company = Company::find($this->companyId);
@@ -47,7 +49,7 @@ class ProcessRedisBatch implements ShouldQueue
                 Redis::sadd($cacheKey2, $element->id);
             }
         } catch (\Throwable $e) {
-            \Log::error("Error in ProcessRedisBatch for {$this->modelClass}, company {$this->companyId}: " . $e->getMessage(), [
+            \Log::error("Error in ProcessRedisBatch for {$this->modelClass}, company {$this->companyId}: ".$e->getMessage(), [
                 'company_id' => $this->companyId,
                 'model' => $this->modelClass,
                 'trace' => $e->getTraceAsString(),

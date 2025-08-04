@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SupportType extends Model
 {
-    use HasUuids, SoftDeletes, Cacheable;
+    use Cacheable, HasUuids, SoftDeletes;
 
     protected function casts(): array
     {

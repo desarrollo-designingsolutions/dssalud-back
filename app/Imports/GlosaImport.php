@@ -27,13 +27,14 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-
-class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
+class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkReading, WithCustomCsvSettings, WithEvents
 {
     use Importable, SkipsFailures;
 
     public $services_id;
+
     private $key_redis_project;
+
     private $cacheService;
 
     public function __construct(
@@ -44,7 +45,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         protected $codeGlosas,
     ) {
 
-        $this->cacheService = new CacheService();
+        $this->cacheService = new CacheService;
 
         $this->key_redis_project = env('KEY_REDIS_PROJECT');
         $this->services_id = [];
@@ -70,7 +71,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             AfterImport::class => function (AfterImport $event) {
 
                 // Limpiar cache de Redis de las glosas
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:glosas*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:glosas*');
 
                 // Limpiar cache al finalizar
                 Redis::del("integer:glosas_import_total_{$this->user_id}");
@@ -96,8 +97,8 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
                 // Convert array to JSON
                 $routeJson = null;
                 if (count($errorsFormatted) > 0) {
-                    $nameFile = 'error_' . $this->user_id . '.json';
-                    $routeJson = 'companies/company_' . $this->company_id . '/glosas/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = 'error_'.$this->user_id.'.json';
+                    $routeJson = 'companies/company_'.$this->company_id.'/glosas/errors/'.$nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
                 }
 
@@ -302,6 +303,7 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
@@ -344,7 +346,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
         ];
     }
 
-
     /**
      * Enviar notificación al usuario
      */
@@ -352,7 +353,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
     {
         // Obtener el objeto User a partir del ID
         $user = User::find($userId);
-
 
         if ($user) {
             // Enviar notificación
@@ -365,18 +365,18 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             BrevoProcessSendEmail::dispatch(
                 emailTo: [
                     [
-                        "name" => $user->full_name,
-                        "email" => $user->email,
-                    ]
+                        'name' => $user->full_name,
+                        'email' => $user->email,
+                    ],
                 ],
                 subject: $data['title'],
                 templateId: 8,  // El ID de la plantilla de Brevo que quieres usar
                 params: [
-                    "full_name" => $user->full_name,
-                    "subtitle" => $data['subtitle'],
-                    "bussines_name" => $user->company?->name,
-                    "glosas_import" => $data['glosas_import'],
-                    "show_table_errors" => count($data['glosas_import']) > 0 ? true : false,
+                    'full_name' => $user->full_name,
+                    'subtitle' => $data['subtitle'],
+                    'bussines_name' => $user->company?->name,
+                    'glosas_import' => $data['glosas_import'],
+                    'show_table_errors' => count($data['glosas_import']) > 0 ? true : false,
                 ],
                 attachments: [
                     [
@@ -410,7 +410,6 @@ class GlosaImport implements ShouldQueue, SkipsOnFailure, ToModel, WithChunkRead
             // Tomar el primer elemento del grupo y devolver solo su 'data'
             return $group->first()['data'] ?? null;
         })->values();
-
 
         // Generar el CSV con Laravel Excel
         $csv = Excel::raw(new GlosaExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);

@@ -2,24 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Attributes\Description;
 use App\Enums\Assignment\StatusAssignmentEnum;
-use App\Events\ModalError;
 use App\Exports\Assignment\AssignmentExcelErrorsValidationExport;
 use App\Exports\Assignment\AssignmentExcelExport;
-use App\Helpers\Common\ErrorCollector;
-use App\Helpers\Common\ImportCsvValidator;
 use App\Helpers\Constants;
 use App\Http\Requests\Assignment\AssignmentUploadCsvRequest;
 use App\Http\Resources\Assignment\AssignmentPaginateInvoiceAuditResource;
 use App\Http\Resources\Assignment\AssignmentPaginatePatientResource;
 use App\Http\Resources\Assignment\AssignmentPaginateThirdsResource;
-use App\Imports\AssingmentImport;
 use App\Imports\AssingmentImportValidationStructure;
-use App\Jobs\Assignment\ProcessValidationStructureAssignment;
-use App\Jobs\BrevoProcessSendEmail;
-use App\Models\User;
-use App\Notifications\BellNotification;
 use App\Repositories\AssignmentBatcheRepository;
 use App\Repositories\AssignmentRepository;
 use App\Repositories\CompanyRepository;
@@ -122,27 +113,27 @@ class AssignmentController extends Controller
             $company_id = $request->input('company_id');
 
             $assignmentBatches = $this->assignmentBatcheRepository->list([
-                "company_id" => $company_id,
-                "typeData" => "all",
+                'company_id' => $company_id,
+                'typeData' => 'all',
             ]);
 
             $users = $this->userRepository->list([
-                "is_active" => 1,
-                "company_id" => $company_id,
-                "typeData" => "all",
+                'is_active' => 1,
+                'company_id' => $company_id,
+                'typeData' => 'all',
             ]);
 
             $auditUsers = $this->userRepository->getAuditUsers([
-                "is_active" => 1,
-                "company_id" => $company_id,
-                "typeData" => "all",
+                'is_active' => 1,
+                'company_id' => $company_id,
+                'typeData' => 'all',
             ]);
 
             $assignmentStatusEnumValues = array_column(StatusAssignmentEnum::cases(), 'value');
 
             if ($request->hasFile('archiveCsv')) {
                 $file = $request->file('archiveCsv');
-                $ruta = '/companies/company_' . $company_id . '/assignments/import_temp/' . $user_id; // Ruta donde se guardará la carpeta
+                $ruta = '/companies/company_'.$company_id.'/assignments/import_temp/'.$user_id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
                 $path_csv = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
             }
@@ -174,7 +165,6 @@ class AssignmentController extends Controller
             // Tomar el primer elemento del grupo y devolver solo su 'data'
             return $group->first()['data'] ?? null;
         })->values();
-
 
         // Generar el CSV con Laravel Excel
         $csv = Excel::raw(new AssignmentExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);
@@ -289,7 +279,7 @@ class AssignmentController extends Controller
         return $this->execute(function () use ($request) {
             // Obtener el contenido del archivo
 
-            $jsonContent = openFileJson($request["url_json"]);
+            $jsonContent = openFileJson($request['url_json']);
 
             return [
                 'code' => 200,
@@ -308,14 +298,14 @@ class AssignmentController extends Controller
             $company_id = $request->input('company_id');
 
             $assignmentBatches = $this->assignmentBatcheRepository->list([
-                "company_id" => $company_id,
-                "typeData" => "all",
+                'company_id' => $company_id,
+                'typeData' => 'all',
             ]);
 
             $users = $this->userRepository->getAuditUsers([
-                "is_active" => 1,
-                "company_id" => $company_id,
-                "typeData" => "all",
+                'is_active' => 1,
+                'company_id' => $company_id,
+                'typeData' => 'all',
             ]);
 
             $keyData = "invoice_audits:company_{$company_id}:cronjob_";

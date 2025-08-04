@@ -17,9 +17,7 @@ class DataSelectFilter implements Filter
     /**
      * Apply the filter to the query.
      *
-     * @param Builder $query
-     * @param mixed $value
-     * @param string $property
+     * @param  mixed  $value
      * @return void
      */
     public function __invoke(Builder $query, $value, string $property)
@@ -32,7 +30,7 @@ class DataSelectFilter implements Filter
             return explode('|', $val)[0]; // Ej: "239|venezuela" → "239"
         }, $values);
 
-        if (!empty($this->relation)) {
+        if (! empty($this->relation)) {
             $query->whereHas($this->relation, function ($q) use ($property, $arrayIds) {
                 $q->whereIn($property, $arrayIds);
             });

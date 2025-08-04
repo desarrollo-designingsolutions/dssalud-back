@@ -32,5 +32,4 @@ class Constants
     public const KEY_NumDocumentoIdentificacion = 'numDocumentoIdentificacion';
 
     public const KEY_VrServicio = 'vrServicio';
-
 }

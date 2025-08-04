@@ -30,9 +30,5 @@ Route::get('/conciliation/excelExportConciliationInvoices', [ConciliationControl
 
 Route::post('/conciliation/uploadFile', [ConciliationController::class, 'uploadFile']);
 
-// Route::get('/conciliation/errors/{batchId}', [ConciliationController::class, 'getErrors']);
-
-Route::get('/process/{batchId}/errors', [ProcessLogController::class, 'getErrors']);
-
 
 // });

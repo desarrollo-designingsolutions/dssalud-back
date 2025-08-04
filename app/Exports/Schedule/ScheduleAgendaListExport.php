@@ -25,7 +25,7 @@ class ScheduleAgendaListExport implements FromView, ShouldAutoSize, WithEvents
     {
         $data = collect($this->data)->map(function ($value) {
 
-            $response_date = $value->response_date ? Carbon::parse($value->response_date)->format("d-m-Y H:i") : "Sin respuesta";
+            $response_date = $value->response_date ? Carbon::parse($value->response_date)->format('d-m-Y H:i') : 'Sin respuesta';
 
             return [
                 'id' => $value->id,
@@ -34,12 +34,9 @@ class ScheduleAgendaListExport implements FromView, ShouldAutoSize, WithEvents
                 'response_status_description' => $value->scheduleable->response_status?->description(),
                 'response_date' => $response_date,
 
-
                 'user_name' => $value->scheduleable?->user?->full_name,
-                'third_name' => $value->scheduleable?->third?->nit . ' - ' .   $value->scheduleable?->third?->name,
+                'third_name' => $value->scheduleable?->third?->nit.' - '.$value->scheduleable?->third?->name,
                 'reconciliation_group_name' => $value->scheduleable?->reconciliation_group?->name,
-
-
 
             ];
         });
@@ -57,7 +54,7 @@ class ScheduleAgendaListExport implements FromView, ShouldAutoSize, WithEvents
                 // Obtener el rango de celdas con datos
                 $highestColumn = $sheet->getHighestColumn();
                 $highestRow = $sheet->getHighestRow();
-                $range = 'A1:' . $highestColumn . $highestRow;
+                $range = 'A1:'.$highestColumn.$highestRow;
 
                 // Establecer el filtro automático en el rango de celdas
                 $sheet->setAutoFilter($range);

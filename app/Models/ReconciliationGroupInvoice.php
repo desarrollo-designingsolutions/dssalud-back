@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReconciliationGroupInvoice extends Model
 {
-    use HasUuids, SoftDeletes, Cacheable;
+    use Cacheable, HasUuids, SoftDeletes;
 
     public function reconciliationGroup()
     {

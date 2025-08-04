@@ -69,7 +69,7 @@ function filterComponent($query, &$request, $model = null)
                         $search = $value['search'];
 
                         if ($value['type'] == 'LIKE' && ! is_array($search)) {
-                            $search = '%' . $value['search'] . '%';
+                            $search = '%'.$value['search'].'%';
                         }
                         if (isset($value['relation'])) {
                             foreach ($value['relation'] as $key => $relation) {
@@ -177,7 +177,7 @@ function generatePastelColor($opacity = 1.0)
 function truncate_text($text, $maxLength = 15)
 {
     if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength) . '...';
+        return substr($text, 0, $maxLength).'...';
     }
 
     return $text;
@@ -188,7 +188,7 @@ function formatNumber($number, $currency_symbol = '$ ', $decimal = 2)
     // Asegúrate de que el número es un número flotante
     $formattedNumber = number_format((float) $number, $decimal, ',', '.');
 
-    return $currency_symbol . $formattedNumber;
+    return $currency_symbol.$formattedNumber;
 }
 
 function formattedElement($element)
@@ -295,7 +295,7 @@ function customSort($a, $b, $sortingRules)
                 }
                 break;
 
-            // Puedes agregar más tipos de ordenación según sea necesario
+                // Puedes agregar más tipos de ordenación según sea necesario
 
             default:
                 // Si el tipo de orden no es 'asc' ni 'desc', no realizar ninguna comparación
@@ -498,11 +498,9 @@ function sumVrServicio($valueJsonInvoice)
     return $sumVrInvoice;
 }
 
-
-
 function changeServiceData($service_id)
 {
-    $service = Service::with(["invoice_audit"])->find($service_id);
+    $service = Service::with(['invoice_audit'])->find($service_id);
 
     $value_glosa = $service->glosas->sum('glosa_value');
 
@@ -512,21 +510,21 @@ function changeServiceData($service_id)
 
     $value_approved = $service->total_value - $value_glosa;
 
-    //actualiza la BD MYSQL
+    // actualiza la BD MYSQL
     $service->update([
         'value_glosa' => $value_glosa,
         'value_approved' => $value_approved,
     ]);
 
-    //ACTUALIZA LA BD REDIS
+    // ACTUALIZA LA BD REDIS
     $request = [
         'company_id' => $service->id,
         'element_id' => $service->id,
     ];
 
     // Generar la clave de caché
-    $cacheService = new CacheService();
-    $key = $cacheService->generateKey("services_cronjob", $request, 'hash');
+    $cacheService = new CacheService;
+    $key = $cacheService->generateKey('services_cronjob', $request, 'hash');
 
     $newData = [
         'value_glosa' => $value_glosa,
@@ -534,17 +532,16 @@ function changeServiceData($service_id)
     ];
     Redis::hmset($key, $newData);
 
-
-    //sumo los valores de los servicios
+    // sumo los valores de los servicios
     $services = $service->invoice_audit->services;
 
     $value_glosa = $services->sum('value_glosa');
     $value_approved = $services->sum('value_approved');
 
-    //los emito al front
+    // los emito al front
     ChangeInvoiceAuditData::dispatch($service->invoice_audit_id, [
-        "value_glosa" => formatNumber($value_glosa),
-        "value_approved" => formatNumber($value_approved),
+        'value_glosa' => formatNumber($value_glosa),
+        'value_approved' => formatNumber($value_approved),
     ]);
 }
 

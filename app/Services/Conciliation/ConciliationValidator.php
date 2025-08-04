@@ -4,11 +4,14 @@ namespace App\Services\Conciliation;
 
 use App\Models\AuditoryFinalReport;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // Importar Redis
+use Illuminate\Support\Facades\Redis;    // Importar DB
 
 class ConciliationValidator
 {
-    protected $batchId ;
+    protected $batchId;
+
     protected $validationRules = [
         'data_integrity' => true,
         'required_fields' => true,
@@ -29,52 +32,62 @@ class ConciliationValidator
         'VALOR_ACEPTADO_IPS',
         'VALOR_ACEPTADO_EPS',
         'VALOR_RATIFICADO_EPS',
-        'OBSERVACIONES'
+        'OBSERVACIONES',
     ];
 
-    // Clave para almacenar el conteo de facturas en cache
+    // Clave para almacenar el conteo de facturas en cache (para DB counts)
     protected const FACTURA_COUNT_CACHE_KEY = 'factura_counts';
 
-    // Clave para almacenar el conteo de apariciones en el Excel
+    // Clave para almacenar el conteo de apariciones en el Excel (usando Redis Hash)
     protected const FACTURA_EXCEL_COUNT_CACHE_KEY = 'factura_excel_counts';
 
     // Tiempo de vida de la caché en minutos (2 horas = 120 minutos)
     protected const CACHE_TTL_MINUTES = 120;
 
-    public function validate(array $row, array $rowData, int $rowIndex, array $expectedHeaders,$batchId): array
+    /**
+     * Constructor de la clase.
+     *
+     * @param  string|null  $batchId  El ID del batch actual.
+     */
+    public function __construct(?string $batchId = null)
     {
         $this->batchId = $batchId;
+    }
+
+    public function validate(array $row, array $rowData, int $rowIndex, array $expectedHeaders): array
+    {
+        // El batchId ya se establece en el constructor, no es necesario pasarlo aquí.
         $errors = [];
         $reportData = null;
 
         // 1. Validación de facturas completas (solo si tiene FACTURA_ID)
-        if (isset($row['FACTURA_ID']) && !empty($row['FACTURA_ID'])) {
+        if (isset($row['FACTURA_ID']) && ! empty($row['FACTURA_ID'])) {
             $errors = array_merge($errors, $this->validateCompleteInvoices($row, $rowIndex, $rowData));
         }
 
         // Validación de integridad de datos
         if ($this->validationRules['data_integrity'] || $this->validationRules['cross_amount_validation']) {
-            if (isset($row['ID']) && !empty($row['ID'])) {
-                $cacheKey = "auditory_report:{$row['ID']}". ":{$this->batchId}";
-
+            if (isset($row['ID']) && ! empty($row['ID'])) {
+                $cacheKey = "auditory_report:{$row['ID']}".":{$this->batchId}";
                 $reportData = Cache::remember($cacheKey, self::CACHE_TTL_MINUTES, function () use ($row) {
                     try {
                         $report = AuditoryFinalReport::where('id', $row['ID'])->first();
+
                         return $report ? ['valor_glosa' => (float) $report->valor_glosa] : null;
                     } catch (\Exception $e) {
-                        Log::error("Error retrieving auditory report: " . $e->getMessage());
+                        Log::error('Error retrieving auditory report: '.$e->getMessage());
+
                         return null;
                     }
                 });
-
                 if ($reportData === null) {
                     $errors[] = $this->buildError(
                         'datos',
                         $rowIndex,
                         'ID',
                         "El ID {$row['ID']} no existe en auditory_final_reports o hubo un error al consultar.",
+                        $row['ID'] ?? null,
                         $rowData,
-                        $row['ID'] ?? null
                     );
                 }
             }
@@ -83,36 +96,35 @@ class ConciliationValidator
         // Validar campos obligatorios
         if ($this->validationRules['required_fields']) {
             foreach ($this->requiredFields as $field) {
-                if (!$this->isValidRequired($row, $field)) {
+                if (! $this->isValidRequired($row, $field)) {
                     $errors[] = $this->buildError(
                         'requerido',
                         $rowIndex,
                         $field,
                         "El campo '{$field}' es obligatorio y está vacío o es inválido.",
+                        $row[$field] ?? null,
                         $rowData,
-                        $row[$field] ?? null
                     );
                 }
             }
         }
 
         // Validación específica de ESTADO_RESPUESTA
-        if ($this->validationRules['estado_respuesta'] && isset($row['ESTADO_RESPUESTA']) && !empty($row['ESTADO_RESPUESTA'])) {
+        if ($this->validationRules['estado_respuesta'] && isset($row['ESTADO_RESPUESTA']) && ! empty($row['ESTADO_RESPUESTA'])) {
             $allowedStatuses = [
                 'Glosa aceptada por IPS',
                 'Glosa No aceptada por IPS (Genera respuesta)',
                 'Glosa Subsanada por IPS (Genera respuesta y Envía soporte)',
-                'Glosa para conciliación'
+                'Glosa para conciliación',
             ];
-
-            if (!in_array($row['ESTADO_RESPUESTA'], $allowedStatuses, true)) {
+            if (! in_array($row['ESTADO_RESPUESTA'], $allowedStatuses, true)) {
                 $errors[] = $this->buildError(
                     'formato',
                     $rowIndex,
                     'ESTADO_RESPUESTA',
-                    "Valor no permitido en ESTADO_RESPUESTA. Valores válidos: " . implode(', ', $allowedStatuses),
+                    'Valor no permitido en ESTADO_RESPUESTA. Valores válidos: '.implode(', ', $allowedStatuses),
+                    $row['ESTADO_RESPUESTA'],
                     $rowData,
-                    $row['ESTADO_RESPUESTA']
                 );
             }
         }
@@ -121,18 +133,17 @@ class ConciliationValidator
         $numericFields = [
             'VALOR_ACEPTADO_IPS' => $this->validationRules['valor_aceptado_ips'],
             'VALOR_ACEPTADO_EPS' => $this->validationRules['valor_aceptado_eps'],
-            'VALOR_RATIFICADO_EPS' => $this->validationRules['valor_ratificado_eps']
+            'VALOR_RATIFICADO_EPS' => $this->validationRules['valor_ratificado_eps'],
         ];
-
         foreach ($numericFields as $field => $shouldValidate) {
-            if ($shouldValidate && isset($row[$field]) && (!is_numeric($row[$field]) || $row[$field] < 0)) {
+            if ($shouldValidate && isset($row[$field]) && (! is_numeric($row[$field]) || $row[$field] < 0)) {
                 $errors[] = $this->buildError(
                     'formato',
                     $rowIndex,
                     $field,
                     "El campo '{$field}' debe ser un valor numérico positivo.",
+                    $row[$field],
                     $rowData,
-                    $row[$field]
                 );
             }
         }
@@ -146,21 +157,18 @@ class ConciliationValidator
                 is_numeric($row['VALOR_RATIFICADO_EPS']) &&
                 $reportData && isset($reportData['valor_glosa'])
             ) {
-
                 $sum = (float) $row['VALOR_ACEPTADO_IPS'] +
                     (float) $row['VALOR_ACEPTADO_EPS'] +
                     (float) $row['VALOR_RATIFICADO_EPS'];
-
                 $valorGlosa = (float) $reportData['valor_glosa'];
-
                 if ($sum !== $valorGlosa) {
                     $errors[] = $this->buildError(
                         'consistencia',
                         $rowIndex,
                         'VALOR_ACEPTADO_IPS,VALOR_ACEPTADO_EPS,VALOR_RATIFICADO_EPS',
                         "La suma de valores ({$sum}) no coincide con VALOR_GLOSA ({$valorGlosa}).",
+                        $sum,
                         $rowData,
-                        $sum
                     );
                 }
             }
@@ -174,16 +182,17 @@ class ConciliationValidator
         int $rowIndex,
         string $column,
         string $message,
+        $error_value,
         array $fullRecord,
-        $field_value = null
     ): array {
         return [
             'error_type' => $errorType,
-            'row' => $rowIndex,
-            'column' => $column,
-            'message' => $message,
-            'full_record' => $fullRecord,
-            'field_value' => $field_value
+            'row_number' => $rowIndex, // Cambiado a row_number para consistencia con la tabla de errores
+            'column_name' => $column,
+            'error_message' => $message,
+            'original_data' => $fullRecord,
+            'error_value' => $error_value,
+            'timestamp' => now()->toISOString(), // Añadido timestamp
         ];
     }
 
@@ -193,7 +202,7 @@ class ConciliationValidator
         return isset($row[$field]) &&
             $row[$field] !== '' &&
             $row[$field] !== null &&
-            (!is_string($row[$field]) || trim($row[$field]) !== '');
+            (! is_string($row[$field]) || trim($row[$field]) !== '');
     }
 
     /**
@@ -203,25 +212,21 @@ class ConciliationValidator
     {
         $errors = [];
         $facturaId = $row['FACTURA_ID'];
-
         try {
-            // 1. Registrar aparición en el Excel
+            // 1. Registrar aparición en el Excel usando Redis para atomicidad
             $this->incrementExcelCount($facturaId);
-
             // 2. Obtener conteo de la base de datos (con cache)
-            $dbCount = $this->getDatabaseCount($facturaId);
-
-            // 3. Validar solo si ya terminamos de procesar todo el archivo
-            // (esta validación se completará en el método finalizeValidation)
-
+            // Esta llamada es solo para que el cache se llene si es necesario,
+            // la validación real de conteos se hace en finalizeValidation.
+            $this->getDatabaseCount($facturaId);
         } catch (\Exception $e) {
             $errors[] = $this->buildError(
                 'datos',
                 $rowIndex,
                 'FACTURA_ID',
-                "Error al validar factura: " . $e->getMessage(),
+                'Error al validar factura: '.$e->getMessage(),
+                $facturaId,
                 $rowData,
-                $facturaId
             );
         }
 
@@ -229,22 +234,32 @@ class ConciliationValidator
     }
 
     /**
-     * Incrementa el contador de apariciones en el Excel
+     * Incrementa el contador de apariciones en el Excel usando Redis Hash.
+     * Esto es atómico y seguro para múltiples workers.
      */
     protected function incrementExcelCount(string $facturaId): void
     {
-        $excelCounts = Cache::get(self::FACTURA_EXCEL_COUNT_CACHE_KEY. ":{$this->batchId}", []);
-        $excelCounts[$facturaId] = ($excelCounts[$facturaId] ?? 0) + 1;
-        Cache::put(self::FACTURA_EXCEL_COUNT_CACHE_KEY. ":{$this->batchId}", $excelCounts, self::CACHE_TTL_MINUTES);
+        if ($this->batchId) {
+            Redis::hincrby(self::FACTURA_EXCEL_COUNT_CACHE_KEY.":{$this->batchId}", $facturaId, 1);
+        } else {
+            Log::warning('ConciliationValidator: batchId no está configurado. No se puede incrementar el conteo de Excel en Redis.');
+        }
     }
 
     /**
-     * Obtiene el conteo de registros en la base de datos para una factura (con cache)
+     * Obtiene el conteo de registros en la base de datos para una factura (con cache).
+     * Asume que AuditoryFinalReport es el modelo de tu tabla final.
      */
     protected function getDatabaseCount(string $facturaId): int
     {
+        if (! $this->batchId) {
+            Log::warning('ConciliationValidator: batchId no está configurado. No se puede obtener el conteo de BD desde caché.');
+
+            return 0;
+        }
+
         return Cache::remember(
-            self::FACTURA_COUNT_CACHE_KEY . ":{$facturaId}". ":{$this->batchId}",
+            self::FACTURA_COUNT_CACHE_KEY.":{$facturaId}".":{$this->batchId}",
             self::CACHE_TTL_MINUTES,
             function () use ($facturaId) {
                 return AuditoryFinalReport::where('factura_id', $facturaId)
@@ -256,24 +271,56 @@ class ConciliationValidator
 
     /**
      * Método para finalizar la validación (debe llamarse al terminar de procesar todo el archivo)
+     * y verificar la conciliación de conteos de FACTURA_ID con valor_glosa > 0.
+     *
+     * @return array Una lista de errores encontrados.
      */
     public function finalizeValidation(): array
     {
         $errors = [];
-        $excelCounts = Cache::get(self::FACTURA_EXCEL_COUNT_CACHE_KEY. ":{$this->batchId}", []);
+        if (! $this->batchId) {
+            Log::error('ConciliationValidator: batchId no está configurado en finalizeValidation. No se puede realizar la validación final.');
 
+            return [['error_type' => 'system_error', 'message' => 'Batch ID no disponible para validación final.']];
+        }
+
+        // 1. Obtener todos los conteos de Excel desde Redis (hash)
+        $excelCounts = Redis::hgetall(self::FACTURA_EXCEL_COUNT_CACHE_KEY.":{$this->batchId}");
+        // Convertir los valores de string a int
+        $excelCounts = array_map('intval', $excelCounts);
+
+        if (empty($excelCounts)) {
+            $this->clearCountCache(); // Limpiar incluso si no hay conteos
+
+            return [];
+        }
+
+        $facturaIds = array_keys($excelCounts);
+
+        // 2. Obtener conteos de la base de datos para todos los FACTURA_ID relevantes en una sola consulta
+        $dbCounts = AuditoryFinalReport::whereIn('factura_id', $facturaIds)
+            ->where('valor_glosa', '>', 0)
+            ->select('factura_id', DB::raw('count(*) as db_count'))
+            ->groupBy('factura_id')
+            ->get()
+            ->keyBy('factura_id')
+            ->map(fn ($item) => $item->db_count); // Mapear solo el conteo
+
+        // 3. Comparar conteos
         foreach ($excelCounts as $facturaId => $excelCount) {
-            $dbCount = $this->getDatabaseCount($facturaId);
+            $dbCount = $dbCounts->get($facturaId) ?? 0; // Obtener conteo de la colección, 0 si no se encuentra
 
             if ($excelCount !== $dbCount) {
                 $errors[] = [
-                    'error_type' => 'factura_incompleta',
-                    'row' => 'global',
-                    'column' => 'FACTURA_ID',
-                    'message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en BD: {$dbCount}",
-                    'full_record' => null,
-                    'field_value' => $facturaId
+                    'error_type' => 'final_conciliation_error', // Tipo de error más específico
+                    'row_number' => 0, // Error a nivel de batch/conciliación
+                    'column_name' => 'FACTURA_ID_CONCILIACION',
+                    'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en BD (con valor_glosa > 0): {$dbCount}",
+                    'error_value' => $facturaId,
+                    'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
+                    'timestamp' => now()->toISOString(),
                 ];
+                Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs BD (con valor_glosa > 0: {$dbCount}).");
             }
         }
 
@@ -284,18 +331,19 @@ class ConciliationValidator
     }
 
     /**
-     * Limpia los datos de cache de conteo
+     * Limpia los datos de cache de conteo.
+     * Elimina el hash de Redis para los conteos de Excel.
+     * Para los conteos de BD, se confía en el TTL de Cache::remember.
      */
     protected function clearCountCache(): void
     {
-        $excelCounts = Cache::get(self::FACTURA_EXCEL_COUNT_CACHE_KEY. ":{$this->batchId}", []);
-
-        // Eliminar conteos individuales de la BD
-        foreach (array_keys($excelCounts) as $facturaId) {
-            Cache::forget(self::FACTURA_COUNT_CACHE_KEY . ":{$facturaId}". ":{$this->batchId}");
+        if ($this->batchId) {
+            Redis::del(self::FACTURA_EXCEL_COUNT_CACHE_KEY.":{$this->batchId}");
+            // Los cachés individuales de DB (FACTURA_COUNT_CACHE_KEY) se gestionan por su propio TTL
+            // o se podrían borrar explícitamente si se pasara la lista de facturaIds aquí.
+            // Por simplicidad y eficiencia, confiamos en el TTL para los cachés de DB.
+        } else {
+            Log::warning('ConciliationValidator: batchId no está configurado. No se puede limpiar la caché de conteos.');
         }
-
-        // Eliminar conteo del Excel
-        Cache::forget(self::FACTURA_EXCEL_COUNT_CACHE_KEY. ":{$this->batchId}");
     }
 }

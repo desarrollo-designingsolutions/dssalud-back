@@ -3,7 +3,6 @@
 namespace App\Exports\ReconciliationGroup;
 
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -29,7 +28,7 @@ class ReconciliationGroupExcelExport implements FromView, ShouldAutoSize, WithEv
                 'name' => $value->name,
                 'third_nit' => $value->third?->nit,
                 'third_name' => $value->third?->name,
-                'link' => env('SYSTEM_URL_BACK') . 'reconciliationGroup/index/' . $value->id,
+                'link' => env('SYSTEM_URL_BACK').'reconciliationGroup/index/'.$value->id,
             ];
         });
 
@@ -46,7 +45,7 @@ class ReconciliationGroupExcelExport implements FromView, ShouldAutoSize, WithEv
                 // Obtener el rango de celdas con datos
                 $highestColumn = $sheet->getHighestColumn();
                 $highestRow = $sheet->getHighestRow();
-                $range = 'A1:' . $highestColumn . $highestRow;
+                $range = 'A1:'.$highestColumn.$highestRow;
 
                 // Establecer el filtro automático en el rango de celdas
                 $sheet->setAutoFilter($range);

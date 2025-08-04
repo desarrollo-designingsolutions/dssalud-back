@@ -2,16 +2,21 @@
 
 namespace App\QueryBuilder\Sort;
 
-use Spatie\QueryBuilder\Sorts\Sort;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\QueryBuilder\Sorts\Sort;
 
 class RelatedModelSort implements Sort
 {
     protected $relationship;
+
     protected $relatedTable;
+
     protected $relatedColumn;
+
     protected $morphType;
+
     protected $morphClass;
+
     protected $uniqueId;
 
     public function __construct(string $relationship, string $relatedTable, string $relatedColumn, ?string $morphType = null, ?string $morphClass = null)

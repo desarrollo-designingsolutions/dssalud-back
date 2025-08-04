@@ -12,7 +12,6 @@ use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginatePatientResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateServiceResource;
 use App\Http\Resources\InvoiceAudit\InvoiceAuditPaginateThirdsResource;
 use App\Jobs\BrevoProcessSendEmail;
-use App\Models\Assignment;
 use App\Notifications\BellNotification;
 use App\Repositories\AssignmentRepository;
 use App\Repositories\CodeGlosaRepository;
@@ -164,7 +163,7 @@ class InvoiceAuditController extends Controller
             $request['third_id'] = $third_id;
             $request['invoice_audit_id'] = $invoice_audit_id;
 
-            $assignment =  $this->assignmentRepository->searchOne($request->all());
+            $assignment = $this->assignmentRepository->searchOne($request->all());
 
             $invoice_audit['total_value'] = formatNumber($invoice_audit['total_value']);
 
@@ -245,7 +244,6 @@ class InvoiceAuditController extends Controller
 
             $excelBase64 = base64_encode($excel);
 
-
             // Obtener el objeto User a partir del ID
             $user = $this->userRepository->find($user_id);
 
@@ -257,16 +255,16 @@ class InvoiceAuditController extends Controller
                 BrevoProcessSendEmail::dispatch(
                     emailTo: [
                         [
-                            "name" => $user->full_name,
-                            "email" => $user->email,
-                        ]
+                            'name' => $user->full_name,
+                            'email' => $user->email,
+                        ],
                     ],
-                    subject: "Exportacion de servicios",
+                    subject: 'Exportacion de servicios',
                     templateId: 9,  // El ID de la plantilla de Brevo que quieres usar
                     params: [
-                        "full_name" => $user->full_name,
-                        "subtitle" => "informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios",
-                        "bussines_name" => $user->company?->name,
+                        'full_name' => $user->full_name,
+                        'subtitle' => 'informacion de los servicios, descargue el archivo donde se muestra la informacion de los servicios',
+                        'bussines_name' => $user->company?->name,
                     ],
                     attachments: [
                         [
@@ -276,7 +274,6 @@ class InvoiceAuditController extends Controller
                     ],
                 );
             }
-
 
             return [
                 'code' => 200,
@@ -313,17 +310,14 @@ class InvoiceAuditController extends Controller
 
             $this->assignmentRepository->changeStatusAssigmentMasive($request);
 
-
-            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
-            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
-            $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
-
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:assignments_paginate_count_all_data*');
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:invoice_audits_paginateThirds*');
+            $this->cacheService->clearByPrefix($this->key_redis_project.'string:invoice_audits_paginateBatche*');
 
             return [
                 'code' => 200,
-                'message' => "Auditoria finalizada con exito",
+                'message' => 'Auditoria finalizada con exito',
             ];
         });
     }
-
 }

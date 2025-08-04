@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class AssignmentsImport implements ToModel, ShouldQueue, WithChunkReading
+class AssignmentsImport implements ShouldQueue, ToModel, WithChunkReading
 {
     /**
      * @return \Illuminate\Database\Eloquent\Model|null

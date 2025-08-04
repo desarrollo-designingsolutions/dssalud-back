@@ -20,7 +20,7 @@ class FileListTableV2Resource extends JsonResource
             'support_type_name' => $this->supportType?->name,
             'pathname' => $this->pathname,
             'filename' => $this->filename,
-            'created_at' => Carbon::parse($this->created_at)->format("d-m-Y"),
+            'created_at' => Carbon::parse($this->created_at)->format('d-m-Y'),
         ];
     }
 }

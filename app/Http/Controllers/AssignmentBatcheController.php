@@ -11,7 +11,6 @@ use App\Repositories\CompanyRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
-
 class AssignmentBatcheController extends Controller
 {
     use HttpResponseTrait;

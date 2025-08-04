@@ -36,7 +36,7 @@ class InvoiceAuditRepository extends BaseRepository
             })
             ->where(function ($query) use ($request) {
                 if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                 }
             });
 
@@ -86,7 +86,6 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
-
 
                     if (! empty($request['user_id'])) {
                         $query->whereHas('assignments', function ($subQuery) use ($request) {
@@ -183,7 +182,7 @@ class InvoiceAuditRepository extends BaseRepository
                     SELECT 1
                       FROM assignments
                      WHERE assignments.invoice_audit_id = invoice_audits.id
-                       AND assignments.status <> '" . StatusAssignmentEnum::ASSIGNMENT_EST_003->value . "'
+                       AND assignments.status <> '".StatusAssignmentEnum::ASSIGNMENT_EST_003->value."'
                        AND assignments.user_id = '{$userId}'
                   ) THEN 'pending'
                   ELSE 'finished'
@@ -198,7 +197,7 @@ class InvoiceAuditRepository extends BaseRepository
                     SELECT 1
                       FROM assignments
                      WHERE assignments.invoice_audit_id = invoice_audits.id
-                       AND assignments.status <> '" . StatusAssignmentEnum::ASSIGNMENT_EST_003->value . "'
+                       AND assignments.status <> '".StatusAssignmentEnum::ASSIGNMENT_EST_003->value."'
                   ) THEN 'pending'
                   ELSE 'finished'
                 END
@@ -214,16 +213,16 @@ class InvoiceAuditRepository extends BaseRepository
                     'user_names' => Assignment::selectRaw('CONCAT(users.name, \' \', COALESCE(users.surname, \'\'))')
                         ->join('users', 'users.id', '=', 'assignments.user_id')
                         ->whereColumn('invoice_audit_id', 'invoice_audits.id')
-                        ->when(!empty($request['assignment_batch_id']), function ($subQuery) use ($request) {
+                        ->when(! empty($request['assignment_batch_id']), function ($subQuery) use ($request) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         })
-                        ->when(!empty($request['company_id']), function ($subQuery) use ($request) {
+                        ->when(! empty($request['company_id']), function ($subQuery) use ($request) {
                             $subQuery->where('assignments.company_id', $request['company_id']);
                         })
-                        ->when(!empty($request['user_id']), function ($subQuery) use ($request) {
+                        ->when(! empty($request['user_id']), function ($subQuery) use ($request) {
                             $subQuery->where('user_id', $request['user_id']);
                         })
-                        ->when(!empty($request['third_id']), function ($subQuery) use ($request) {
+                        ->when(! empty($request['third_id']), function ($subQuery) use ($request) {
                             $subQuery->whereHas('invoiceAudit', function ($query2) use ($request) {
                                 $query2->where('third_id', $request['third_id']);
                             });
@@ -233,13 +232,13 @@ class InvoiceAuditRepository extends BaseRepository
                 ->withSum('services as value_glosa', 'value_glosa')
                 ->withSum('services as value_approved', 'value_approved')
                 ->allowedFilters([
-                    AllowedFilter::callback('inputGeneral', function ($query, $value) use ($request) {
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         // $query->orWhere(function ($subQuery) use ($value) {
                         //     $number = preg_replace('/[\$\s\.,]/', '', $value);
                         //     $subQuery->orHaving('total_value_services', 'like', $number)
                         //     ->orHaving('value_glosa',        'like', $number);
                         // });
-                        $query->where(function ($subQuery) use ($value, $request) {
+                        $query->where(function ($subQuery) use ($value) {
                             $subQuery->orWhere('invoice_number', 'like', "%$value%");
                             // $subQuery->orWhere('status', 'like', "%$value%");
                             $subQuery->orWhere(function ($subQuery) use ($value) {
@@ -248,8 +247,8 @@ class InvoiceAuditRepository extends BaseRepository
                             });
 
                             // Búsqueda por nombres y apellidos de usuarios
-                            $subQuery->orWhereHas('assignment.user', function ($userQuery) use ($value, $request) {
-                                $userQuery->where(function ($q) use ($value, $request) {
+                            $subQuery->orWhereHas('assignment.user', function ($userQuery) use ($value) {
+                                $userQuery->where(function ($q) use ($value) {
                                     $q->where('name', 'like', "%$value%")
                                         ->orWhere('surname', 'like', "%$value%")
                                         ->orWhereRaw("CONCAT(name, ' ', COALESCE(surname, '')) LIKE ?", ["%$value%"]);
@@ -335,7 +334,6 @@ class InvoiceAuditRepository extends BaseRepository
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
-
 
                     if (! empty($request['user_id'])) {
                         $query->whereHas('invoice_audit.assignment', function ($subQuery) use ($request) {

@@ -10,7 +10,7 @@ class CommaSeparatedEmails implements Rule
     {
         // Dividir el string por comas y limpiar espacios
         $emails = array_map('trim', explode(',', $value));
-        
+
         // Verificar que haya al menos un correo
         if (empty($emails)) {
             return false;
@@ -18,7 +18,7 @@ class CommaSeparatedEmails implements Rule
 
         // Validar cada correo
         foreach ($emails as $email) {
-            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 return false;
             }
         }

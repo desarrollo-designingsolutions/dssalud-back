@@ -10,18 +10,24 @@ use App\Http\Requests\Conciliation\ConciliationUploadFileRequest;
 use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
 use App\Http\Resources\Conciliation\ConciliationPaginateResource;
 use App\Http\Resources\Conciliation\ConciliationShowResource;
-use App\Models\ReconciliationGroupInvoice;
+use App\Jobs\Conciliation\FinalizeImportDecisionJob;
+use App\Jobs\Conciliation\ProcessExcelDataJob;
+use App\Jobs\Conciliation\ValidateExcelStructureJob;
+use App\Models\ProcessBatch;
 use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
 use App\Services\Conciliation\ExcelStructureValidator;
-use App\Services\Conciliation\ExcelConciliationProcessor;
 use App\Services\ProcessBatchService;
 use App\Traits\HttpResponseTrait;
+use Illuminate\Bus\Batch;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class ConciliationController extends Controller
 {
@@ -31,9 +37,7 @@ class ConciliationController extends Controller
         protected ReconciliationGroupRepository $reconciliationGroupRepository,
         protected ReconciliationGroupInvoiceRepository $reconciliationGroupInvoiceRepository,
         protected ExcelStructureValidator $excelStructureValidator,
-        protected ExcelConciliationProcessor $excelConciliationProcessor,
     ) {}
-
 
     public function paginateConciliation(Request $request)
     {
@@ -107,171 +111,183 @@ class ConciliationController extends Controller
     {
         $company_id = $request->input('company_id');
         $user_id = $request->input('user_id');
-
-        // $fullPath = public_path('Libro1.xlsx');
         $uploadedFile = $request->file('file');
 
         // Guardar archivo temporalmente
-        $fileName = time() . '_' . $uploadedFile->getClientOriginalName();
+        $fileName = time().'_'.$uploadedFile->getClientOriginalName();
         $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        $fullPath = storage_path('app/public/' . $filePath);
+        $fullPath = storage_path('app/public/'.$filePath);
+
+        // Obtener nombre y tamaño del archivo para metadatos
+        $originalFileName = $uploadedFile->getClientOriginalName();
+        $fileSize = $uploadedFile->getSize();
+
+        // Obtener el total de filas del archivo Excel (excluyendo encabezado)
+        $totalRows = Excel::toCollection(new \stdClass, $fullPath)[0]->count() - 1;
+        if ($totalRows < 0) {
+            $totalRows = 0;
+        }
+
+        // Definir un conjunto de colas disponibles
+        $availableQueues = [
+            'imports_1',
+            'imports_2',
+            'imports_3',
+            'imports_4',
+            'imports_5',
+        ];
+
+        $selectedQueue = null; // Inicializar a null
 
         try {
-            Log::info("🔍 [CONTROLLER] Starting validation for: {$fullPath}");
-
-            // Validación rápida
-            $validation = $this->excelStructureValidator->validate(
-                $fullPath
-            );
-
-            if ($validation['operation_failed']) {
-                // Storage::disk(Constants::DISK_FILES)->delete($filePath);
-                Log::warning("❌ [CONTROLLER] Validation failed for: {$fullPath}");
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Errores en la validación',
-                    'errors' => $validation['data']
-                ], 422);
+            // 1. Seleccionar una cola disponible ANTES de despachar el batch
+            $selectedQueue = ProcessBatchService::selectAvailableQueue($availableQueues);
+        } catch (Throwable $e) {
+            // Si no se puede seleccionar una cola, responder con error y limpiar el archivo temporal
+            if (Storage::exists($fullPath)) {
+                Storage::delete($fullPath);
             }
 
-            Log::info("✅ [CONTROLLER] Validation successful, starting processing for: {$fullPath}");
-
-            // Procesamiento asíncrono
-            $result = $this->excelConciliationProcessor->processFile(
-                $fullPath,
-                $company_id,
-                $user_id,
-            );
-
-            if (!$result['success']) {
-                // Storage::disk(Constants::DISK_FILES)->delete($filePath);
-                Log::error("❌ [CONTROLLER] Processing error for: {$fullPath} - {$result['error']}");
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => $result['error']
-                ], 500);
-            }
-
-            // Inicializar progreso en cache
-            Cache::put("batch_processed_{$result['batch_id']}", 0, now()->addHours(2));
-
-            Log::info("🎯 [CONTROLLER] Batch created successfully: {$result['batch_id']} for file: {$fullPath}");
-
-            // ✅ EMITIR EVENTO INICIAL CON METADATA COMPLETA
-            event(new ImportProgressEvent(
-                $result['batch_id'],
-                0,
-                'Iniciando proceso',
-                'Validando estructura',
-                [
-                    'sheet' => 0,
-                    'chunk' => 0,
-                    'current_row' => 0,
-                    'total_rows' => 0,
-                    'total_sheets' => $result['total_sheets'],
-                    'total_chunks' => $result['total_chunks'],
-                    'total_records' => $result['total_records'],
-                    'processed_records' => 0,
-                    'general_progress' => 0,
-                    'connection_type' => 'websocket',
-                    // ✅ NUEVOS DATOS INICIALES
-                    'current_sheet' => 1,
-                    'errors_count' => 0,
-                    'warnings_count' => 0,
-                    'file_size' => $result['file_size'] ?? 0,
-                    'processing_start_time' => $result['processing_start_time'] ?? now()->toDateTimeString(),
-                    'last_activity' => now()->toDateTimeString(),
-                    'memory_usage' => memory_get_usage(true),
-                    'cpu_usage' => 0,
-                    'connection_status' => 'connected',
-                ]
-            ));
-
-            Log::info("📤 [CONTROLLER] Sending immediate response for batch: {$result['batch_id']}");
-
             return response()->json([
-                'status' => 'success',
-                'batch_id' => $result['batch_id'],
-                'sheets' => $result['total_sheets'],
-                'chunks' => $result['total_chunks'],
-                'total_records' => $result['total_records'],
-                // 'file_name' => $uploadedFile->getClientOriginalName(),
-                'file_size' => $result['file_size'] ?? 0,
-                'processing_start_time' => $result['processing_start_time'] ?? now()->toDateTimeString(),
-                // 'message' => 'Archivo enviado a procesamiento. El progreso se actualizará via WebSocket.'
-            ], 200);
-        } catch (\Exception $e) {
-            // if (Storage::disk(Constants::DISK_FILES)->exists($filePath)) {
-            //     Storage::disk(Constants::DISK_FILES)->delete($filePath);
-            // }
-
-            Log::error("💥 [CONTROLLER] Exception during processing: {$e->getMessage()}", [
-                // 'file' => $fileName,
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error procesando el archivo: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Error: '.$e->getMessage(),
+                'error' => $e->getMessage(),
+            ], 503); // 503 Service Unavailable, ya que no hay recursos de cola
         }
-    }
 
+        // Crear batch con dos jobs secuenciales
+        $initialJobs = [
+            new ValidateExcelStructureJob($fullPath),
+            new ProcessExcelDataJob($fullPath, $totalRows), // <-- totalRows se pasa aquí
+        ];
 
-    public function getErrors(string $batchId)
-    {
-        try {
-            $errors = Cache::get("conciliation_errors_{$batchId}");
+        $batch = Bus::batch($initialJobs)
+            ->name('ProcessConciliation_'.now()->format('Y-m-d_H-i-s'))
+            ->onQueue($selectedQueue)
+            // ->allowFailures()
+            ->before(function (Batch $batch) use ($fullPath, $totalRows, $originalFileName, $fileSize) {
 
-            if (!$errors) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No se encontraron errores para este batch o ya expiraron'
-                ], 404);
-            }
+                // Guardar totalRows en Redis usando tu ID temporal
+                Redis::set("process:{$batch->id}:total_rows", $totalRows);
 
-            $decodedErrors = $errors; // Ya no necesita json_decode
-            $errorCount = count($decodedErrors);
+                // Leer solo la primera fila (headers)
+                $import = new \App\Imports\ChunkDataImport(1, 1);
+                $data = Excel::toArray($import, $fullPath)[0];
+                Redis::set("batch:{$batch->id}:headers", json_encode($data[0] ?? []));
 
-            $recordsWithErrors = count(array_unique(array_column($decodedErrors, 'row')));
+                // Guardar metadatos estáticos en Redis como un hash
+                Redis::hmset("batch:{$batch->id}:metadata", [
+                    'total_rows' => $totalRows,
+                    'file_name' => $originalFileName,
+                    'file_size' => $fileSize,
+                    'started_at' => now()->toDateTimeString(),
+                    'completed_at' => null,
+                    'total_sheets' => 1, // Asumiendo una sola hoja
+                    'current_sheet' => 1, // Asumiendo una sola hoja
+                ]);
 
-            return response()->json([
-                'status' => 'success',
-                'total_errors' => $errorCount,
-                'records_with_errors' => $recordsWithErrors,
-                'errors' => $decodedErrors,
-                'count' => $errorCount,
-                'cache_driver' => config('cache.default') // Info adicional
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error al recuperar errores: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+                // Emitir evento de progreso inicial
+                event(new ImportProgressEvent(
+                    $batch->id, // Usar el batch ID real de Laravel
+                    0, // processedRecords
+                    'Iniciando proceso de importación',
+                    0, // errorCount
+                    'active', // backendStatus
+                    0, // currentElement
+                ));
+            })
+            ->then(function (Batch $batch) use ($fullPath) {
+                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath);
+            })
+            ->catch(function (Batch $batch, Throwable $e) use ($fullPath) {
 
-    public function showErrors(string $batchId, Request $request)
-    {
-        $page = $request->get('page', 1);
-        $perPage = min($request->get('per_page', 200), 500); // Máximo 500 por página
+                $redisKey = "batch:{$batch->id}:errors";
+                $errorsFromRedis = Redis::lrange($redisKey, 0, -1);
+                $currentErrorCount = count($errorsFromRedis);
 
-        try {
-            $result = ProcessBatchService::getErrors($batchId, $page, $perPage);
+                if (! empty($errorsFromRedis)) {
+                    $errorsToInsert = [];
+                    foreach ($errorsFromRedis as $errorJson) {
+                        $errorData = json_decode($errorJson, true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            continue;
+                        }
+                        $errorsToInsert[] = [
+                            'id' => Str::uuid(),
+                            'batch_id' => $batch->id,
+                            'row_number' => $errorData['row_number'] ?? null,
+                            'column_name' => $errorData['column_name'] ?? null,
+                            'error_message' => $errorData['error_message'] ?? 'Error desconocido',
+                            'error_type' => $errorData['error_type'] ?? 'unknown',
+                            'original_data' => json_encode($errorData['original_data'] ?? null),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                    if (! empty($errorsToInsert)) {
+                        try {
+                            DB::table('process_batche_errors')->insert($errorsToInsert);
+                        } catch (Throwable $dbE) {
+                        }
+                    }
+                }
 
-            return response()->json([
-                'success' => true,
-                'data' => $result['data'],
-                'meta' => $result['meta']
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar los errores'
-            ], 500);
-        }
+                $processBatchRecord = ProcessBatch::where('batch_id', $batch->id)->first();
+                $processedRecordsAtFailure = $processBatchRecord ? $processBatchRecord->processed_records : 0;
+                ProcessBatchService::finalizeProcess($batch->id, $currentErrorCount, false, 'failed');
+
+                event(new ImportProgressEvent(
+                    $batch->id,
+                    $processedRecordsAtFailure,
+                    'Se encontraron errores en la estructura del archivo',
+                    $currentErrorCount,
+                    'failed', // Backend status
+                    $processedRecordsAtFailure, // currentElement
+                ));
+
+                Redis::del("batch:{$batch->id}:errors");
+
+                if (Storage::exists($fullPath)) {
+                    Storage::delete($fullPath);
+                }
+            })
+            ->finally(function (Batch $batch) use ($selectedQueue) {
+
+                ProcessBatchService::releaseQueue($selectedQueue); // Liberar la cola
+            })
+            ->dispatch();
+
+        // 1. Iniciar registro en BD usando ProcessBatchService
+        $processBatch = ProcessBatchService::initProcess( // <-- Capturar el objeto ProcessBatch
+            $batch->id,
+            $company_id,
+            $user_id,
+            $totalRows,
+            [
+                'total_rows' => $totalRows,
+                'file_name' => $originalFileName,
+                'file_size' => $fileSize,
+                'started_at' => now()->toDateTimeString(),
+                'completed_at' => null,
+                'total_sheets' => 1, // Asumiendo una sola hoja
+                'current_sheet' => 1, // Asumiendo una sola hoja
+            ]
+        );
+        // Emitir evento de progreso inicial
+        event(new ImportProgressEvent(
+            $batch->id, // Usar el batch ID real de Laravel
+            0, // processedRecords
+            'Archivo recibido y en cola', // currentAction para el evento inicial
+            0, // errorCount
+            $processBatch->status, // backendStatus
+            0, // currentElement
+        ));
+
+        return response()->json([
+            'batch_id' => $batch->id,
+            'message' => 'Proceso iniciado',
+            'status' => 'success',
+            'code' => '200',
+        ]);
     }
 
     public function excelExportConciliationInvoices(Request $request)

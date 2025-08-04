@@ -61,7 +61,7 @@ class CompanyController extends Controller
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_' . $company->id . $request->input('logo');
+                $ruta = 'companies/company_'.$company->id.$request->input('logo');
 
                 $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
@@ -100,7 +100,7 @@ class CompanyController extends Controller
 
             if ($request->file('logo')) {
                 $file = $request->file('logo');
-                $ruta = 'companies/company_' . $company->id . $request->input('logo');
+                $ruta = 'companies/company_'.$company->id.$request->input('logo');
                 $logo = $file->store($ruta, Constants::DISK_FILES);
                 $company->logo = $logo;
                 $company->save();
@@ -150,7 +150,7 @@ class CompanyController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'Compañia ' . $msg . ' con éxito',
+                'message' => 'Compañia '.$msg.' con éxito',
             ];
         });
     }

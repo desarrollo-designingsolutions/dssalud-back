@@ -10,7 +10,6 @@ use App\Models\Filing;
 use App\Models\FilingInvoice;
 use App\QueryBuilder\Filters\QueryFilters;
 use App\QueryBuilder\Sort\RelatedTableSort;
-use App\QueryBuilder\Sort\UserFullNameSort;
 use App\Traits\FilterManager;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
@@ -38,8 +37,8 @@ class FilingRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($filter, $request) {
 
             $query = QueryBuilder::for($this->model->query())
-                ->with(['contract:id,name','user:id,name,surname'])
-                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr', 'filings.company_id',"filings.user_id"])
+                ->with(['contract:id,name', 'user:id,name,surname'])
+                ->select(['filings.id', 'contract_id', 'type', 'status', 'sumVr', 'filings.company_id', 'filings.user_id'])
                 ->withCount(['filingInvoicePreRadicated'])
                 ->defaultSort('-created_at')
                 ->allowedFilters([
@@ -84,7 +83,6 @@ class FilingRepository extends BaseRepository
                         'contract_id',
                     )),
                     AllowedSort::custom('user_full_name', new RelatedTableSort('filings', 'users', 'name', 'user_id')),
-
 
                 ]);
 

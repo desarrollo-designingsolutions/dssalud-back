@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conciliation_results', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
 
-            $table->foreignUuid("auditory_final_report_id")->constrained();
-            $table->string("response_status");
-            $table->string("autorization_number");
-            $table->decimal("accepted_value_ips", 15, 2);
-            $table->decimal("accepted_value_eps", 15, 2);
-            $table->decimal("eps_ratified_value", 15, 2);
+            $table->foreignUuid('auditory_final_report_id')->constrained();
+            $table->string('response_status');
+            $table->string('autorization_number');
+            $table->decimal('accepted_value_ips', 15, 2);
+            $table->decimal('accepted_value_eps', 15, 2);
+            $table->decimal('eps_ratified_value', 15, 2);
 
             $table->timestamps();
         });

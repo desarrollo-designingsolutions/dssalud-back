@@ -16,7 +16,7 @@ class Patient extends Model
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->second_name . ' ' . $this->first_surname . ' ' . $this->second_surname;
+        return $this->first_name.' '.$this->second_name.' '.$this->first_surname.' '.$this->second_surname;
     }
 
     public function invoice_audit(): BelongsTo
@@ -27,8 +27,8 @@ class Patient extends Model
     public function glosas()
     {
         return $this->hasManyThrough(
-            Glosa::class,    
-            Service::class   
+            Glosa::class,
+            Service::class
         );
     }
 

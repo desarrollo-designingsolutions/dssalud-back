@@ -16,7 +16,7 @@ class ContractRepository extends BaseRepository
     {
         $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_list", $request, 'string');
 
-        return $this->cacheService->remember($cacheKey, function () use ($request, $with, $idsAllowed) {
+        return $this->cacheService->remember($cacheKey, function () use ($request, $with) {
 
             $data = $this->model->with($with)->where(function ($query) {})
                 ->where(function ($query) use ($request) {
@@ -27,7 +27,7 @@ class ContractRepository extends BaseRepository
                     }
                 })->where(function ($query) use ($request) {
                     if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
+                        $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
                     }
                 });
 

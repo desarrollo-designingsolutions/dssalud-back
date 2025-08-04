@@ -11,8 +11,6 @@ use App\Exports\Assignment\AssignmentExcelErrorsValidationExport;
 use App\Helpers\Constants;
 use App\Jobs\BrevoProcessSendEmail;
 use App\Models\Assignment;
-use App\Models\AssignmentBatche;
-use App\Models\InvoiceAudit;
 use App\Models\User;
 use App\Notifications\BellNotification;
 use App\Services\CacheService;
@@ -28,14 +26,18 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Facades\Excel;
 
-class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEvents, WithCustomCsvSettings
+class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithCustomCsvSettings, WithEvents
 {
     // ... constructor y otras propiedades ...
 
     private $key_redis_project;
+
     private $cacheService;
+
     private $assignments;
+
     private $invoice_audits;
+
     private $keyErrorRedis;
 
     public function __construct(
@@ -46,7 +48,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         protected $auditUsers,
         protected $assignmentStatusEnumValues,
     ) {
-        $this->cacheService = new CacheService();
+        $this->cacheService = new CacheService;
 
         $this->key_redis_project = env('KEY_REDIS_PROJECT');
         $this->keyErrorRedis = "string:assignment_import_errors_{$this->user_id}";
@@ -71,13 +73,13 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
                 $keyData = "assignments:company_{$this->company_id}:cronjob_";
                 $this->assignments = getCronjobHashes($keyData);
-                
+
                 $keyData = "invoice_audits:company_{$this->company_id}:cronjob_";
                 $this->invoice_audits = getCronjobHashes($keyData);
             },
             AfterImport::class => function (AfterImport $event) {
                 // Limpiar cache al finalizar
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:assignments*');
 
                 Redis::del("integer:assignments_import_total_{$this->user_id}");
                 Redis::del("integer:assignments_import_processed_{$this->user_id}");
@@ -100,8 +102,8 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                 // Convert array to JSON
                 $routeJson = null;
                 if (count($errorsFormatted) > 0) {
-                    $nameFile = 'error_' . $this->user_id . '.json';
-                    $routeJson = 'companies/company_' . $this->company_id . '/assignment/errors/' . $nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = 'error_'.$this->user_id.'.json';
+                    $routeJson = 'companies/company_'.$this->company_id.'/assignment/errors/'.$nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($errorsFormatted, JSON_PRETTY_PRINT));
                 }
 
@@ -123,11 +125,11 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
                         'assignments_import' => $errorsFormatted,
                     ]
                 );
-                
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:assignments_paginate_count_all_data*');
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateThirds*');
-                $this->cacheService->clearByPrefix($this->key_redis_project . 'string:invoice_audits_paginateBatche*');
-                
+
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:assignments_paginate_count_all_data*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:invoice_audits_paginateThirds*');
+                $this->cacheService->clearByPrefix($this->key_redis_project.'string:invoice_audits_paginateBatche*');
+
                 // Artisan::call('redis:run-service-job');
             },
         ];
@@ -180,32 +182,32 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         // Guardar los errores en Redis como una lista
         $assignmentBatch = $this->assignmentBatch($row[0], 'id');
-        if ($assignmentBatch == null) { 
-            $this->logError('1', $processed, $row[0], $data, "El ID del paquete no existe en la base de datos.");
+        if ($assignmentBatch == null) {
+            $this->logError('1', $processed, $row[0], $data, 'El ID del paquete no existe en la base de datos.');
             $error = true;
 
         }
 
         $user = $this->user($row[1], 'id');
-        if ($user == null) { 
+        if ($user == null) {
 
-            $this->logError('2', $processed, $row[1], $data, "El ID del usuario no existe en la base de datos.");
+            $this->logError('2', $processed, $row[1], $data, 'El ID del usuario no existe en la base de datos.');
             $error = true;
 
         }
 
         $auditUser = $this->auditUser($row[1], 'id');
-        if ($auditUser == null) { 
+        if ($auditUser == null) {
 
-            $this->logError('2', $processed, $row[1], $data, "El usuario no cuenta con la funcion de rol Auditor.");
+            $this->logError('2', $processed, $row[1], $data, 'El usuario no cuenta con la funcion de rol Auditor.');
             $error = true;
 
         }
 
         $invoiceAudit = $this->invoiceAudit($row[2], 'id');
-        if ($invoiceAudit) { 
+        if ($invoiceAudit) {
 
-            $this->logError('3', $processed, $row[2], $data, "El ID de la factura no existe en la base de datos.");
+            $this->logError('3', $processed, $row[2], $data, 'El ID de la factura no existe en la base de datos.');
             $error = true;
 
         }
@@ -219,13 +221,13 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         }
 
         $assignment_in_file = $this->assignmentInFile($row[2]);
-        if($assignment_in_file){
+        if ($assignment_in_file) {
             $this->logError('3', $processed, $row[2], $data, "La factura '{$row[2]}' ya está registrado en el archivo actual.");
             $error = true;
         }
 
-        if (!in_array($row[4], $this->assignmentStatusEnumValues, true)) {
-            $this->logError('5', $processed, $row[4], $data, "El codigo del estado no coincide con los estados del sistema.");
+        if (! in_array($row[4], $this->assignmentStatusEnumValues, true)) {
+            $this->logError('5', $processed, $row[4], $data, 'El codigo del estado no coincide con los estados del sistema.');
             $error = true;
         }
 
@@ -240,6 +242,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
@@ -254,6 +257,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
@@ -268,6 +272,7 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
 
         $data = $cache->first(function ($item) use ($value, $field) {
             $match = isset($item[$field]) && strtoupper($item[$field]) === strtoupper($value);
+
             return $match;
         });
 
@@ -311,12 +316,13 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         $error = false;
 
         // Verificar si el valor ya existe en el conjunto
-        if (!Redis::sismember($setKey, $value)) {
+        if (! Redis::sismember($setKey, $value)) {
             // El valor no existe, agregarlo al conjunto
             Redis::sadd($setKey, $value);
         } else {
             $error = true;
         }
+
         return $error;
     }
 
@@ -348,7 +354,6 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
         // Obtener el objeto User a partir del ID
         $user = User::find($userId);
 
-
         if ($user) {
             // Enviar notificación
             $user->notify(new BellNotification($data));
@@ -360,18 +365,18 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
             BrevoProcessSendEmail::dispatch(
                 emailTo: [
                     [
-                        "name" => $user->full_name,
-                        "email" => $user->email,
-                    ]
+                        'name' => $user->full_name,
+                        'email' => $user->email,
+                    ],
                 ],
                 subject: $data['title'],
                 templateId: 10,  // El ID de la plantilla de Brevo que quieres usar
                 params: [
-                    "full_name" => $user->full_name,
-                    "subtitle" => $data['subtitle'],
-                    "bussines_name" => $user->company?->name,
-                    "assignments_import" => $data['assignments_import'],
-                    "show_table_errors" => count($data['assignments_import']) > 0 ? true : false,
+                    'full_name' => $user->full_name,
+                    'subtitle' => $data['subtitle'],
+                    'bussines_name' => $user->company?->name,
+                    'assignments_import' => $data['assignments_import'],
+                    'show_table_errors' => count($data['assignments_import']) > 0 ? true : false,
                 ],
                 attachments: [
                     [
@@ -405,7 +410,6 @@ class AssingmentImport implements ShouldQueue, ToModel, WithChunkReading, WithEv
             // Tomar el primer elemento del grupo y devolver solo su 'data'
             return $group->first()['data'] ?? null;
         })->values();
-
 
         // Generar el CSV con Laravel Excel
         $csv = Excel::raw(new AssignmentExcelErrorsValidationExport($result), \Maatwebsite\Excel\Excel::CSV);

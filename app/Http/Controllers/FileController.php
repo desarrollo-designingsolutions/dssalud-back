@@ -11,13 +11,13 @@ use App\Http\Resources\File\FileListTableV2Resource;
 use App\Jobs\File\ProcessMassUpload;
 use App\Repositories\FileRepository;
 use App\Traits\HttpResponseTrait;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class FileController extends Controller
 {
@@ -90,7 +90,7 @@ class FileController extends Controller
                 $modelId = $request->input('fileable_id');
                 $path = "companies/company_{$validatedData['company_id']}/{$modelType}/{$modelId}/files";
 
-                $validatedData['fileable_type'] = 'App\\Models\\' . $validatedData['fileable_type'];
+                $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
                 $path = $file->store($path, Constants::DISK_FILES);
@@ -126,7 +126,7 @@ class FileController extends Controller
                 $modelId = $request->input('fileable_id');
                 $path = "companies/company_{$validatedData['company_id']}/{$modelType}/{$modelId}/files";
 
-                $validatedData['fileable_type'] = 'App\\Models\\' . $validatedData['fileable_type'];
+                $validatedData['fileable_type'] = 'App\\Models\\'.$validatedData['fileable_type'];
 
                 // Guardar el archivo en el almacenamiento de Laravel
                 $path = $file->store($path, Constants::DISK_FILES);
@@ -184,10 +184,10 @@ class FileController extends Controller
             $sanitizedFileName = preg_replace('/[\/\\\\?%*:|"<>]/', '_', $file);
 
             // Construye la ruta completa del archivo
-            $filePath = storage_path('app/public/' . $file);
+            $filePath = storage_path('app/public/'.$file);
 
             // Verifica si el archivo existe en el almacenamiento
-            if (! Storage::exists('public/' . $file)) {
+            if (! Storage::exists('public/'.$file)) {
                 return response()->json([
                     'code' => 500,
                     'message' => 'El archivo no existe en el almacenamiento',
@@ -208,7 +208,7 @@ class FileController extends Controller
             // Maneja cualquier excepción inesperada
             return response()->json([
                 'code' => 500,
-                'message' => 'Ocurrió un error inesperado: ' . $e->getMessage(),
+                'message' => 'Ocurrió un error inesperado: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -236,7 +236,7 @@ class FileController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\' . $modelType;
+            $modelClass = 'App\\Models\\'.$modelType;
             if (! class_exists($modelClass)) {
                 return response()->json(['code' => 400, 'message' => 'Modelo no válido'], 400);
             }
@@ -266,7 +266,7 @@ class FileController extends Controller
                     'fileable_type' => $modelClass,
                     'fileable_id' => $modelId,
                     'support_type_id' => $request->input('support_type_id', null),
-                    'channel' => 'filing_invoice.' . $modelId,
+                    'channel' => 'filing_invoice.'.$modelId,
                 ];
 
                 ProcessMassUpload::dispatch(
@@ -289,7 +289,7 @@ class FileController extends Controller
                 'count' => $fileCount,
             ], 202);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json(['code' => 500, 'message' => 'Error: '.$e->getMessage()], 500);
         }
     }
 
@@ -357,7 +357,7 @@ class FileController extends Controller
             ]);
 
             // Get the file path from the request
-            $fileKey = $request->input("pathname");
+            $fileKey = $request->input('pathname');
 
             // Validate that the file path is provided
             if (empty($fileKey)) {
@@ -373,22 +373,23 @@ class FileController extends Controller
                     config('filesystems.disks.s3.bucket'),
                     $fileKey
                 );
-                if (!$exists) {
+                if (! $exists) {
                     return [
                         'code' => 404,
                         'message' => "File not found in S3: {$fileKey}",
                     ];
                 }
             } catch (\Exception $e) {
-                \Log::error('S3 Existence Check Error: ' . $e->getMessage());
+                \Log::error('S3 Existence Check Error: '.$e->getMessage());
+
                 return [
                     'code' => 500,
-                    'error' => 'Error checking file existence: ' . $e->getMessage(),
+                    'error' => 'Error checking file existence: '.$e->getMessage(),
                 ];
             }
 
             // Generate a cache key based on the file path
-            $cacheKey = 's3_presigned_url_' . md5($fileKey);
+            $cacheKey = 's3_presigned_url_'.md5($fileKey);
 
             // Check if a valid presigned URL exists in Redis
             $cachedUrlData = Redis::get($cacheKey);
@@ -426,7 +427,6 @@ class FileController extends Controller
             $ttl = 3600; // 1 hour in seconds (matches '+1 hour')
             Redis::setex($cacheKey, $ttl, json_encode($urlData));
 
-
             return [
                 'code' => 200,
                 'fileUrlS3' => $fileUrlS3,
@@ -461,7 +461,7 @@ class FileController extends Controller
             $files = is_array($files) ? $files : [$files];
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\' . $modelType;
+            $modelClass = 'App\\Models\\'.$modelType;
             if (! class_exists($modelClass)) {
                 return response()->json(['code' => 400, 'message' => 'Modelo no válido'], 400);
             }
@@ -526,7 +526,7 @@ class FileController extends Controller
                 'files' => $uploadedFiles,
             ]);
         } catch (\Exception $e) {
-            return response()->json(['code' => 500, 'message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json(['code' => 500, 'message' => 'Error: '.$e->getMessage()], 500);
         }
     }
 }

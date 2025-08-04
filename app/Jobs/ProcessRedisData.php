@@ -16,17 +16,17 @@ class ProcessRedisData implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function handle(CacheService $cacheService): void
-    { 
+    {
         try {
             $models = [InvoiceAudit::class];
             // $models = [InvoiceAudit::class, Assignment::class];
 
             foreach ($models as $model) {
-                logger('Processing model: ' . $model);
+                logger('Processing model: '.$model);
                 ProcessRedisModel::dispatch($model)->onQueue('models');
             }
         } catch (\Throwable $e) {
-            \Log::error('Error in ProcessRedisData: ' . $e->getMessage(), [
+            \Log::error('Error in ProcessRedisData: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;

@@ -23,9 +23,9 @@ class ScheduleListResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
 
-            //para que se ordene y arregle en el calendario
-            'start' => $formattedDay . 'T' . $this->start_hour,
-            'end' => $formattedEndDay . 'T' . $this->end_hour,
+            // para que se ordene y arregle en el calendario
+            'start' => $formattedDay.'T'.$this->start_hour,
+            'end' => $formattedEndDay.'T'.$this->end_hour,
 
             'backgroundColor' => $this->type_event?->backgroundColor(),
             'type' => 'event', // Agregado para indicar que es un evento
