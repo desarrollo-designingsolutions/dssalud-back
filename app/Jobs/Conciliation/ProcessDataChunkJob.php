@@ -22,8 +22,8 @@ class ProcessDataChunkJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 5; // Permitir 5 intentos
-    public $timeout = 3600; // 1 hora
+    public $timeout = 3600; // Mantener tu timeout
+
 
     public function __construct(
         private string $filePath,
@@ -35,33 +35,21 @@ class ProcessDataChunkJob implements ShouldQueue
     public function handle()
     {
         $batchId = $this->batch()->id;
-        Log::info("Iniciando ProcessDataChunkJob", [
-            'batch_id' => $batchId,
-            'start_row' => $this->startRow,
-            'chunk_size' => $this->chunkSize,
-            'file_path' => $this->filePath
-        ]);
 
         try {
-            $startTime = microtime(true);
+
             $rows = $this->readExcelChunk();
             $processedRowsInChunk = count($rows);
-            Log::info("Chunk leído", [
-                'batch_id' => $batchId,
-                'row_count' => $processedRowsInChunk,
-                'duration' => microtime(true) - $startTime
-            ]);
 
+            // Obtener el total de registros procesados ANTES de este chunk desde la DB
+            $initialProcessedRecordsForBatch = ProcessBatch::where('batch_id', $batchId)->value('processed_records') ?? 0;
+
+            $localProcessedInChunk = 0;
             $validator = new ConciliationValidator($batchId);
-            Log::info("Validador inicializado", ['batch_id' => $batchId]);
 
             foreach ($rows as $index => $row) {
                 $actualRowNumber = $this->startRow + $index;
                 $formattedRow = $this->mapToAssociativeArray($row, $this->headers);
-                Log::debug("Procesando fila {$actualRowNumber}", [
-                    'batch_id' => $batchId,
-                    'formatted_row' => $formattedRow
-                ]);
 
                 try {
                     $errors = $validator->validate(
@@ -70,13 +58,33 @@ class ProcessDataChunkJob implements ShouldQueue
                         $actualRowNumber,
                         $this->headers
                     );
-                    Log::debug("Fila {$actualRowNumber} validada", [
-                        'batch_id' => $batchId,
-                        'errors' => $errors
-                    ]);
 
+                    if (! empty($errors)) {
+                        foreach ($errors as $error) {
+                            $error['batch_id'] = $batchId;
+                            Redis::rpush("batch:{$batchId}:errors", json_encode($error));
+                        }
+                    } else {
+                        Redis::rpush("batch:{$batchId}:staged_data", json_encode($formattedRow));
+                    }
+                } catch (Throwable $e) {
+                    Log::error("Error inesperado procesando fila {$actualRowNumber}: ".$e->getMessage(), ['row_data' => $row]);
+                    Redis::rpush("batch:{$batchId}:errors", json_encode([
+                        'row_number' => $actualRowNumber,
+                        'column_name' => 'SYSTEM_ERROR',
+                        'error_message' => 'Error inesperado: '.$e->getMessage(),
+                        'error_type' => 'system_processing_error',
+                        'error_value' => null,
+                        'original_data' => $formattedRow,
+                        'timestamp' => now()->toISOString(),
+                    ]));
+                }
+
+                $localProcessedInChunk++;
+                $currentErrorCount = Redis::llen("batch:{$batchId}:errors");
+
+                // Incrementar contadores en Redis
                     Redis::hincrby("batch:{$batchId}:progress", 'processed_records', 1);
-
                     if (!empty($errors)) {
                         foreach ($errors as $error) {
                             $error['batch_id'] = $batchId;
@@ -87,15 +95,11 @@ class ProcessDataChunkJob implements ShouldQueue
                         Redis::rpush("batch:{$batchId}:staged_data", json_encode($formattedRow));
                     }
 
+                    // Obtener valores acumulados
                     $totalProcessedRecords = Redis::hget("batch:{$batchId}:progress", 'processed_records') ?? 0;
                     $totalErrorCount = Redis::hget("batch:{$batchId}:progress", 'error_count') ?? 0;
 
-                    Log::debug("Emitiendo evento para fila {$actualRowNumber}", [
-                        'batch_id' => $batchId,
-                        'total_processed' => $totalProcessedRecords,
-                        'total_errors' => $totalErrorCount
-                    ]);
-
+                    // Emitir evento por registro
                     event(new ImportProgressEvent(
                         $batchId,
                         (int)$totalProcessedRecords,
@@ -104,106 +108,48 @@ class ProcessDataChunkJob implements ShouldQueue
                         'active',
                         $actualRowNumber
                     ));
-
-                } catch (Throwable $e) {
-                    Log::error("Error procesando fila {$actualRowNumber}", [
-                        'batch_id' => $batchId,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                        'row_data' => $row
-                    ]);
-                    Redis::rpush("batch:{$batchId}:errors", json_encode([
-                        'row_number' => $actualRowNumber,
-                        'column_name' => 'SYSTEM_ERROR',
-                        'error_message' => 'Error inesperado: ' . $e->getMessage(),
-                        'error_type' => 'system_processing_error',
-                        'error_value' => null,
-                        'original_data' => $formattedRow,
-                        'timestamp' => now()->toISOString(),
-                    ]));
-                    Redis::hincrby("batch:{$batchId}:progress", 'error_count', 1);
-                    Redis::hincrby("batch:{$batchId}:progress", 'processed_records', 1);
-
-                    $totalProcessedRecords = Redis::hget("batch:{$batchId}:progress", 'processed_records') ?? 0;
-                    $totalErrorCount = Redis::hget("batch:{$batchId}:progress", 'error_count') ?? 0;
-
-                    event(new ImportProgressEvent(
-                        $batchId,
-                        (int)$totalProcessedRecords,
-                        'Procesando datos',
-                        (int)$totalErrorCount,
-                        'active',
-                        $actualRowNumber
-                    ));
-                }
             }
 
-            Log::info("Actualizando processed_records en base de datos", ['batch_id' => $batchId]);
             ProcessBatchService::incrementProcessedRecords($batchId, $processedRowsInChunk);
-            Log::info("Chunk procesado exitosamente", [
-                'batch_id' => $batchId,
-                'duration' => microtime(true) - $startTime
-            ]);
-
-            // Limpiar claves de Redis
-            Log::info("Limpiando claves de Redis", ['batch_id' => $batchId]);
-            Redis::del("batch:{$batchId}:progress");
-            Redis::del("batch:{$batchId}:errors");
-            Redis::del("batch:{$batchId}:staged_data");
 
         } catch (Throwable $e) {
-            Log::error("Error crítico en ProcessDataChunkJob", [
-                'batch_id' => $batchId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'start_row' => $this->startRow,
-                'chunk_size' => $this->chunkSize,
-                'file_path' => $this->filePath
-            ]);
-            Redis::rpush("batch:{$batchId}:errors", json_encode([
-                'row_number' => $this->startRow,
-                'column_name' => 'SYSTEM_ERROR',
-                'error_message' => 'Error crítico en chunk: ' . $e->getMessage(),
-                'error_type' => 'system_chunk_error',
-                'original_data' => null,
-                'timestamp' => now()->toISOString(),
-            ]));
-            Redis::hincrby("batch:{$batchId}:progress", 'error_count', 1);
-            throw $e; // Relanzar la excepción para marcar el job como fallido
+            Log::error("Error procesando fila {$actualRowNumber}: " . $e->getMessage(), [
+                    'batch_id' => $batchId,
+                    'row_data' => $row,
+                    'exception' => $e->getTraceAsString()
+                ]);
+                Redis::rpush("batch:{$batchId}:errors", json_encode([
+                    'row_number' => $actualRowNumber,
+                    'column_name' => 'SYSTEM_ERROR',
+                    'error_message' => 'Error inesperado: ' . $e->getMessage(),
+                    'error_type' => 'system_processing_error',
+                    'error_value' => null,
+                    'original_data' => $formattedRow,
+                    'timestamp' => now()->toISOString(),
+                ]));
+                Redis::hincrby("batch:{$batchId}:progress", 'error_count', 1);
+                Redis::hincrby("batch:{$batchId}:progress", 'processed_records', 1);
+
+                $totalProcessedRecords = Redis::hget("batch:{$batchId}:progress", 'processed_records') ?? 0;
+                $totalErrorCount = Redis::hget("batch:{$batchId}:progress", 'error_count') ?? 0;
+
+                event(new ImportProgressEvent(
+                    $batchId,
+                    (int)$totalProcessedRecords,
+                    'Procesando datos',
+                    (int)$totalErrorCount,
+                    'active',
+                    $actualRowNumber
+                ));
         }
     }
 
     private function readExcelChunk(): array
     {
-        if (!file_exists($this->filePath)) {
-            Log::error("Archivo no encontrado", [
-                'file_path' => $this->filePath,
-                'batch_id' => $this->batch()->id
-            ]);
-            throw new \Exception("Archivo no encontrado: {$this->filePath}");
-        }
+        $import = new ChunkDataImport($this->startRow, $this->chunkSize);
+        $data = Excel::toArray($import, $this->filePath)[0];
 
-        $startTime = microtime(true);
-        try {
-            $import = new ChunkDataImport($this->startRow, $this->chunkSize);
-            $data = Excel::toArray($import, $this->filePath)[0];
-            Log::info("Tiempo de lectura del chunk", [
-                'batch_id' => $this->batch()->id,
-                'start_row' => $this->startRow,
-                'chunk_size' => $this->chunkSize,
-                'row_count' => count($data),
-                'duration' => microtime(true) - $startTime
-            ]);
-            return $data ?? [];
-        } catch (Throwable $e) {
-            Log::error("Error al leer el archivo Excel", [
-                'batch_id' => $this->batch()->id,
-                'file_path' => $this->filePath,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
+        return $data ?? [];
     }
 
     private function mapToAssociativeArray(array $row, array $headers): array
@@ -212,6 +158,7 @@ class ProcessDataChunkJob implements ShouldQueue
         foreach ($headers as $index => $header) {
             $formattedRow[$header] = $row[$index] ?? null;
         }
+
         return $formattedRow;
     }
 }
