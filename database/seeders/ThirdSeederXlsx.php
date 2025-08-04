@@ -50,8 +50,7 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new InvoiceAuditsImport, $filePath);
 
-
-        //ROLES
+        // ROLES
         // $filePath = public_path('seeders\roles.xlsx');
 
         // // Depuración: Verifica si el archivo existe
@@ -61,7 +60,7 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new RoleImport, $filePath);
 
-        //USERS
+        // USERS
         // $filePath = public_path('seeders\users.xlsx');
 
         // // Depuración: Verifica si el archivo existe
@@ -71,8 +70,6 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new UserImport, $filePath);
 
-
-
         // $filePath = public_path('seeders\assignments.csv');
 
         // // Depuración: Verifica si el archivo existe
@@ -81,7 +78,6 @@ class ThirdSeederXlsx extends Seeder
         // }
 
         // Excel::import(new AssignmentsImport, $filePath);
-
 
         // $filePath = public_path('seeders\patients.xlsx');
 
@@ -110,7 +106,6 @@ class ThirdSeederXlsx extends Seeder
 
         // Excel::import(new GlosasImport, $filePath);
 
-
         // //support_types
         // $filePath = public_path('seeders\support_types.xlsx');
 
@@ -120,7 +115,6 @@ class ThirdSeederXlsx extends Seeder
         // }
 
         // Excel::import(new SupportTypeImport, $filePath);
-
 
         // //FILES
         // $filePath = public_path('seeders\files.xlsx');

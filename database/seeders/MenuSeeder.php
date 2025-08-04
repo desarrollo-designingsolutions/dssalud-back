@@ -112,7 +112,7 @@ class MenuSeeder extends Seeder
                 'title' => 'Grupo de conciliación',
                 'to' => 'ReconciliationGroup-List',
                 'icon' => 'device-desktop-dollar',
-                'requiredPermission' => 'reconciliationGroup.list'
+                'requiredPermission' => 'reconciliationGroup.list',
             ],
             [
                 'id' => 13,
@@ -120,7 +120,7 @@ class MenuSeeder extends Seeder
                 'title' => 'Conciliaciones',
                 'to' => 'Conciliation-List',
                 'icon' => 'free-rights',
-                'requiredPermission' => 'conciliation.list'
+                'requiredPermission' => 'conciliation.list',
             ],
         ];
 

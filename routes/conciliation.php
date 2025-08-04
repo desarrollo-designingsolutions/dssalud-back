@@ -1,9 +1,7 @@
 <?php
 
 use App\Http\Controllers\ConciliationController;
-use App\Http\Controllers\ProcessLogController;
 use Illuminate\Support\Facades\Route;
-
 
 // Rutas protegidas
 // Route::middleware(['check.permission:conciliation.index'])->group(function () {
@@ -24,11 +22,6 @@ Route::get('/conciliation/paginateConciliationInvoices', [ConciliationController
 
 Route::get('/conciliation/excelExportConciliationInvoices', [ConciliationController::class, 'excelExportConciliationInvoices']);
 
-
-
-
-
 Route::post('/conciliation/uploadFile', [ConciliationController::class, 'uploadFile']);
-
 
 // });

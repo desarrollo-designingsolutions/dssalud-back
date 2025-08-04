@@ -4,7 +4,7 @@ use App\Http\Controllers\ScheduleConciliationController;
 use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
-//Rutas protegidas
+// Rutas protegidas
 Route::middleware(['check.permission:schedule.menu'])->group(function () {
 
     /*
@@ -16,7 +16,6 @@ Route::middleware(['check.permission:schedule.menu'])->group(function () {
     Route::get('/schedule/index', [ScheduleController::class, 'index']);
 
     Route::get('/schedule/dataView', [ScheduleController::class, 'dataView']);
-
 
     /*
     |--------------------------------------------------------------------------

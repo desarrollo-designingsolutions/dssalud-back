@@ -23,12 +23,12 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
     Route::post('/glosa/update/{id}', [GlosaController::class, 'update']);
 
     Route::delete('/glosa/delete/{id}', [GlosaController::class, 'delete']);
-    
+
     Route::get('/glosa/createMasive', [GlosaController::class, 'createMasive']);
-    
+
     Route::post('/glosa/storeMasive', [GlosaController::class, 'storeMasive']);
-    
+
     Route::post('/glosa/uploadCsvGlosa', [GlosaController::class, 'uploadCsvGlosa']);
-    
+
     Route::post('/glosa/getContentJson', [GlosaController::class, 'getContentJson']);
 });

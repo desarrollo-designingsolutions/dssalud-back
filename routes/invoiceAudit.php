@@ -36,5 +36,4 @@ Route::middleware(['check.permission:invoiceAuditAssignmentBatche.list'])->group
 
     Route::post('/invoiceAudit/successFinalizedAudit', [InvoiceAuditController::class, 'successFinalizedAudit']);
 
-
 });

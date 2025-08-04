@@ -3,7 +3,6 @@
 use App\Http\Controllers\ReconciliationGroupController;
 use Illuminate\Support\Facades\Route;
 
-
 // Rutas protegidas
 Route::middleware(['check.permission:reconciliationGroup.list'])->group(function () {
 

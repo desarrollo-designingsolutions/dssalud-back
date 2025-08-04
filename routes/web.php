@@ -1,19 +1,16 @@
 <?php
 
 use App\Http\Controllers\ConciliationController;
-use App\Http\Controllers\ReconciliationGroupController;
 use App\Jobs\File\ProcessMassUpload;
 use App\Models\Company;
 use App\Models\SupportType;
 use App\Models\User;
 use App\Notifications\BellNotification;
+use Aws\S3\S3Client;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-use Aws\S3\S3Client;
-
 Route::get('/conciliation/errors/{batchId}', [ConciliationController::class, 'getErrors']);
-
 
 // $prefix = $prefix .'1032365030/1032365030-JSE933/';
 
@@ -31,7 +28,7 @@ Route::get('/', function () {
 });
 
 // // Incluir rutas personalizadas
-require __DIR__ . '/reconciliationGroupWeb.php';
+require __DIR__.'/reconciliationGroupWeb.php';
 
 Route::get('/s3-test/{folder?}', function ($folder = null) {
     try {
@@ -45,9 +42,9 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
         ]);
 
         // Prepare the prefix (e.g., '02/subfolder/' or '' for root)
-        $prefix = $folder ? rtrim($folder, '/') . '/' : '';
+        $prefix = $folder ? rtrim($folder, '/').'/' : '';
 
-        $prefix = $prefix . '1032365030/1032365030-JSE933/';
+        $prefix = $prefix.'1032365030/1032365030-JSE933/';
         $items = ['files' => [], 'folders' => []];
         $continuationToken = null;
 
@@ -70,6 +67,7 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
                         'Key' => $key,
                     ]);
                     $presignedUrl = $s3->createPresignedRequest($cmd, '+1 hour')->getUri()->__toString();
+
                     return [
                         'name' => $fileName,
                         'url' => $presignedUrl,
@@ -94,7 +92,7 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
             'files' => $items['files'],
             'folders' => $items['folders'],
             'bucket' => config('filesystems.disks.s3.bucket'),
-            'prefix' => $prefix
+            'prefix' => $prefix,
         ]);
 
         if (empty($items['files']) && empty($items['folders'])) {
@@ -103,8 +101,9 @@ Route::get('/s3-test/{folder?}', function ($folder = null) {
 
         return response()->json(['prefix' => $prefix, 'items' => $items]);
     } catch (\Exception $e) {
-        \Log::error('S3 Listing Error: ' . $e->getMessage());
-        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        \Log::error('S3 Listing Error: '.$e->getMessage());
+
+        return response()->json(['error' => 'Error: '.$e->getMessage()], 500);
     }
 });
 
@@ -112,13 +111,14 @@ Route::get('/s3', function () {
     try {
         $files = Storage::disk('s3')->files();
         \Log::info('S3 Files:', $files); // Log the files
+
         return response()->json($files);
     } catch (\Exception $e) {
-        \Log::error('S3 Error: ' . $e->getMessage()); // Log the error
-        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        \Log::error('S3 Error: '.$e->getMessage()); // Log the error
+
+        return response()->json(['error' => 'Error: '.$e->getMessage()], 500);
     }
 });
-
 
 Route::get('/s2', function () {
     try {
@@ -131,7 +131,7 @@ Route::get('/s2', function () {
         \Log::info('S3 Files Listed:', [
             'files' => $files,
             'bucket' => config('filesystems.disks.s3.bucket'),
-            'folder' => $folder
+            'folder' => $folder,
         ]);
 
         if (empty($files)) {
@@ -140,8 +140,9 @@ Route::get('/s2', function () {
 
         return response()->json($files);
     } catch (\Exception $e) {
-        \Log::error('S3 Listing Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-        return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        \Log::error('S3 Listing Error: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+        return response()->json(['error' => 'Error: '.$e->getMessage()], 500);
     }
 });
 
@@ -165,13 +166,13 @@ Route::get('/ftp', function () {
 
     // 2. Leer todos los nombres de archivos de la carpeta
     $files = scandir($fullPath);
-    $fileList = array_filter($files, fn($file) => ! in_array($file, ['.', '..']));
+    $fileList = array_filter($files, fn ($file) => ! in_array($file, ['.', '..']));
     if (empty($fileList)) {
         return ['code' => 400, 'message' => 'No se encontraron archivos en la carpeta'];
     }
 
     // Resolver el modelo
-    $modelClass = 'App\\Models\\' . $modelType;
+    $modelClass = 'App\\Models\\'.$modelType;
     if (! class_exists($modelClass)) {
         return ['code' => 400, 'message' => 'Modelo no válido'];
     }
@@ -196,7 +197,7 @@ Route::get('/ftp', function () {
     $seenConsecutives = [];
 
     foreach ($fileList as $index => $fileName) {
-        $fullFilePath = $fullPath . '/' . $fileName;
+        $fullFilePath = $fullPath.'/'.$fileName;
         if (! is_file($fullFilePath)) {
             continue; // Saltar si no es un archivo
         }
@@ -310,7 +311,7 @@ Route::get('/ftp', function () {
     // Respuesta final
     $response = [
         'code' => 200,
-        'message' => 'Se procesaron ' . count($validFiles) . " de {$fileCount} archivos",
+        'message' => 'Se procesaron '.count($validFiles)." de {$fileCount} archivos",
         'upload_id' => $uploadId,
         'count' => count($validFiles),
         'errors' => $errors,

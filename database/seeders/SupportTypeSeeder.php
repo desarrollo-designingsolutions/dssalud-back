@@ -69,7 +69,7 @@ class SupportTypeSeeder extends Seeder
         $bar = $this->command->getOutput()->createProgressBar(count($arrayData));
 
         foreach ($arrayData as $key => $value) {
-            $data = SupportType::where("code", $value['code'])->first();
+            $data = SupportType::where('code', $value['code'])->first();
             if (! $data) {
                 $data = new SupportType;
             }
