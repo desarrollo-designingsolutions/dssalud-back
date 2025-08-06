@@ -276,84 +276,59 @@ class ConciliationValidator
      * @return array Una lista de errores encontrados.
      */
     public function finalizeValidation(): array
-    {
-        $errors = [];
-        if (! $this->batchId) {
-            Log::error('ConciliationValidator: batchId no está configurado en finalizeValidation. No se puede realizar la validación final.');
-
-            return [['error_type' => 'system_error', 'message' => 'Batch ID no disponible para validación final.']];
-        }
-
-        // 1. Obtener todos los conteos de Excel desde Redis (hash)
-        $excelCounts = Redis::hgetall(self::FACTURA_EXCEL_COUNT_CACHE_KEY.":{$this->batchId}");
-        // Convertir los valores de string a int
-        $excelCounts = array_map('intval', $excelCounts);
-
-        if (empty($excelCounts)) {
-            $this->clearCountCache(); // Limpiar incluso si no hay conteos
-
-            return [];
-        }
-
-        $facturaIds = array_keys($excelCounts);
-        Log::info("facturaIds");
-        Log::info("message: facturaIds: ".implode(', ', $facturaIds));
-
-        // // 2. Obtener conteos de la base de datos para todos los FACTURA_ID relevantes en una sola consulta
-        // $dbCounts = AuditoryFinalReport::whereIn('factura_id', $facturaIds)
-        //     ->where('valor_glosa', '>', 0)
-        //     ->select('factura_id', DB::raw('count(*) as db_count'))
-        //     ->groupBy('factura_id')
-        //     ->get()
-        //     ->keyBy('factura_id')
-        //     ->map(fn ($item) => $item->db_count); // Mapear solo el conteo
-
-    //     $dbCounts = InvoiceAudit::join('auditory_final_reports', 'invoice_audit.id', '=', 'auditory_final_reports.factura_id')
-    // ->whereIn('invoice_audit.id', $facturaIds)
-    // ->where('auditory_final_reports.valor_glosa', '>', 0)
-    // ->select('invoice_audit.id', DB::raw('count(*) as db_count'))
-    // ->groupBy('invoice_audit.id')
-    // ->get()
-    // ->keyBy('id')
-    // ->map(fn ($item) => $item->db_count);
-
-//     $dbCounts = DB::select(
-//     'SELECT ia.id, COUNT(afr.id) AS db_count
-//      FROM invoice_audits ia
-//      INNER JOIN auditory_final_reports afr
-//          ON afr.factura_id = ia.id
-//      WHERE ia.id IN (' . implode(',', array_fill(0, count($facturaIds), '?')) . ')
-//      GROUP BY ia.id',
-//     $facturaIds
-// );
-
-// $dbCounts = collect($dbCounts)->keyBy('id')->map(fn ($item) => $item->db_count);
-//  log::info("dbCounts: ", implode(', ', $dbCounts->toArray()));
- 
-
-        // 3. Comparar conteos
-        // foreach ($excelCounts as $facturaId => $excelCount) {
-        //     $dbCount = $dbCounts->get($facturaId) ?? 0; // Obtener conteo de la colección, 0 si no se encuentra
-
-        //     if ($excelCount !== $dbCount) {
-        //         $errors[] = [
-        //             'error_type' => 'final_conciliation_error', // Tipo de error más específico
-        //             'row_number' => 0, // Error a nivel de batch/conciliación
-        //             'column_name' => 'FACTURA_ID_CONCILIACION',
-        //             'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en BD (con valor_glosa > 0): {$dbCount}",
-        //             'error_value' => $facturaId,
-        //             'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
-        //             'timestamp' => now()->toISOString(),
-        //         ];
-        //         Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs BD (con valor_glosa > 0: {$dbCount}).");
-        //     }
-        // }
-
-        // Limpiar cache de conteos
-        $this->clearCountCache();
-
-        return $errors;
+{
+    $errors = [];
+    if (! $this->batchId) {
+        Log::error('ConciliationValidator: batchId no está configurado en finalizeValidation. No se puede realizar la validación final.');
+        return [['error_type' => 'system_error', 'message' => 'Batch ID no disponible para validación final.']];
     }
+
+    // 1. Obtener todos los conteos de Excel desde Redis (hash)
+    $excelCounts = Redis::hgetall(self::FACTURA_EXCEL_COUNT_CACHE_KEY . ":{$this->batchId}");
+    // Convertir los valores de string a int
+    $excelCounts = array_map('intval', $excelCounts);
+
+    if (empty($excelCounts)) {
+        $this->clearCountCache(); // Limpiar incluso si no hay conteos
+        return [];
+    }
+
+    $facturaIds = array_keys($excelCounts);
+    Log::info("facturaIds: " . implode(', ', $facturaIds));
+
+    // 2. Obtener conteos de la base de datos desde Redis
+    $dbCounts = [];
+    foreach ($facturaIds as $facturaId) {
+        $redisKey = "invoice_audit:{$facturaId}:db_count";
+        $dbCount = Redis::connection('redis_6380')->get($redisKey);
+        $dbCounts[$facturaId] = $dbCount !== null ? (int) $dbCount : 0;
+    }
+
+    Log::info("Conteo de Redis terminado para facturaIds");
+
+    // 3. Comparar conteos
+    foreach ($excelCounts as $facturaId => $excelCount) {
+        $dbCount = $dbCounts[$facturaId] ?? 0; // Obtener conteo de Redis, 0 si no se encuentra
+
+        if ($excelCount !== $dbCount) {
+            $errors[] = [
+                'error_type' => 'final_conciliation_error',
+                'row_number' => 0,
+                'column_name' => 'FACTURA_ID_CONCILIACION',
+                'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en Redis (db_count): {$dbCount}",
+                'error_value' => $facturaId,
+                'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
+                'timestamp' => now()->toISOString(),
+            ];
+            Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs Redis (db_count: {$dbCount}).");
+        }
+    }
+
+    // Limpiar cache de conteos
+    $this->clearCountCache();
+
+    return $errors;
+}
 
     /**
      * Limpia los datos de cache de conteo.

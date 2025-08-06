@@ -10,10 +10,54 @@ use Aws\S3\S3Client;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::get('/conciliation/errors/{batchId}', [ConciliationController::class, 'getErrors']);
+use App\Jobs\ProcessInvoiceAuditCounts;
 
-// $prefix = $prefix .'1032365030/1032365030-JSE933/';
 
+
+use Illuminate\Support\Facades\Redis;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+Route::get('/pruebaRedisExcel', function () {
+ // Obtener todas las claves de Redis
+    $redisKeys = Redis::connection('redis_6380')->keys('invoice_audit:*:db_count');
+
+    // Crear una nueva hoja de cálculo
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Agregar encabezados
+    $sheet->setCellValue('A1', 'UUID');
+
+    // Procesar las claves para extraer el UUID
+    foreach ($redisKeys as $index => $key) {
+        // Extraer el UUID (la parte entre 'invoice_audit:' y ':db_count')
+        $uuid = explode(':', $key)[1];
+        $sheet->setCellValue('A' . ($index + 2), $uuid);
+    }
+
+    // Crear una respuesta para descargar el archivo Excel
+    $response = new StreamedResponse(function () use ($spreadsheet) {
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+    });
+
+    $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    $response->headers->set('Content-Disposition', 'attachment;filename="redis_uuids.xlsx"');
+    $response->headers->set('Cache-Control', 'max-age=0');
+
+    return $response;
+});
+
+Route::get('/pruebaRedis', function () {
+    // Despachar el trabajo ProcessInvoiceAuditCounts
+    $job = ProcessInvoiceAuditCounts::dispatch()->onQueue('imports_2');
+
+    // Retornar una respuesta al usuario
+    return response()->json([
+        'message' => 'El procesamiento ha comenzado en segundo plano.', 
+    ]);
+});
 Route::get('/phpinfo', function () {
     phpinfo();
 });

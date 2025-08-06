@@ -134,7 +134,7 @@ class ConciliationController extends Controller
             'imports_2',
             'imports_3',
             'imports_4',
-            'imports_5',
+            'imports_5'
         ];
 
         $selectedQueue = null; // Inicializar a null
@@ -163,7 +163,7 @@ class ConciliationController extends Controller
         $batch = Bus::batch($initialJobs)
             ->name('ProcessConciliation_'.now()->format('Y-m-d_H-i-s'))
             ->onQueue($selectedQueue)
-            // ->allowFailures()
+            ->allowFailures()
             ->before(function (Batch $batch) use ($fullPath, $totalRows, $originalFileName, $fileSize) {
 
                 // Guardar totalRows en Redis usando tu ID temporal
@@ -196,7 +196,7 @@ class ConciliationController extends Controller
                 ));
             })
             ->then(function (Batch $batch) use ($fullPath) {
-                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath);
+                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath)->onQueue("imports");
             })
             ->catch(function (Batch $batch, Throwable $e) use ($fullPath) {
 

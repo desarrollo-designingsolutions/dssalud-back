@@ -23,7 +23,7 @@ class ProcessDataChunkJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 3600; // Mantener tu timeout
-
+ 
 
     public function __construct(
         private string $filePath,
@@ -160,5 +160,18 @@ class ProcessDataChunkJob implements ShouldQueue
         }
 
         return $formattedRow;
+    }
+
+    // Add a failed method for better error handling
+    public function failed(Throwable $exception)
+    {
+        Log::error("ProcessDataChunkJob failed after {$this->tries} attempts", [
+            'batch_id' => $this->batch()->id,
+            'file_path' => $this->filePath,
+            'start_row' => $this->startRow,
+            'chunk_size' => $this->chunkSize,
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
     }
 }

@@ -91,46 +91,88 @@ class FinalizeImportDecisionJob implements ShouldQueue
                 Redis::del("batch:{$batchIdToUse}:staged_data");
                 $finalStatus = 'failed'; // O 'completed_with_errors' si quieres un estado intermedio
             } else {
-                DB::transaction(function () use ($batchIdToUse) {
                     $stagedRecordsJson = Redis::lrange("batch:{$batchIdToUse}:staged_data", 0, -1);
                     $insertBatchSize = 1000;
                     $recordsToInsert = [];
 
-                    foreach ($stagedRecordsJson as $recordJson) {
-                        $formattedRow = json_decode($recordJson, true); // Decodificar el JSON a array asociativo
+                    foreach ($stagedRecordsJson as $index => $recordJson) {
+                        try {
+                            $formattedRow = json_decode($recordJson, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                Log::error('Fallo al decodificar JSON de staged_data desde Redis: ' . json_last_error_msg(), ['json' => $recordJson]);
+                                Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
+                                    'row_number' => $index + 2, // Ajustar según startRow
+                                    'column_name' => 'SYSTEM_ERROR',
+                                    'error_message' => 'Fallo al decodificar JSON de staged_data: ' . json_last_error_msg(),
+                                    'error_type' => 'system_processing_error',
+                                    'error_value' => null,
+                                    'original_data' => $recordJson,
+                                    'timestamp' => now()->toISOString(),
+                                    'batch_id' => $batchIdToUse,
+                                ]));
+                                continue;
+                            }
 
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            Log::error('Fallo al decodificar JSON de staged_data desde Redis: '.json_last_error_msg(), ['json' => $recordJson]);
+                            // Validar que autorization_number no sea null
+                            if (!isset($formattedRow['NUMERO_DE_AUTORIZACION']) || $formattedRow['NUMERO_DE_AUTORIZACION'] === null || $formattedRow['NUMERO_DE_AUTORIZACION'] === '') {
+                                Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
+                                    'row_number' => $index + 2, // Ajustar según startRow
+                                    'column_name' => 'NUMERO_DE_AUTORIZACION',
+                                    'error_message' => 'El campo NUMERO_DE_AUTORIZACION no puede ser nulo o vacío.',
+                                    'error_type' => 'validation_error',
+                                    'error_value' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
+                                    'original_data' => $formattedRow,
+                                    'timestamp' => now()->toISOString(),
+                                    'batch_id' => $batchIdToUse,
+                                ]));
+                                continue;
+                            }
 
+                            $recordsToInsert[] = [
+                                'id' => Str::uuid(),
+                                'auditory_final_report_id' => $formattedRow['ID'] ?? null,
+                                'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
+                                'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'],
+                                'accepted_value_ips' => (float) ($formattedRow['VALOR_ACEPTADO_IPS'] ?? 0.0),
+                                'accepted_value_eps' => (float) ($formattedRow['VALOR_ACEPTADO_EPS'] ?? 0.0),
+                                'eps_ratified_value' => (float) ($formattedRow['VALOR_RATIFICADO_EPS'] ?? 0.0),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            if (count($recordsToInsert) >= $insertBatchSize) {
+                                DB::table('conciliation_results')->insert($recordsToInsert);
+                                $recordsToInsert = [];
+                            }
+                        } catch (Throwable $e) {
+                            Log::error("Error al procesar registro de staged_data", [
+                                'batch_id' => $batchIdToUse,
+                                'index' => $index,
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString(),
+                                'record' => $recordJson
+                            ]);
+                            Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
+                                'row_number' => $index + 2, // Ajustar según startRow
+                                'column_name' => 'SYSTEM_ERROR',
+                                'error_message' => 'Error al insertar en conciliation_results: ' . $e->getMessage(),
+                                'error_type' => 'system_processing_error',
+                                'error_value' => null,
+                                'original_data' => json_decode($recordJson, true) ?: $recordJson,
+                                'timestamp' => now()->toISOString(),
+                                'batch_id' => $batchIdToUse,
+                            ]));
                             continue;
                         }
-
-                        // Aquí se aplican las transformaciones y se añaden los campos de control
-                        $recordsToInsert[] = [
-                            'id' => Str::uuid(),
-                            'auditory_final_report_id' => $formattedRow['ID'] ?? null,
-                            'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
-                            'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
-                            'accepted_value_ips' => (float) ($formattedRow['VALOR_ACEPTADO_IPS'] ?? 0.0),
-                            'accepted_value_eps' => (float) ($formattedRow['VALOR_ACEPTADO_EPS'] ?? 0.0),
-                            'eps_ratified_value' => (float) ($formattedRow['VALOR_RATIFICADO_EPS'] ?? 0.0),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-
-                        if (count($recordsToInsert) >= $insertBatchSize) {
-                            DB::table('conciliation_results')->insert($recordsToInsert); // <-- Reemplaza con tu tabla final
-                            $recordsToInsert = [];
-                        }
                     }
 
-                    if (! empty($recordsToInsert)) {
-                        DB::table('conciliation_results')->insert($recordsToInsert); // <-- Reemplaza con tu tabla final
-                    }
+                    // if (!empty($recordsToInsert)) {
+                    //     DB::transaction(function () use ($batchIdToUse) {
+                    //         DB::table('conciliation_results')->insert($recordsToInsert);
+                    //     });
+                    // }
 
-                    // Eliminar la clave de Redis para los datos de staging después de la inserción exitosa
                     Redis::del("batch:{$batchIdToUse}:staged_data");
-                });
                 $finalStatus = 'completed';
             }
 

@@ -26,7 +26,7 @@ class ReconciliationGroupWebController extends Controller
     {
         $reconciliationGroup = $this->reconciliationGroupRepository->find($id, ['third', 'reconciliationNotification']);
 
-        $third = $reconciliationGroup->third;
+        $third = $reconciliationGroup?->third;
 
         $invoices = $reconciliationGroup->invoices;
 
