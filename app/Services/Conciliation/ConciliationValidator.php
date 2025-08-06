@@ -25,14 +25,14 @@ class ConciliationValidator
 
     // Campos obligatorios explícitos
     protected $requiredFields = [
-        // 'ID',
-        // 'FACTURA_ID',
-        // 'ESTADO_RESPUESTA',
-        // 'NUMERO_DE_AUTORIZACION',
-        // 'VALOR_ACEPTADO_IPS',
-        // 'VALOR_ACEPTADO_EPS',
-        // 'VALOR_RATIFICADO_EPS',
-        // 'OBSERVACIONES',
+        "ID",
+        "FACTURA_ID",
+        "SERVICIO_ID",
+        "ESTADO_RESPUESTA",
+        "VALOR_ACEPTADO_IPS",
+        "VALOR_ACEPTADO_EPS",
+        "VALOR_RATIFICADO_EPS",
+        "OBSERVACIONES",
     ];
 
     // Clave para almacenar el conteo de facturas en cache (para DB counts)
@@ -320,7 +320,7 @@ class ConciliationValidator
                 'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
                 'timestamp' => now()->toISOString(),
             ];
-            Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs Redis (db_count: {$dbCount}).");
+            // Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs Redis (db_count: {$dbCount}).");
         }
     }
 

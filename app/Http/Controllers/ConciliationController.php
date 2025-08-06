@@ -23,6 +23,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -196,9 +197,12 @@ class ConciliationController extends Controller
                 ));
             })
             ->then(function (Batch $batch) use ($fullPath) {
-                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath)->onQueue("imports");
+                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath);
             })
             ->catch(function (Batch $batch, Throwable $e) use ($fullPath) {
+
+        Log::error('ERROR EN EL CATCH CAPTURADO: '.$e->getMessage());
+
 
                 $redisKey = "batch:{$batch->id}:errors";
                 $errorsFromRedis = Redis::lrange($redisKey, 0, -1);

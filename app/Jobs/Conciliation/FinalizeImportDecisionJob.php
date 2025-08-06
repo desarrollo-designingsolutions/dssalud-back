@@ -113,26 +113,11 @@ class FinalizeImportDecisionJob implements ShouldQueue
                                 continue;
                             }
 
-                            // Validar que autorization_number no sea null
-                            if (!isset($formattedRow['NUMERO_DE_AUTORIZACION']) || $formattedRow['NUMERO_DE_AUTORIZACION'] === null || $formattedRow['NUMERO_DE_AUTORIZACION'] === '') {
-                                Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
-                                    'row_number' => $index + 2, // Ajustar según startRow
-                                    'column_name' => 'NUMERO_DE_AUTORIZACION',
-                                    'error_message' => 'El campo NUMERO_DE_AUTORIZACION no puede ser nulo o vacío.',
-                                    'error_type' => 'validation_error',
-                                    'error_value' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
-                                    'original_data' => $formattedRow,
-                                    'timestamp' => now()->toISOString(),
-                                    'batch_id' => $batchIdToUse,
-                                ]));
-                                continue;
-                            }
-
                             $recordsToInsert[] = [
                                 'id' => Str::uuid(),
                                 'auditory_final_report_id' => $formattedRow['ID'] ?? null,
                                 'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
-                                'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'],
+                                'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
                                 'accepted_value_ips' => (float) ($formattedRow['VALOR_ACEPTADO_IPS'] ?? 0.0),
                                 'accepted_value_eps' => (float) ($formattedRow['VALOR_ACEPTADO_EPS'] ?? 0.0),
                                 'eps_ratified_value' => (float) ($formattedRow['VALOR_RATIFICADO_EPS'] ?? 0.0),

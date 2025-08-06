@@ -87,7 +87,7 @@ class ValidateExcelStructureJob implements ShouldQueue
             }
 
         } catch (Throwable $e) {
-            Log::error('Error durante validación de estructura: '.$e->getMessage());
+            Log::error('Error encontrado en ValidateExcelStructureJob durante validación de estructura: '.$e->getMessage());
             $this->fail($e);
         }
     }
