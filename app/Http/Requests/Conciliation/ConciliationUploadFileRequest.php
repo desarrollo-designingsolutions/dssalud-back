@@ -24,7 +24,7 @@ class ConciliationUploadFileRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'file' => 'required|file|mimes:xlsx,xls|max:10240',
+            // 'file' => 'required|file|mimes:csv|max:10240',
             'user_id' => 'nullable|string',
             'company_id' => 'nullable|string',
         ];
@@ -37,7 +37,7 @@ class ConciliationUploadFileRequest extends FormRequest
         return [
             'file.required' => 'El archivo es obligatorio.',
             'file.file' => 'El archivo proporcionado no es válido.',
-            'file.mimes' => 'El archivo debe ser de tipo Excel (.xlsx o .xls).',
+            'file.mimes' => 'El archivo debe ser de tipo Excel (.csv).',
             'file.max' => 'El archivo no debe exceder los 10 MB.',
             'user_id.string' => 'El ID del docente debe ser una cadena de texto.',
             'company_id.string' => 'El ID de la compañía debe ser una cadena de texto.',

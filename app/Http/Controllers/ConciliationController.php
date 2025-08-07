@@ -13,6 +13,7 @@ use App\Http\Resources\Conciliation\ConciliationShowResource;
 use App\Jobs\Conciliation\FinalizeImportDecisionJob;
 use App\Jobs\Conciliation\ProcessExcelDataJob;
 use App\Jobs\Conciliation\ValidateExcelStructureJob;
+use App\Jobs\ProcessCsvImportJob;
 use App\Models\ProcessBatch;
 use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use SplFileObject;
 use Throwable;
 
 class ConciliationController extends Controller
@@ -114,10 +116,121 @@ class ConciliationController extends Controller
         $user_id = $request->input('user_id');
         $uploadedFile = $request->file('file');
 
+        // Generar un batch ID único para esta importación
+        $batchId = (string) Str::uuid();
+
         // Guardar archivo temporalmente
-        $fileName = time().'_'.$uploadedFile->getClientOriginalName();
+        $originalFileName = $uploadedFile->getClientOriginalName();
+        // Usar el batchId en el nombre del archivo para asegurar unicidad y trazabilidad
+        $fileName = $batchId . '_' . time() . '_' . $originalFileName;
+        // Asegúrate de que Constants::DISK_FILES apunte a un disco público o accesible por el Job
+        $filePath = $uploadedFile->storeAs('temp', $fileName, 'public'); // Usar 'public' si Constants::DISK_FILES es 'public'
+        $fullPath = storage_path('app/public/' . $filePath); // Ruta completa para el Job
+
+        // Verificar si el archivo se guardó correctamente
+        if (!file_exists($fullPath)) {
+            Log::error("Error al guardar el archivo temporal: {$fullPath}");
+            return response()->json([
+                'message' => 'Error al guardar el archivo.',
+                'status' => 'error',
+                'code' => '500',
+            ], 500);
+        }
+
+        $totalRows = 0;
+        $fileSize = filesize($fullPath);
+
+        try {
+            // Contar el número total de filas en el CSV (saltando la cabecera)
+            $file = new SplFileObject($fullPath, 'r');
+            $file->setFlags(SplFileObject::SKIP_EMPTY | SplFileObject::READ_AHEAD);
+            $file->fgets(); // Saltar cabecera
+            foreach ($file as $line) {
+                $totalRows++;
+            }
+            $file = null; // Liberar el archivo
+
+            // Almacenar metadatos iniciales del batch en Redis para que el evento los lea
+            Redis::hmset("batch:{$batchId}:metadata", [
+                'total_rows' => (string)$totalRows,
+                'file_name' => (string)$originalFileName,
+                'file_size' => (string)$fileSize,
+                'status' => 'queued', // Estado inicial
+                'started_at' => 'N/A', // Se actualizará cuando el Job inicie
+                'completed_at' => 'N/A',
+                'current_sheet' => (string)1,
+                'total_sheets' => (string)1,
+            ]);
+            // Establecer una expiración para los metadatos del batch en Redis (ej. 24 horas)
+            Redis::expire("batch:{$batchId}:metadata", 3600 * 24);
+
+            // 1. Iniciar registro en BD usando ProcessBatchService
+            // Asegúrate de que ProcessBatchService::initProcess acepte estos parámetros
+            $processBatch = ProcessBatchService::initProcess(
+                $batchId, // Usar el batchId generado
+                $company_id,
+                $user_id,
+                $totalRows,
+                [
+                    'total_rows' => $totalRows,
+                    'file_name' => $originalFileName,
+                    'file_size' => $fileSize,
+                    'started_at' => now()->toDateTimeString(), // Registrar el inicio en DB
+                    'completed_at' => null,
+                    'total_sheets' => 1,
+                    'current_sheet' => 1,
+                ]
+            );
+
+            // Despachar el Job de importación a la cola
+            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows);
+
+            // Despachar el evento inicial de progreso para la UI
+            ImportProgressEvent::dispatch(
+                $batchId,
+                (string) 0, // Procesados
+                'Archivo encolado para procesamiento',
+                (string) 0, // Errores
+                'queued',
+                '0' // Elemento actual
+            );
+
+            Log::info("Archivo {$originalFileName} encolado para procesamiento con Batch ID: {$batchId}");
+
+            return response()->json([
+                'batch_id' => $batchId,
+                'message' => 'Proceso de importación iniciado y encolado.',
+                'status' => 'success',
+                'code' => '200',
+            ]);
+        } catch (Throwable $e) {
+            Log::error("Error en uploadFile para batch ID {$batchId}: " . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // Limpiar metadatos de Redis si el proceso falla antes de despachar el Job
+            Redis::del("batch:{$batchId}:metadata");
+
+            return response()->json([
+                'message' => 'Error interno al procesar el archivo: ' . $e->getMessage(),
+                'status' => 'error',
+                'code' => '500',
+            ], 500);
+        }
+    }
+
+    public function uploadFile2(ConciliationUploadFileRequest $request)
+    {
+        $company_id = $request->input('company_id');
+        $user_id = $request->input('user_id');
+        $uploadedFile = $request->file('file');
+
+        // Guardar archivo temporalmente
+        $fileName = time() . '_' . $uploadedFile->getClientOriginalName();
         $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        $fullPath = storage_path('app/public/'.$filePath);
+        $fullPath = storage_path('app/public/' . $filePath);
 
         // Obtener nombre y tamaño del archivo para metadatos
         $originalFileName = $uploadedFile->getClientOriginalName();
@@ -150,7 +263,7 @@ class ConciliationController extends Controller
             }
 
             return response()->json([
-                'message' => 'Error: '.$e->getMessage(),
+                'message' => 'Error: ' . $e->getMessage(),
                 'error' => $e->getMessage(),
             ], 503); // 503 Service Unavailable, ya que no hay recursos de cola
         }
@@ -162,7 +275,7 @@ class ConciliationController extends Controller
         ];
 
         $batch = Bus::batch($initialJobs)
-            ->name('ProcessConciliation_'.now()->format('Y-m-d_H-i-s'))
+            ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
             ->onQueue($selectedQueue)
             ->allowFailures()
             ->before(function (Batch $batch) use ($fullPath, $totalRows, $originalFileName, $fileSize) {
@@ -201,7 +314,7 @@ class ConciliationController extends Controller
             })
             ->catch(function (Batch $batch, Throwable $e) use ($fullPath) {
 
-        Log::error('ERROR EN EL CATCH CAPTURADO: '.$e->getMessage());
+                Log::error('ERROR EN EL CATCH CAPTURADO: ' . $e->getMessage());
 
 
                 $redisKey = "batch:{$batch->id}:errors";

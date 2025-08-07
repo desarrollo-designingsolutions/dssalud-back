@@ -48,29 +48,57 @@ class CsvValidationService
     ];
 
     protected string $batchId;
+    protected int $totalRows = 0; // Añadido para el progreso
+    protected $eventDispatcher; // Callback para despachar eventos
 
     public function __construct(string $batchId)
     {
         $this->batchId = $batchId;
     }
 
+    /**
+     * Establece el número total de filas para el cálculo de progreso.
+     */
+    public function setTotalRows(int $totalRows): void
+    {
+        $this->totalRows = $totalRows;
+    }
+
+    /**
+     * Establece el callback para despachar eventos de progreso.
+     */
+    public function setEventDispatcher(callable $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     public function validateCsv(string $filePath): array
     {
-        Redis::del("import_errors:{$this->batchId}");
+        // Asegurar que el prefijo se use también en la limpieza inicial
+        $cachePrefix = config('database.redis.options.prefix', '');
+
+        Redis::del("import_errors:{$this->batchId}"); // Esto ya se prefija automáticamente
 
         // Limpiar las claves de recolección de factura para este batch antes de empezar
-        $keysToClean = Redis::keys("csv_factura_total_counts:{$this->batchId}"); // Nueva clave
-        $keysToClean = array_merge($keysToClean, Redis::keys("csv_factura_rows:{$this->batchId}:*"));
-        $keysToClean[] = "csv_unique_factura_ids:{$this->batchId}";
+        $keysToClean = Redis::keys($cachePrefix . "csv_factura_total_counts:{$this->batchId}");
+        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_factura_rows:{$this->batchId}:*"));
+        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}")); // Asegurar que esta también se limpie
+
         if (!empty($keysToClean)) {
+            Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
             Redis::del($keysToClean);
+        } else {
+            Log::info("DEBUG VALIDATION: No se encontraron claves de Redis para limpiar al inicio de la validación.");
         }
 
-        // La llamada a validateHeaders es correcta aquí, ya que es un método protegido de esta misma clase.
         $this->validateHeaders($filePath);
 
         if (Redis::llen("import_errors:{$this->batchId}") > 0) {
             Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
+            // Disparar evento de finalización con errores si la validación de cabecera falla
+            if ($this->eventDispatcher) {
+                ($this->eventDispatcher)(0, 'Error en cabeceras CSV', 'failed', '0');
+            }
             return $this->getErrors();
         }
 
@@ -113,16 +141,19 @@ class CsvValidationService
     protected function validateRows(string $filePath): void
     {
         $rowNumber = 1;
+        $processedRows = 0;
+        $dispatchInterval = max(1, floor($this->totalRows / 100)); // Despachar al menos 100 veces por archivo, mínimo 1 por cada fila
 
         LazyCollection::make(function () use ($filePath) {
             $handle = fopen($filePath, 'r');
-            fgetcsv($handle, 0, ';');
+            fgetcsv($handle, 0, ';'); // Saltar cabecera
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 yield $row;
             }
             fclose($handle);
-        })->each(function ($row) use (&$rowNumber) {
+        })->each(function ($row) use (&$rowNumber, &$processedRows, $dispatchInterval) {
             $rowNumber++;
+            $processedRows++;
 
             if (count($row) !== count($this->requiredHeaders)) {
                 $this->addError($rowNumber, 'row_structure', 'Row has an incorrect number of columns.', 'column_count_mismatch', count($row), json_encode($row));
@@ -132,24 +163,26 @@ class CsvValidationService
             $data = array_combine($this->requiredHeaders, $row);
 
             // Recolección de datos para la validación de "Facturas Completas"
-            // CORREGIDO: Usar FACTURA_ID del CSV, no NUMERO_FACTURA
             $facturaId = trim($data['FACTURA_ID'] ?? '');
             $auditoryReportId = trim($data['ID'] ?? '');
 
             if (!empty($facturaId) && !empty($auditoryReportId)) {
-                // Almacenar conteo total de FACTURA_ID en un HASH
                 Redis::hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
-                // Almacenar número de fila en una LIST para la factura actual
                 Redis::rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
-                // Almacenar FACTURA_ID en un SET de FACTURA_ID únicos del CSV
                 Redis::sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
-            }
 
+                // DEBUG: Verificar la creación de una clave de conteo de factura
+                if ($processedRows === 1) { // Solo para la primera fila para evitar logs excesivos
+                    $cachePrefix = config('database.redis.options.prefix', '');
+                    $prefixedKey = $cachePrefix . "csv_factura_total_counts:{$this->batchId}";
+                    Log::info("DEBUG VALIDATION: Clave de conteo de factura creada: {$prefixedKey}. Valor: " . Redis::hget("csv_factura_total_counts:{$this->batchId}", $facturaId));
+                }
+            }
 
             // 1. Validación de campos obligatorios
             $requiredFields = [
                 'ID',
-                'FACTURA_ID', // Este es el NUMERO_FACTURA en el CSV
+                'FACTURA_ID',
                 'SERVICIO_ID',
                 'ESTADO_RESPUESTA',
                 'VALOR_ACEPTADO_IPS',
@@ -221,7 +254,19 @@ class CsvValidationService
                     }
                 }
             }
+
+            // Despachar evento de progreso periódicamente
+            if ($processedRows % $dispatchInterval === 0 || $processedRows === $this->totalRows) {
+                if ($this->eventDispatcher) {
+                    ($this->eventDispatcher)($processedRows, 'Validando filas CSV', 'active', (string)$rowNumber);
+                }
+            }
         });
+
+        // Despachar evento final después de la validación de filas (si no se hizo en el bucle)
+        if ($this->eventDispatcher && ($processedRows % $dispatchInterval !== 0 || $processedRows > 0)) {
+             ($this->eventDispatcher)($processedRows, 'Validación de filas CSV completada', 'active', (string)$rowNumber);
+        }
     }
 
     public function addError(int $rowNumber, string $columnName, string $errorMessage, string $errorType, $errorValue, string $originalData): void
