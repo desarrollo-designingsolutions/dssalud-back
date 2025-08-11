@@ -64,8 +64,6 @@ class ProcessDataChunkJob implements ShouldQueue
                             $error['batch_id'] = $batchId;
                             Redis::rpush("batch:{$batchId}:errors", json_encode($error));
                         }
-                    } else {
-                        Redis::rpush("batch:{$batchId}:staged_data", json_encode($formattedRow));
                     }
                 } catch (Throwable $e) {
                     Log::error("Error inesperado procesando fila {$actualRowNumber}: ".$e->getMessage(), ['row_data' => $row]);
