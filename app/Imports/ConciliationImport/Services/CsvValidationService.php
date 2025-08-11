@@ -92,23 +92,23 @@ class CsvValidationService
         $keysToClean = array_merge($keysToClean, Redis::connection("redis_6380")->keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}"));
 
         if (!empty($keysToClean)) {
-            Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
+            // Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
             Redis::connection("redis_6380")->del($keysToClean);
         } else {
-            Log::info("DEBUG VALIDATION: No se encontraron claves de Redis para limpiar al inicio de la validación.");
+            // Log::info("DEBUG VALIDATION: No se encontraron claves de Redis para limpiar al inicio de la validación.");
         }
 
         $this->validateHeaders($filePath);
 
         if (Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}") > 0) {
-            Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
+            // Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
             if ($this->eventDispatcher) {
                 ($this->eventDispatcher)(0, 'Error en cabeceras CSV', 'failed', '0');
             }
             return $this->getErrors();
         }
 
-        Log::info("Header validation passed for batch ID: {$this->batchId}. Proceeding with row validation.");
+        // Log::info("Header validation passed for batch ID: {$this->batchId}. Proceeding with row validation.");
         $this->validateRows($filePath);
 
         return $this->getErrors();
@@ -128,8 +128,8 @@ class CsvValidationService
         }
         fclose($handle); // Cerrar el archivo después de leer los encabezados
 
-        Log::info('Headers read from CSV:', [$headers]);
-        Log::info('Expected headers (exact match):', [$this->requiredHeaders]);
+        // Log::info('Headers read from CSV:', [$headers]);
+        // Log::info('Expected headers (exact match):', [$this->requiredHeaders]);
 
         // Comparar las cabeceras leídas directamente con las cabeceras requeridas (sensible a la capitalización)
         $missingHeaders = array_diff($this->requiredHeaders, $headers);

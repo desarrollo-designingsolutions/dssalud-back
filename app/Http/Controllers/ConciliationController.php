@@ -168,7 +168,7 @@ class ConciliationController extends Controller
 
             fclose($csvFile);
 
-            Log::info("Archivo CSV procesado exitosamente. Total de filas: {$totalRows}");
+            // Log::info("Archivo CSV procesado exitosamente. Total de filas: {$totalRows}");
 
             // Opcional: Eliminar el archivo Excel original si ya no se necesita
             // \Illuminate\Support\Facades\Storage::disk(Constants::DISK_FILES)->delete($filePath);
@@ -209,7 +209,7 @@ class ConciliationController extends Controller
                 '0'
             );
 
-            Log::info("Archivo {$fullPath} encolado para procesamiento con Batch ID: {$batchId}");
+            // Log::info("Archivo {$fullPath} encolado para procesamiento con Batch ID: {$batchId}");
 
             return response()->json([
                 'batch_id' => $batchId,

@@ -13,45 +13,65 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Events\ImportProgressEvent; // Añadido: Importar el evento de progreso
 use App\Imports\ConciliationImport\Services\CsvValidationService;
+use App\Models\ProcessBatch;
 use SplFileObject; // Añadido: Importar SplFileObject
 
 trait ImportHelper
 {
     protected float $benchmarkStartTime;
     protected int $benchmarkStartMemory;
-    protected int $startRowCount;
     protected int $startQueries;
     protected string $currentBatchId;
     protected int $totalRowsForJobProgress; // Añadido para mantener el total de filas del archivo original para el cálculo de progreso global
 
-    protected function startBenchmark(string $table = 'conciliation_results'): void
+    protected function startBenchmark(string $batchId): void
     {
-        $this->startRowCount = DB::table($table)->count();
         $this->benchmarkStartTime = microtime(true);
         $this->benchmarkStartMemory = memory_get_usage(); // Corregido: memory_usage() a memory_get_usage()
         DB::enableQueryLog();
         $this->startQueries = DB::select("SHOW SESSION STATUS LIKE 'Questions'")[0]->Value;
     }
 
-    protected function endBenchmark(string $table = 'conciliation_results'): void
+    protected function endBenchmark(string $batchId): void
     {
+        $processBatch = ProcessBatch::where('batch_id', $batchId)->first();
         $executionTime = microtime(true) - $this->benchmarkStartTime;
         $memoryUsage = round((memory_get_usage() - $this->benchmarkStartMemory) / 1024 / 1024, 2);
         $queriesCount = DB::select("SHOW SESSION STATUS LIKE 'Questions'")[0]->Value - (isset($this->startQueries) ? $this->startQueries : 0) - 1;
-        $rowDiff = DB::table($table)->count() - $this->startRowCount;
+
         $formattedTime = match (true) {
             $executionTime >= 60 => sprintf('%dm %ds', floor($executionTime / 60), $executionTime % 60),
             $executionTime >= 1 => round($executionTime, 2) . 's',
             default => round($executionTime * 1000) . 'ms',
         };
+
+        // Registrar las métricas en el log (funcionalidad original)
         Log::info(sprintf(
             '⚡ Batch %s | TIME: %s | MEM: %sMB | SQL: %s | ROWS: %s',
-            $this->currentBatchId, // Añadido el batch ID aquí
+            $batchId, // Cambiado de $this->currentBatchId a $batchId para consistencia
             $formattedTime,
             $memoryUsage,
             number_format($queriesCount),
-            number_format($rowDiff)
+            number_format($processBatch->total_records)
         ));
+
+        // Obtener el metadata actual
+        $existingMetadata = $processBatch->metadata;
+
+        // Decodificar el metadata existente (si existe) o usar un array vacío
+        $metadata = $existingMetadata && json_last_error() === JSON_ERROR_NONE ? json_decode($existingMetadata, true) : [];
+
+        // Agregar las nuevas métricas bajo una clave específica
+        $metadata['performance'] = [
+            'time' => $formattedTime,
+            'memory_mb' => $memoryUsage,
+            'sql_queries' => $queriesCount,
+        ];
+
+        // Actualizar el campo metadata con los datos combinados
+        $processBatch->update([
+            'metadata' => json_encode($metadata, JSON_UNESCAPED_UNICODE),
+        ]);
     }
 
     /**
@@ -90,7 +110,7 @@ trait ImportHelper
             }
         });
 
-        Log::info("DEBUG CSV IDs: IDs extraídos del CSV para precarga (primeros 10): " . json_encode(array_slice(array_keys($ids), 0, 10)));
+        // Log::info("DEBUG CSV IDs: IDs extraídos del CSV para precarga (primeros 10): " . json_encode(array_slice(array_keys($ids), 0, 10)));
         return array_keys($ids);
     }
 
@@ -104,11 +124,11 @@ trait ImportHelper
         $redisMasterKey = 'auditory_glosa_master';
         $cacheService = app(CacheService::class);
 
-        Log::info("DEBUG PRELOAD GLOSA: Iniciando precarga para batch ID: {$this->currentBatchId}. IDs a procesar: " . count($fileIds));
-        Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs del archivo: " . json_encode(array_slice($fileIds, 0, 10)));
+        // Log::info("DEBUG PRELOAD GLOSA: Iniciando precarga para batch ID: {$this->currentBatchId}. IDs a procesar: " . count($fileIds));
+        // Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs del archivo: " . json_encode(array_slice($fileIds, 0, 10)));
 
         $cacheService->clearByPrefix("auditory_glosa:{$this->currentBatchId}:");
-        Log::info("DEBUG PRELOAD GLOSA: Limpiando claves de 'auditory_glosa' para el batch actual al inicio de la precarga.");
+        // Log::info("DEBUG PRELOAD GLOSA: Limpiando claves de 'auditory_glosa' para el batch actual al inicio de la precarga.");
 
         $preloadStartTime = microtime(true);
         $count = 0;
@@ -118,7 +138,7 @@ trait ImportHelper
 
         // Paso 1: Identificar qué IDs del archivo ya están en la caché maestra y cuáles faltan
         if (Redis::connection("redis_6380")->exists($redisMasterKey)) {
-            Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs del archivo...");
+            // Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs del archivo...");
             foreach (array_chunk($fileIds, $chunkSize) as $idChunk) {
                 $idChunk = array_map('strval', $idChunk); // Asegurar que los IDs en el chunk son cadenas
                 $glosaValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $idChunk);
@@ -130,16 +150,16 @@ trait ImportHelper
                     }
                 }
             }
-            Log::info(sprintf("DEBUG PRELOAD GLOSA: %d IDs del archivo ya están en caché maestra. %d IDs necesitan ser cargados de DB.", count($foundIdsInMasterCache), count($idsToLoadFromDb)));
+            // Log::info(sprintf("DEBUG PRELOAD GLOSA: %d IDs del archivo ya están en caché maestra. %d IDs necesitan ser cargados de DB.", count($foundIdsInMasterCache), count($idsToLoadFromDb)));
         } else {
-            Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' no existe. Todos los IDs del archivo necesitan ser cargados de DB.");
+            // Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' no existe. Todos los IDs del archivo necesitan ser cargados de DB.");
             $idsToLoadFromDb = $fileIds;
         }
 
         // Paso 2: Cargar los IDs faltantes de la DB a la caché maestra
         if (!empty($idsToLoadFromDb)) {
-            Log::info(sprintf("DEBUG PRELOAD GLOSA: Cargando %d IDs de auditory_final_reports desde la base de datos a la caché maestra...", count($idsToLoadFromDb)));
-            Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs a cargar de DB: " . json_encode(array_slice($idsToLoadFromDb, 0, 10)));
+            // Log::info(sprintf("DEBUG PRELOAD GLOSA: Cargando %d IDs de auditory_final_reports desde la base de datos a la caché maestra...", count($idsToLoadFromDb)));
+            // Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs a cargar de DB: " . json_encode(array_slice($idsToLoadFromDb, 0, 10)));
             $dbLoadCount = 0;
             $dbLoadStartTime = microtime(true);
             $dbPipeline = Redis::connection("redis_6380")->pipeline();
@@ -148,28 +168,28 @@ trait ImportHelper
             foreach (array_chunk($idsToLoadFromDb, $chunkSize) as $idChunkForDb) {
                 $processedChunks++;
                 $idChunkForDb = array_map('strval', $idChunkForDb); // Asegurar que los IDs para whereIn son cadenas
-                Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Procesando chunk %d con %d IDs. Primeros 5 IDs: %s", $processedChunks, count($idChunkForDb), implode(', ', array_slice($idChunkForDb, 0, 5))));
+                // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Procesando chunk %d con %d IDs. Primeros 5 IDs: %s", $processedChunks, count($idChunkForDb), implode(', ', array_slice($idChunkForDb, 0, 5))));
 
                 $dbReports = AuditoryFinalReport::select('id', 'valor_glosa')
                     ->whereIn('id', $idChunkForDb)
                     ->get(); // Usar get() para procesar el chunk completo
 
-                Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Chunk %d - Recibidos %d reportes de la DB.", $processedChunks, $dbReports->count()));
-                Log::info("DEBUG PRELOAD GLOSA DB: Primeros 5 IDs encontrados en DB para este chunk: " . json_encode(array_slice($dbReports->pluck('id')->toArray(), 0, 5)));
+                // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Chunk %d - Recibidos %d reportes de la DB.", $processedChunks, $dbReports->count()));
+                // Log::info("DEBUG PRELOAD GLOSA DB: Primeros 5 IDs encontrados en DB para este chunk: " . json_encode(array_slice($dbReports->pluck('id')->toArray(), 0, 5)));
 
                 foreach ($dbReports as $report) {
                     $dbPipeline->hset($redisMasterKey, (string) $report->id, (string) $report->valor_glosa);
                     $dbLoadCount++;
                 }
             }
-            Log::info("DEBUG PRELOAD GLOSA DB: Ejecutando pipeline de Redis para la carga de DB...");
+            // Log::info("DEBUG PRELOAD GLOSA DB: Ejecutando pipeline de Redis para la carga de DB...");
             $dbPipeline->execute();
-            Log::info("DEBUG PRELOAD GLOSA DB: Pipeline de Redis ejecutado.");
+            // Log::info("DEBUG PRELOAD GLOSA DB: Pipeline de Redis ejecutado.");
             Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
             $dbLoadEndTime = microtime(true);
-            Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Carga de %d IDs desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
+            // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Carga de %d IDs desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
         } else {
-            Log::info("DEBUG PRELOAD GLOSA: No hay IDs del archivo que necesiten ser cargados de la base de datos a la caché maestra.");
+            // Log::info("DEBUG PRELOAD GLOSA: No hay IDs del archivo que necesiten ser cargados de la base de datos a la caché maestra.");
         }
 
         // Paso 3: Poblar la caché específica del batch desde la caché maestra (ahora actualizada)
@@ -190,14 +210,14 @@ trait ImportHelper
         $pipeline->execute();
 
         $preloadEndTime = microtime(true);
-        Log::info(sprintf("DEBUG PRELOAD GLOSA: Resumen de precarga de glosa (para batch): %d registros en %.2f segundos.", $count, ($preloadEndTime - $preloadStartTime)));
+        // Log::info(sprintf("DEBUG PRELOAD GLOSA: Resumen de precarga de glosa (para batch): %d registros en %.2f segundos.", $count, ($preloadEndTime - $preloadStartTime)));
 
         $notFoundIds = array_diff($fileIds, $finalFoundIdsForBatch);
         if (!empty($notFoundIds)) {
             Log::warning(sprintf("ATENCIÓN PRELOAD GLOSA: %d IDs del archivo no se encontraron en la caché maestra '{$redisMasterKey}' y no fueron precargados para este batch. Primeros 10 IDs no encontrados:", count($notFoundIds)));
             Log::warning(json_encode(array_slice($notFoundIds, 0, 10)));
         } else {
-            Log::info("DEBUG PRELOAD GLOSA: Todos los IDs del archivo se encontraron en la caché maestra '{$redisMasterKey}' y fueron precargados para este batch.");
+            // Log::info("DEBUG PRELOAD GLOSA: Todos los IDs del archivo se encontraron en la caché maestra '{$redisMasterKey}' y fueron precargados para este batch.");
         }
     }
 
@@ -211,11 +231,11 @@ trait ImportHelper
         $redisMasterKey = 'db_factura_glosa_counts_master';
         $cacheService = app(CacheService::class);
 
-        Log::info("DEBUG PRELOAD FACTURA: Iniciando precarga para batch ID: {$this->currentBatchId}. IDs de factura a procesar: " . count($fileFacturaIds));
-        Log::info("DEBUG PRELOAD FACTURA: Primeros 10 IDs de factura del archivo: " . json_encode(array_slice($fileFacturaIds, 0, 10)));
+        // Log::info("DEBUG PRELOAD FACTURA: Iniciando precarga para batch ID: {$this->currentBatchId}. IDs de factura a procesar: " . count($fileFacturaIds));
+        // Log::info("DEBUG PRELOAD FACTURA: Primeros 10 IDs de factura del archivo: " . json_encode(array_slice($fileFacturaIds, 0, 10)));
 
         $cacheService->clearByPrefix("db_factura_total_glosa_counts:{$this->currentBatchId}");
-        Log::info("DEBUG PRELOAD FACTURA: Limpiando claves de 'db_factura_total_glosa_counts' para el batch actual al inicio de la precarga.");
+        // Log::info("DEBUG PRELOAD FACTURA: Limpiando claves de 'db_factura_total_glosa_counts' para el batch actual al inicio de la precarga.");
 
         $preloadStartTime = microtime(true);
         $count = 0;
@@ -225,7 +245,7 @@ trait ImportHelper
 
         // Paso 1: Identificar qué IDs de factura del archivo ya están en la caché maestra y cuáles faltan
         if (Redis::connection("redis_6380")->exists($redisMasterKey)) {
-            Log::info("DEBUG PRELOAD FACTURA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs de factura del archivo...");
+            // Log::info("DEBUG PRELOAD FACTURA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs de factura del archivo...");
             foreach (array_chunk($fileFacturaIds, $chunkSize) as $facturaIdChunk) {
                 $facturaIdChunk = array_map('strval', $facturaIdChunk); // Asegurar que los IDs en el chunk son cadenas
                 $countsValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $facturaIdChunk);
@@ -237,16 +257,16 @@ trait ImportHelper
                     }
                 }
             }
-            Log::info(sprintf("DEBUG PRELOAD FACTURA: %d IDs de factura del archivo ya están en caché maestra. %d IDs necesitan ser cargados de DB.", count($foundFacturaIdsInMasterCache), count($facturaIdsToLoadFromDb)));
+            // Log::info(sprintf("DEBUG PRELOAD FACTURA: %d IDs de factura del archivo ya están en caché maestra. %d IDs necesitan ser cargados de DB.", count($foundFacturaIdsInMasterCache), count($facturaIdsToLoadFromDb)));
         } else {
-            Log::info("DEBUG PRELOAD FACTURA: La caché maestra '{$redisMasterKey}' no existe. Todos los IDs de factura del archivo necesitan ser cargados de DB.");
+            // Log::info("DEBUG PRELOAD FACTURA: La caché maestra '{$redisMasterKey}' no existe. Todos los IDs de factura del archivo necesitan ser cargados de DB.");
             $facturaIdsToLoadFromDb = $fileFacturaIds;
         }
 
         // Paso 2: Cargar los IDs de factura faltantes de la DB a la caché maestra
         if (!empty($facturaIdsToLoadFromDb)) {
-            Log::info(sprintf("DEBUG PRELOAD FACTURA: Cargando %d IDs de factura (con glosa > 0) desde la base de datos a la caché maestra...", count($facturaIdsToLoadFromDb)));
-            Log::info("DEBUG PRELOAD FACTURA: Primeros 10 IDs de factura a cargar de DB: " . json_encode(array_slice($facturaIdsToLoadFromDb, 0, 10)));
+            // Log::info(sprintf("DEBUG PRELOAD FACTURA: Cargando %d IDs de factura (con glosa > 0) desde la base de datos a la caché maestra...", count($facturaIdsToLoadFromDb)));
+            // Log::info("DEBUG PRELOAD FACTURA: Primeros 10 IDs de factura a cargar de DB: " . json_encode(array_slice($facturaIdsToLoadFromDb, 0, 10)));
             $dbLoadCount = 0;
             $dbLoadStartTime = microtime(true);
             $dbPipeline = Redis::connection("redis_6380")->pipeline();
@@ -260,8 +280,8 @@ trait ImportHelper
                     ->orderBy('factura_id')
                     ->get(); // Usar get() para procesar el chunk completo
 
-                Log::info(sprintf("DEBUG PRELOAD FACTURA DB: Recibidos %d resultados de la DB para este chunk.", $dbResults->count()));
-                Log::info("DEBUG PRELOAD FACTURA DB: Primeros 5 IDs de factura encontrados en DB para este chunk: " . json_encode(array_slice($dbResults->pluck('factura_id')->toArray(), 0, 5)));
+                // Log::info(sprintf("DEBUG PRELOAD FACTURA DB: Recibidos %d resultados de la DB para este chunk.", $dbResults->count()));
+                // Log::info("DEBUG PRELOAD FACTURA DB: Primeros 5 IDs de factura encontrados en DB para este chunk: " . json_encode(array_slice($dbResults->pluck('factura_id')->toArray(), 0, 5)));
 
                 foreach ($dbResults as $result) {
                     $dbPipeline->hset($redisMasterKey, (string) $result->factura_id, (string) $result->total_count);
@@ -271,9 +291,9 @@ trait ImportHelper
             $dbPipeline->execute();
             Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
             $dbLoadEndTime = microtime(true);
-            Log::info(sprintf("DEBUG PRELOAD FACTURA DB: Carga de %d IDs de factura desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
+            // Log::info(sprintf("DEBUG PRELOAD FACTURA DB: Carga de %d IDs de factura desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
         } else {
-            Log::info("DEBUG PRELOAD FACTURA: No hay IDs de factura del archivo que necesiten ser cargados de la base de datos a la caché maestra.");
+            // Log::info("DEBUG PRELOAD FACTURA: No hay IDs de factura del archivo que necesiten ser cargados de la base de datos a la caché maestra.");
         }
 
         // Paso 3: Poblar la caché específica del batch desde la caché maestra (ahora actualizada)
@@ -295,14 +315,14 @@ trait ImportHelper
         $pipeline->execute();
 
         $preloadEndTime = microtime(true);
-        Log::info(sprintf("DEBUG PRELOAD FACTURA: Resumen de precarga de conteos de factura (para batch): %d registros en %.2f segundos.", $count, ($preloadEndTime - $preloadStartTime)));
+        // Log::info(sprintf("DEBUG PRELOAD FACTURA: Resumen de precarga de conteos de factura (para batch): %d registros en %.2f segundos.", $count, ($preloadEndTime - $preloadStartTime)));
 
         $notFoundFacturaIds = array_diff($fileFacturaIds, $finalFoundFacturaIdsForBatch);
         if (!empty($notFoundFacturaIds)) { // CORREGIDO: Usar $notFoundFacturaIds
             Log::warning(sprintf("ATENCIÓN PRELOAD FACTURA: %d IDs de factura del archivo no se encontraron en la caché maestra '{$redisMasterKey}' y no fueron precargados para este batch. Primeros 10 IDs no encontrados:", count($notFoundFacturaIds))); // CORREGIDO: Usar $notFoundFacturaIds
             Log::warning(json_encode(array_slice($notFoundFacturaIds, 0, 10))); // CORREGIDO: Usar $notFoundFacturaIds
         } else {
-            Log::info("DEBUG PRELOAD FACTURA: Todos los IDs de factura del archivo se encontraron en la caché maestra '{$redisMasterKey}' y fueron precargados para este batch.");
+            // Log::info("DEBUG PRELOAD FACTURA: Todos los IDs de factura del archivo se encontraron en la caché maestra '{$redisMasterKey}' y fueron precargados para este batch.");
         }
     }
 
@@ -313,7 +333,7 @@ trait ImportHelper
      */
     protected function performFacturaCompletaValidation(CsvValidationService $validationService): void
     {
-        Log::info("Iniciando performFacturaCompletaValidation para batch ID: {$this->currentBatchId}");
+        // Log::info("Iniciando performFacturaCompletaValidation para batch ID: {$this->currentBatchId}");
 
         $uniqueFacturaIdsFromCsv = Redis::connection("redis_6380")->smembers("csv_unique_factura_ids:{$this->currentBatchId}");
         $totalFacturaIds = count($uniqueFacturaIdsFromCsv);
@@ -329,12 +349,12 @@ trait ImportHelper
             // Obtener el conteo de glosas > 0 para esta factura en la base de datos (precargado)
             $dbGlosaCount = (int) Redis::connection("redis_6380")->hget("db_factura_total_glosa_counts:{$this->currentBatchId}", $facturaId);
 
-            Log::debug(sprintf(
-                "DEBUG FACTURA COMPLETA: Factura ID '%s' - Archivo: %d, DB Glosa: %d",
-                $facturaId,
-                $fileFacturaCount,
-                $dbGlosaCount
-            ));
+            // Log::debug(sprintf(
+            //     "DEBUG FACTURA COMPLETA: Factura ID '%s' - Archivo: %d, DB Glosa: %d",
+            //     $facturaId,
+            //     $fileFacturaCount,
+            //     $dbGlosaCount
+            // ));
 
             if ($fileFacturaCount !== $dbGlosaCount) {
                 // Recuperar los números de fila asociados a esta factura para el mensaje de error
@@ -356,13 +376,12 @@ trait ImportHelper
                     $facturaId,
                     json_encode(['file_count' => $fileFacturaCount, 'db_glosa_count' => $dbGlosaCount, 'rows_in_file' => $rowNumbers])
                 );
-                Log::warning("ERROR FACTURA COMPLETA: " . $errorMessage);
+                // Log::warning("ERROR FACTURA COMPLETA: " . $errorMessage);
             }
 
             // Despachar evento de progreso periódicamente
             if ($processedFacturaIds % $dispatchInterval === 0 || $processedFacturaIds === $totalFacturaIds) {
                 if (method_exists($this, 'dispatchProgressEvent')) {
-                    logMessage("hola juan");
                     $this->dispatchProgressEvent(
                         $this->totalRowsForJobProgress, // Mantiene el progreso principal en 100% (de validación de filas)
                         'Validando facturas completas',
@@ -372,7 +391,7 @@ trait ImportHelper
                 }
             }
         }
-        Log::info("Finalizado performFacturaCompletaValidation para batch ID: {$this->currentBatchId}");
+        // Log::info("Finalizado performFacturaCompletaValidation para batch ID: {$this->currentBatchId}");
     }
 
 
@@ -382,12 +401,12 @@ trait ImportHelper
     protected function storeErrorsFromRedis(): void
     {
         $errorKey = "import_errors:{$this->currentBatchId}";
-        Log::info("Attempting to retrieve errors from Redis key: {$errorKey}");
+        // Log::info("Attempting to retrieve errors from Redis key: {$errorKey}");
 
         $rawErrors = Redis::connection("redis_6380")->lrange($errorKey, 0, -1);
 
         if (empty($rawErrors)) {
-            Log::info("No errors found in Redis for batch ID: {$this->currentBatchId}");
+            // Log::info("No errors found in Redis for batch ID: {$this->currentBatchId}");
             return;
         }
 
@@ -403,14 +422,14 @@ trait ImportHelper
 
         if (!empty($errorsToInsert)) {
             $chunkSize = 500;
-            $totalErrors = count($errorsToInsert);
-            Log::info(sprintf('Found %d errors to insert into DB for batch ID: %s. Inserting in chunks of %d.', $totalErrors, $this->currentBatchId, $chunkSize));
+            // $totalErrors = count($errorsToInsert);
+            // Log::info(sprintf('Found %d errors to insert into DB for batch ID: %s. Inserting in chunks of %d.', $totalErrors, $this->currentBatchId, $chunkSize));
 
             foreach (array_chunk($errorsToInsert, $chunkSize) as $chunk) {
-                DB::transaction(function () use ($chunk, $totalErrors) {
+                DB::transaction(function () use ($chunk) {
                     try {
                         DB::table('process_batche_errors')->insert($chunk);
-                        Log::info(sprintf('Successfully inserted a chunk of %d errors into process_batche_errors table.', count($chunk)));
+                        // Log::info(sprintf('Successfully inserted a chunk of %d errors into process_batche_errors table.', count($chunk)));
                     } catch (\Exception $e) {
                         Log::error('Failed to bulk insert errors into process_batche_errors: ' . $e->getMessage());
                         Log::error('Database insertion failed for errors chunk:', [
@@ -421,17 +440,17 @@ trait ImportHelper
                         ]);
                         throw $e;
                     }
-                    Log::info(sprintf('Stored %d validation errors to process_batche_errors table.', $totalErrors));
-                    Log::info('Finished inserting all errors into process_batche_errors table.');
+                    // Log::info(sprintf('Stored %d validation errors to process_batche_errors table.', $totalErrors));
+                    // Log::info('Finished inserting all errors into process_batche_errors table.');
                 });
             }
 
-            $persistedErrorsCount = DB::table('process_batche_errors')
-                ->where('batch_id', $this->currentBatchId)
-                ->count();
-            Log::info(sprintf('DEBUG DB: %d errores encontrados en la DB para batch ID: %s inmediatamente después de la inserción.', $persistedErrorsCount, $this->currentBatchId));
+            // $persistedErrorsCount = DB::table('process_batche_errors')
+            //     ->where('batch_id', $this->currentBatchId)
+            //     ->count();
+            // Log::info(sprintf('DEBUG DB: %d errores encontrados en la DB para batch ID: %s inmediatamente después de la inserción.', $persistedErrorsCount, $this->currentBatchId));
         } else {
-            Log::info("No valid errors to insert after decoding for batch ID: {$this->currentBatchId}");
+            // Log::info("No valid errors to insert after decoding for batch ID: {$this->currentBatchId}");
         }
         Redis::connection("redis_6380")->del($errorKey);
     }
@@ -442,7 +461,7 @@ trait ImportHelper
      */
     protected function import11ConcurrentCsv(string $filePath): void
     {
-        Log::info("iniciando import11Concurrent desde CSV");
+        // Log::info("iniciando import11Concurrent desde CSV");
         $now = now()->format('Y-m-d H:i:s');
         $numberOfProcesses = 10;
         $tasks = [];
@@ -464,11 +483,10 @@ trait ImportHelper
         Redis::connection("redis_6380")->set("batch:{$batchId}:imported_rows_count", 0);
         Redis::connection("redis_6380")->expire("batch:{$batchId}:imported_rows_count", 3600 * 24); // Expiración de 24 horas
 
-        $dispatchInterval = max(1, floor($totalRows / 100)); // Despachar al menos 100 veces
 
         for ($i = 0; $i < $numberOfProcesses; $i++) {
             // CORREGIDO: Eliminado $this de la cláusula use. $this ya es accesible y su inclusión explícita causa el error de serialización.
-            $tasks[] = function () use ($filePath, $i, $numberOfProcesses, $now, $dispatchInterval, $totalRows, $batchId, $totalRowsForEvent) {
+            $tasks[] = function () use ($filePath, $i, $numberOfProcesses, $now, $batchId) {
                 DB::reconnect();
                 $handle = fopen($filePath, 'r');
                 fgets($handle); // Skip header
