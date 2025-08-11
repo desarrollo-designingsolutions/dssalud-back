@@ -253,12 +253,12 @@ class FinalizeImportDecisionJob implements ShouldQueue
                 'updated_at' => now(),
             ];
             if (count($errorsToInsert) >= $insertBatchSize) {
-                DB::table('process_batche_errors')->insert($errorsToInsert);
+                DB::table('process_batches_errors')->insert($errorsToInsert);
                 $errorsToInsert = [];
             }
         }
         if (! empty($errorsToInsert)) {
-            DB::table('process_batche_errors')->insert($errorsToInsert);
+            DB::table('process_batches_errors')->insert($errorsToInsert);
         }
         // Limpiar la lista de errores de Redis después de persistirlos
         Redis::del($redisKey);

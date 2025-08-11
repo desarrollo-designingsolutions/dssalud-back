@@ -433,10 +433,10 @@ trait ImportHelper
             foreach (array_chunk($errorsToInsert, $chunkSize) as $chunk) {
                 DB::transaction(function () use ($chunk) {
                     try {
-                        DB::table('process_batche_errors')->insert($chunk);
-                        // Log::info(sprintf('Successfully inserted a chunk of %d errors into process_batche_errors table.', count($chunk)));
+                        DB::table('process_batches_errors')->insert($chunk);
+                        // Log::info(sprintf('Successfully inserted a chunk of %d errors into process_batches_errors table.', count($chunk)));
                     } catch (\Exception $e) {
-                        Log::error('Failed to bulk insert errors into process_batche_errors: '.$e->getMessage());
+                        Log::error('Failed to bulk insert errors into process_batches_errors: '.$e->getMessage());
                         Log::error('Database insertion failed for errors chunk:', [
                             'exception' => $e->getMessage(),
                             'code' => $e->getCode(),
@@ -445,12 +445,12 @@ trait ImportHelper
                         ]);
                         throw $e;
                     }
-                    // Log::info(sprintf('Stored %d validation errors to process_batche_errors table.', $totalErrors));
-                    // Log::info('Finished inserting all errors into process_batche_errors table.');
+                    // Log::info(sprintf('Stored %d validation errors to process_batches_errors table.', $totalErrors));
+                    // Log::info('Finished inserting all errors into process_batches_errors table.');
                 });
             }
 
-            // $persistedErrorsCount = DB::table('process_batche_errors')
+            // $persistedErrorsCount = DB::table('process_batches_errors')
             //     ->where('batch_id', $this->currentBatchId)
             //     ->count();
             // Log::info(sprintf('DEBUG DB: %d errores encontrados en la DB para batch ID: %s inmediatamente después de la inserción.', $persistedErrorsCount, $this->currentBatchId));

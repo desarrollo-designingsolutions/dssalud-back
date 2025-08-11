@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\ProcessBatcheError;
+namespace App\Http\Resources\ProcessBatchesError;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProcessBatcheErrorPaginateResource extends JsonResource
+class ProcessBatchesErrorPaginateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

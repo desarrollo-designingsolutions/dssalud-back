@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('process_batche_errors', function (Blueprint $table) {
+        Schema::create('process_batches_errors', function (Blueprint $table) {
             $table->uuid('id')->primary(); // ID único para cada error
             $table->uuid('batch_id')->index(); // ID del batch al que pertenece el error
             $table->integer('row_number')->nullable(); // Número de fila en Excel (si aplica)
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('process_batche_errors');
+        Schema::dropIfExists('process_batches_errors');
     }
 };

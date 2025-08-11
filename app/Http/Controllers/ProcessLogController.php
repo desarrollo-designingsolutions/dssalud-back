@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\ProcessBatcheError\ProcessBatcheErrorPaginateResource;
+use App\Http\Resources\ProcessBatchesError\ProcessBatchesErrorPaginateResource;
 use App\Models\ProcessBatch;
-use App\Repositories\ProcessBatcheErrorRepository;
+use App\Repositories\ProcessBatchesErrorRepository;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Http\Request;
 
@@ -13,14 +13,14 @@ class ProcessLogController extends Controller
     use HttpResponseTrait;
 
     public function __construct(
-        protected ProcessBatcheErrorRepository $processBatcheErrorRepository,
+        protected ProcessBatchesErrorRepository $processBatchesErrorRepository,
     ) {}
 
     public function paginate(Request $request)
     {
         return $this->execute(function () use ($request) {
-            $data = $this->processBatcheErrorRepository->paginate($request->all());
-            $tableData = ProcessBatcheErrorPaginateResource::collection($data);
+            $data = $this->processBatchesErrorRepository->paginate($request->all());
+            $tableData = ProcessBatchesErrorPaginateResource::collection($data);
 
             return [
                 'code' => 200,

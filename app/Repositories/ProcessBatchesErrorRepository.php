@@ -3,13 +3,13 @@
 namespace App\Repositories;
 
 use App\Helpers\Constants;
-use App\Models\ProcessBatcheError;
+use App\Models\ProcessBatchesError;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class ProcessBatcheErrorRepository extends BaseRepository
+class ProcessBatchesErrorRepository extends BaseRepository
 {
-    public function __construct(ProcessBatcheError $modelo)
+    public function __construct(ProcessBatchesError $modelo)
     {
         parent::__construct($modelo);
     }

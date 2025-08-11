@@ -37,8 +37,6 @@ class ConciliationUploadFileRequest extends FormRequest
         return [
             'file.required' => 'El archivo es obligatorio.',
             'file.file' => 'El archivo proporcionado no es válido.',
-            'file.mimes' => 'El archivo debe ser de tipo Excel (.csv).',
-            'file.max' => 'El archivo no debe exceder los 10 MB.',
             'user_id.string' => 'El ID del docente debe ser una cadena de texto.',
             'company_id.string' => 'El ID de la compañía debe ser una cadena de texto.',
         ];

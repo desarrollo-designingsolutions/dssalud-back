@@ -6,7 +6,7 @@ use App\Traits\Cacheable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
-class ProcessBatcheError extends Model
+class ProcessBatchesError extends Model
 {
     use Cacheable, HasUuids;
 
