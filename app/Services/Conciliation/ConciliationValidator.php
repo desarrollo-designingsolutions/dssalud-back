@@ -294,7 +294,7 @@ class ConciliationValidator
     }
 
     $facturaIds = array_keys($excelCounts);
-    Log::info("facturaIds: " . implode(', ', $facturaIds));
+    // Log::info("facturaIds: " . implode(', ', $facturaIds));
 
     // 2. Obtener conteos de la base de datos desde Redis
     $dbCounts = [];
@@ -304,7 +304,7 @@ class ConciliationValidator
         $dbCounts[$facturaId] = $dbCount !== null ? (int) $dbCount : 0;
     }
 
-    Log::info("Conteo de Redis terminado para facturaIds");
+    // Log::info("Conteo de Redis terminado para facturaIds");
 
     // 3. Comparar conteos
     foreach ($excelCounts as $facturaId => $excelCount) {

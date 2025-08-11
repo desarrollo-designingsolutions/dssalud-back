@@ -20,7 +20,7 @@ class ProcessExcelDataJob implements ShouldQueue
 
     public $timeout = 3600; // Mantener tu timeout
 
-    public $chunkSize = 1000; // Puedes ajustar este tamaño de chunk si lo deseas
+    public $chunkSize = 50; // Puedes ajustar este tamaño de chunk si lo deseas
 
     public function __construct(
         private string $filePath,
