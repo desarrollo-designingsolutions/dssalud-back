@@ -17,7 +17,7 @@ class PreloadAuditoryGlosaCache extends Command
         $redisMasterKey = 'auditory_glosa_master';
         $forceRefresh = $this->option('force');
 
-        if (Redis::exists($redisMasterKey) && !$forceRefresh) {
+        if (Redis::connection("redis_6380")->exists($redisMasterKey) && !$forceRefresh) {
             $this->info('Auditory glosa master cache already exists. Use --force to refresh.');
             Log::info('Auditory glosa master cache already exists. Skipping preload.');
             return;
@@ -26,11 +26,11 @@ class PreloadAuditoryGlosaCache extends Command
         $this->info('Preloading auditory_final_reports data into master Redis cache...');
         Log::info('Starting preload of auditory_final_reports data into master Redis cache.');
 
-        Redis::del($redisMasterKey); // Clear existing cache if forcing or not exists
+        Redis::connection("redis_6380")->del($redisMasterKey); // Clear existing cache if forcing or not exists
 
         $count = 0;
         $startTime = microtime(true);
-        $pipeline = Redis::pipeline();
+        $pipeline = Redis::connection("redis_6380")->pipeline();
         $chunkSize = 5000; // Adjust chunk size based on your memory/performance needs
 
         AuditoryFinalReport::select('id', 'valor_glosa')
@@ -49,7 +49,7 @@ class PreloadAuditoryGlosaCache extends Command
         Log::info(sprintf("Preload of auditory_glosa_master completed: %d records in %.2f seconds.", $count, ($endTime - $startTime)));
 
         // Set an expiration for the master cache, e.g., 6 months (approx 180 days)
-        Redis::expire($redisMasterKey, 60 * 60 * 24 * 180);
+        Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180);
         Log::info("Auditory glosa master cache set to expire in 180 days.");
     }
 }

@@ -98,7 +98,7 @@ class ProcessBatchService
         foreach ($availableQueues as $queue) {
             // SADD retorna 1 si el elemento fue añadido (significa que no estaba antes)
             // SADD retorna 0 si el elemento ya existía en el set (significa que está en uso)
-            if (Redis::sadd(self::REDIS_USED_QUEUES_KEY, $queue) === 1) {
+            if (Redis::connection("redis_6380")->sadd(self::REDIS_USED_QUEUES_KEY, $queue) === 1) {
                 return $queue;
             }
         }
@@ -116,7 +116,7 @@ class ProcessBatchService
     {
         // SREM retorna 1 si el elemento fue removido (significa que existía)
         // SREM retorna 0 si el elemento no fue encontrado en el set
-        if (Redis::srem(self::REDIS_USED_QUEUES_KEY, $queueName) === 1) {
+        if (Redis::connection("redis_6380")->srem(self::REDIS_USED_QUEUES_KEY, $queueName) === 1) {
         } else {
             Log::warning("Attempted to release queue '{$queueName}' but it was not found in the used queues set. It might have already been released or never acquired.");
         }

@@ -117,11 +117,11 @@ trait ImportHelper
         $chunkSize = 1000;
 
         // Paso 1: Identificar qué IDs del archivo ya están en la caché maestra y cuáles faltan
-        if (Redis::exists($redisMasterKey)) {
+        if (Redis::connection("redis_6380")->exists($redisMasterKey)) {
             Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs del archivo...");
             foreach (array_chunk($fileIds, $chunkSize) as $idChunk) {
                 $idChunk = array_map('strval', $idChunk); // Asegurar que los IDs en el chunk son cadenas
-                $glosaValues = Redis::hmget($redisMasterKey, $idChunk);
+                $glosaValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $idChunk);
                 foreach ($idChunk as $index => $id) {
                     if (!is_null($glosaValues[$index])) {
                         $foundIdsInMasterCache[] = $id;
@@ -142,7 +142,7 @@ trait ImportHelper
             Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs a cargar de DB: " . json_encode(array_slice($idsToLoadFromDb, 0, 10)));
             $dbLoadCount = 0;
             $dbLoadStartTime = microtime(true);
-            $dbPipeline = Redis::pipeline();
+            $dbPipeline = Redis::connection("redis_6380")->pipeline();
             $processedChunks = 0;
 
             foreach (array_chunk($idsToLoadFromDb, $chunkSize) as $idChunkForDb) {
@@ -165,7 +165,7 @@ trait ImportHelper
             Log::info("DEBUG PRELOAD GLOSA DB: Ejecutando pipeline de Redis para la carga de DB...");
             $dbPipeline->execute();
             Log::info("DEBUG PRELOAD GLOSA DB: Pipeline de Redis ejecutado.");
-            Redis::expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
+            Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
             $dbLoadEndTime = microtime(true);
             Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Carga de %d IDs desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
         } else {
@@ -174,10 +174,10 @@ trait ImportHelper
 
         // Paso 3: Poblar la caché específica del batch desde la caché maestra (ahora actualizada)
         $finalFoundIdsForBatch = [];
-        $pipeline = Redis::pipeline();
+        $pipeline = Redis::connection("redis_6380")->pipeline();
         foreach (array_chunk($fileIds, $chunkSize) as $idChunk) {
             $idChunk = array_map('strval', $idChunk); // Asegurar que los IDs en el chunk son cadenas
-            $glosaValues = Redis::hmget($redisMasterKey, $idChunk);
+            $glosaValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $idChunk);
             foreach ($idChunk as $index => $id) {
                 if (!is_null($glosaValues[$index])) {
                     $redisKey = "auditory_glosa:{$this->currentBatchId}:{$id}";
@@ -224,11 +224,11 @@ trait ImportHelper
         $chunkSize = 1000;
 
         // Paso 1: Identificar qué IDs de factura del archivo ya están en la caché maestra y cuáles faltan
-        if (Redis::exists($redisMasterKey)) {
+        if (Redis::connection("redis_6380")->exists($redisMasterKey)) {
             Log::info("DEBUG PRELOAD FACTURA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs de factura del archivo...");
             foreach (array_chunk($fileFacturaIds, $chunkSize) as $facturaIdChunk) {
                 $facturaIdChunk = array_map('strval', $facturaIdChunk); // Asegurar que los IDs en el chunk son cadenas
-                $countsValues = Redis::hmget($redisMasterKey, $facturaIdChunk);
+                $countsValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $facturaIdChunk);
                 foreach ($facturaIdChunk as $index => $facturaId) {
                     if (!is_null($countsValues[$index])) {
                         $foundFacturaIdsInMasterCache[] = $facturaId;
@@ -249,7 +249,7 @@ trait ImportHelper
             Log::info("DEBUG PRELOAD FACTURA: Primeros 10 IDs de factura a cargar de DB: " . json_encode(array_slice($facturaIdsToLoadFromDb, 0, 10)));
             $dbLoadCount = 0;
             $dbLoadStartTime = microtime(true);
-            $dbPipeline = Redis::pipeline();
+            $dbPipeline = Redis::connection("redis_6380")->pipeline();
 
             foreach (array_chunk($facturaIdsToLoadFromDb, $chunkSize) as $facturaIdChunkForDb) {
                 $facturaIdChunkForDb = array_map('strval', $facturaIdChunkForDb); // Asegurar que los IDs para whereIn son cadenas
@@ -269,7 +269,7 @@ trait ImportHelper
                 }
             }
             $dbPipeline->execute();
-            Redis::expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
+            Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
             $dbLoadEndTime = microtime(true);
             Log::info(sprintf("DEBUG PRELOAD FACTURA DB: Carga de %d IDs de factura desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
         } else {
@@ -278,12 +278,12 @@ trait ImportHelper
 
         // Paso 3: Poblar la caché específica del batch desde la caché maestra (ahora actualizada)
         $finalFoundFacturaIdsForBatch = [];
-        $pipeline = Redis::pipeline();
+        $pipeline = Redis::connection("redis_6380")->pipeline();
         $redisHashKey = "db_factura_total_glosa_counts:{$this->currentBatchId}";
 
         foreach (array_chunk($fileFacturaIds, $chunkSize) as $facturaIdChunk) {
             $facturaIdChunk = array_map('strval', $facturaIdChunk); // Asegurar que los IDs en el chunk son cadenas
-            $countsValues = Redis::hmget($redisMasterKey, $facturaIdChunk);
+            $countsValues = Redis::connection("redis_6380")->hmget($redisMasterKey, $facturaIdChunk);
             foreach ($facturaIdChunk as $index => $facturaId) {
                 if (!is_null($countsValues[$index])) {
                     $pipeline->hset($redisHashKey, (string) $facturaId, (string) $countsValues[$index]);
@@ -315,7 +315,7 @@ trait ImportHelper
     {
         Log::info("Iniciando performFacturaCompletaValidation para batch ID: {$this->currentBatchId}");
 
-        $uniqueFacturaIdsFromCsv = Redis::smembers("csv_unique_factura_ids:{$this->currentBatchId}");
+        $uniqueFacturaIdsFromCsv = Redis::connection("redis_6380")->smembers("csv_unique_factura_ids:{$this->currentBatchId}");
         $totalFacturaIds = count($uniqueFacturaIdsFromCsv);
         $processedFacturaIds = 0;
         $dispatchInterval = max(1, floor($totalFacturaIds / 100)); // Despachar al menos 100 veces
@@ -324,10 +324,10 @@ trait ImportHelper
             $processedFacturaIds++;
 
             // Obtener el conteo de filas para esta factura en el archivo de importación
-            $fileFacturaCount = (int) Redis::hget("csv_factura_total_counts:{$this->currentBatchId}", $facturaId);
+            $fileFacturaCount = (int) Redis::connection("redis_6380")->hget("csv_factura_total_counts:{$this->currentBatchId}", $facturaId);
 
             // Obtener el conteo de glosas > 0 para esta factura en la base de datos (precargado)
-            $dbGlosaCount = (int) Redis::hget("db_factura_total_glosa_counts:{$this->currentBatchId}", $facturaId);
+            $dbGlosaCount = (int) Redis::connection("redis_6380")->hget("db_factura_total_glosa_counts:{$this->currentBatchId}", $facturaId);
 
             Log::debug(sprintf(
                 "DEBUG FACTURA COMPLETA: Factura ID '%s' - Archivo: %d, DB Glosa: %d",
@@ -338,7 +338,7 @@ trait ImportHelper
 
             if ($fileFacturaCount !== $dbGlosaCount) {
                 // Recuperar los números de fila asociados a esta factura para el mensaje de error
-                $rowNumbersJson = Redis::lrange("csv_factura_rows:{$this->currentBatchId}:{$facturaId}", 0, -1);
+                $rowNumbersJson = Redis::connection("redis_6380")->lrange("csv_factura_rows:{$this->currentBatchId}:{$facturaId}", 0, -1);
                 $rowNumbers = array_map('intval', $rowNumbersJson);
                 $firstRow = !empty($rowNumbers) ? min($rowNumbers) : 0; // Usar la primera fila para el error
 
@@ -384,7 +384,7 @@ trait ImportHelper
         $errorKey = "import_errors:{$this->currentBatchId}";
         Log::info("Attempting to retrieve errors from Redis key: {$errorKey}");
 
-        $rawErrors = Redis::lrange($errorKey, 0, -1);
+        $rawErrors = Redis::connection("redis_6380")->lrange($errorKey, 0, -1);
 
         if (empty($rawErrors)) {
             Log::info("No errors found in Redis for batch ID: {$this->currentBatchId}");
@@ -433,7 +433,7 @@ trait ImportHelper
         } else {
             Log::info("No valid errors to insert after decoding for batch ID: {$this->currentBatchId}");
         }
-        Redis::del($errorKey);
+        Redis::connection("redis_6380")->del($errorKey);
     }
 
     /**
@@ -461,8 +461,8 @@ trait ImportHelper
         $totalRowsForEvent = $this->totalRowsForJobProgress; // Total de filas del archivo para el progreso principal
 
         // Inicializar contador de Redis para filas importadas
-        Redis::set("batch:{$batchId}:imported_rows_count", 0);
-        Redis::expire("batch:{$batchId}:imported_rows_count", 3600 * 24); // Expiración de 24 horas
+        Redis::connection("redis_6380")->set("batch:{$batchId}:imported_rows_count", 0);
+        Redis::connection("redis_6380")->expire("batch:{$batchId}:imported_rows_count", 3600 * 24); // Expiración de 24 horas
 
         $dispatchInterval = max(1, floor($totalRows / 100)); // Despachar al menos 100 veces
 
@@ -497,7 +497,7 @@ trait ImportHelper
                     }
 
                     // Incrementar contador global de Redis para filas importadas
-                    $currentImportedCount = Redis::incr("batch:{$batchId}:imported_rows_count");
+                    $currentImportedCount = Redis::connection("redis_6380")->incr("batch:{$batchId}:imported_rows_count");
 
                     // NOTA: Se ha eliminado la llamada a dispatchProgressEvent aquí para evitar problemas de serialización.
                     // El progreso de importación se reflejará principalmente a través del contador de Redis
@@ -513,7 +513,7 @@ trait ImportHelper
         Concurrency::run($tasks);
 
         // Asegurar que el evento final de importación se despacha después de que todas las tareas concurrentes completen
-        $finalImportedCount = (string) Redis::get("batch:{$batchId}:imported_rows_count");
+        $finalImportedCount = (string) Redis::connection("redis_6380")->get("batch:{$batchId}:imported_rows_count");
         // CORREGIDO: Llamar a dispatchProgressEvent del trait. Esto es seguro aquí porque no está dentro de un closure serializado.
         $this->dispatchProgressEvent(
             $totalRowsForEvent, // processedRecords para el evento (progreso principal es 100% de validación)
@@ -523,6 +523,6 @@ trait ImportHelper
         );
 
         // Limpiar el contador de filas importadas de Redis
-        Redis::del("batch:{$batchId}:imported_rows_count");
+        Redis::connection("redis_6380")->del("batch:{$batchId}:imported_rows_count");
     }
 }

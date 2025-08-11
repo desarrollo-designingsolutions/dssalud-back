@@ -16,7 +16,6 @@ class ImportProgressEvent implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $batchId;
-    public string $fileName;
     public float $progress;
     public string $currentElement;
     public string $currentAction;
@@ -35,12 +34,10 @@ class ImportProgressEvent implements ShouldBroadcastNow
         $this->currentAction = $currentAction;
         $this->currentElement = (string) $currentElement;
 
-        $staticMetadata = Redis::hgetall("batch:{$this->batchId}:metadata");
+        $staticMetadata = Redis::connection("redis_6380")->hgetall("batch:{$this->batchId}:metadata");
 
         $totalRecords = (int) ($staticMetadata['total_rows'] ?? 0);
-        $this->fileName = $staticMetadata['file_name'] ?? 'N/A';
         $started_at = $staticMetadata['started_at'] ?? 'N/A';
-        $completed_at = $staticMetadata['completed_at'] ?? 'N/A';
 
         $this->progress = $totalRecords > 0 ? round(((int)$processedRecords / $totalRecords) * 100, 2) : 0;
         $this->status = $this->mapStatus($backendStatus);
@@ -51,7 +48,8 @@ class ImportProgressEvent implements ShouldBroadcastNow
             'errors_count' => (int)$errorCount,
             'last_activity' => now()->toDateTimeString(),
             'started_at' => $started_at,
-            'completed_at' => $completed_at,
+            'completed_at' => $staticMetadata['completed_at'] ?? 'N/A',
+            'file_name' => $staticMetadata['file_name'] ?? 'N/A',
             'file_size' => (int) ($staticMetadata['file_size'] ?? 0),
             'current_sheet' => (int) ($staticMetadata['current_sheet'] ?? 1),
             'total_sheets' => (int) ($staticMetadata['total_sheets'] ?? 1),
@@ -104,7 +102,6 @@ class ImportProgressEvent implements ShouldBroadcastNow
     {
         return [
             'batch_id' => $this->batchId,
-            'file_name' => $this->fileName,
             'progress' => $this->progress,
             'current_element' => $this->currentElement,
             'current_action' => $this->currentAction,

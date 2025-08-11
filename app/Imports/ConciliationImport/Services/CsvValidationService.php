@@ -85,22 +85,22 @@ class CsvValidationService
     {
         $cachePrefix = config('database.redis.options.prefix', '');
 
-        Redis::del("import_errors:{$this->batchId}");
+        Redis::connection("redis_6380")->del("import_errors:{$this->batchId}");
 
-        $keysToClean = Redis::keys($cachePrefix . "csv_factura_total_counts:{$this->batchId}");
-        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_factura_rows:{$this->batchId}:*"));
-        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}"));
+        $keysToClean = Redis::connection("redis_6380")->keys($cachePrefix . "csv_factura_total_counts:{$this->batchId}");
+        $keysToClean = array_merge($keysToClean, Redis::connection("redis_6380")->keys($cachePrefix . "csv_factura_rows:{$this->batchId}:*"));
+        $keysToClean = array_merge($keysToClean, Redis::connection("redis_6380")->keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}"));
 
         if (!empty($keysToClean)) {
             Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
-            Redis::del($keysToClean);
+            Redis::connection("redis_6380")->del($keysToClean);
         } else {
             Log::info("DEBUG VALIDATION: No se encontraron claves de Redis para limpiar al inicio de la validación.");
         }
 
         $this->validateHeaders($filePath);
 
-        if (Redis::llen("import_errors:{$this->batchId}") > 0) {
+        if (Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}") > 0) {
             Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
             if ($this->eventDispatcher) {
                 ($this->eventDispatcher)(0, 'Error en cabeceras CSV', 'failed', '0');
@@ -203,9 +203,9 @@ class CsvValidationService
             $auditoryReportId = trim($data['ID'] ?? '');
 
             if (!empty($facturaId) && !empty($auditoryReportId)) {
-                Redis::hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
-                Redis::rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
-                Redis::sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
+                Redis::connection("redis_6380")->hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
+                Redis::connection("redis_6380")->rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
+                Redis::connection("redis_6380")->sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
             }
 
             // 1. Validación de campos obligatorios
@@ -263,7 +263,7 @@ class CsvValidationService
             if (isset($data['ID']) && !empty(trim($data['ID']))) {
                 $auditoryReportId = trim($data['ID']);
                 $redisKey = "auditory_glosa:{$this->batchId}:{$auditoryReportId}";
-                $expectedValorGlosa = Redis::get($redisKey);
+                $expectedValorGlosa = Redis::connection("redis_6380")->get($redisKey);
 
                 if (is_null($expectedValorGlosa)) {
                     $this->addError($rowNumber, 'ID', "ID '$auditoryReportId' no encontrado en auditory_final_reports o no precargado.", 'id_not_found', $data['ID'], json_encode($data));
@@ -324,13 +324,13 @@ class CsvValidationService
             'created_at' => now()->toDateTimeString(),
             'updated_at' => now()->toDateTimeString(),
         ];
-        Redis::rpush("import_errors:{$this->batchId}", json_encode($error));
-        Redis::expire("import_errors:{$this->batchId}", 3600);
+        Redis::connection("redis_6380")->rpush("import_errors:{$this->batchId}", json_encode($error));
+        Redis::connection("redis_6380")->expire("import_errors:{$this->batchId}", 3600);
     }
 
     public function getErrors(): array
     {
-        $rawErrors = Redis::lrange("import_errors:{$this->batchId}", 0, -1);
+        $rawErrors = Redis::connection("redis_6380")->lrange("import_errors:{$this->batchId}", 0, -1);
         $errors = [];
         foreach ($rawErrors as $errorJson) {
             $errors[] = json_decode($errorJson, true);

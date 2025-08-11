@@ -120,8 +120,14 @@ class ConciliationController extends Controller
         $uploadedFile = $request->file('file');
         $batchId = (string) Str::uuid();
 
-        // Validar que el archivo sea CSV
+        // Obtener el nombre original del archivo con extensión
+        $fileNameWithExtension = strtolower($uploadedFile->getClientOriginalName());
+        // Obtener el nombre del archivo sin la extensión
+        $fileName = pathinfo($fileNameWithExtension, PATHINFO_FILENAME);
+
         $fileExtension = strtolower($uploadedFile->getClientOriginalExtension());
+
+        // Validar que el archivo sea CSV
         if ($fileExtension !== 'csv') {
             return response()->json([
                 'message' => 'Solo se permiten archivos en formato CSV.',
@@ -131,8 +137,8 @@ class ConciliationController extends Controller
         }
 
         // Guardar archivo CSV
-        $fileName = $batchId . '_' . time() . '.csv';
-        $filePath = $uploadedFile->storeAs('temp', $fileName, 'public');
+          $fileName = $fileName . '_' . time() . '.csv';
+        $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
         $fullPath = storage_path('app/public/' . $filePath);
 
         if (!file_exists($fullPath)) {
@@ -158,7 +164,6 @@ class ConciliationController extends Controller
             // Procesar filas
             while (($row = fgetcsv($csvFile, 0, ';')) !== false) {
                 $totalRows++;
-                // Aquí tu lógica de procesamiento de cada fila
             }
 
             fclose($csvFile);
@@ -166,21 +171,21 @@ class ConciliationController extends Controller
             Log::info("Archivo CSV procesado exitosamente. Total de filas: {$totalRows}");
 
             // Opcional: Eliminar el archivo Excel original si ya no se necesita
-            // \Illuminate\Support\Facades\Storage::disk('public')->delete($filePath);
+            // \Illuminate\Support\Facades\Storage::disk(Constants::DISK_FILES)->delete($filePath);
 
 
             // Almacenar metadatos iniciales del batch en Redis
-            Redis::hmset("batch:{$batchId}:metadata", [
+            $metadata = [
                 'total_rows' => (string)$totalRows,
                 'file_name' => (string)$fileName,
                 'file_size' => (string)filesize($fullPath),
-                'status' => 'queued',
-                'started_at' => 'N/A',
+                'started_at' => now()->toDateTimeString(),
                 'completed_at' => 'N/A',
                 'current_sheet' => (string)1,
                 'total_sheets' => (string)1,
-            ]);
-            Redis::expire("batch:{$batchId}:metadata", 3600 * 24);
+            ];
+            Redis::connection("redis_6380")->hmset("batch:{$batchId}:metadata", $metadata);
+            Redis::connection("redis_6380")->expire("batch:{$batchId}:metadata", 3600 * 24);
 
             // Iniciar registro en BD usando ProcessBatchService
             $processBatch = ProcessBatchService::initProcess(
@@ -188,19 +193,11 @@ class ConciliationController extends Controller
                 $company_id,
                 $user_id,
                 $totalRows,
-                [
-                    'total_rows' => $totalRows,
-                    'file_name' => $fullPath,
-                    'file_size' => filesize($fullPath),
-                    'started_at' => now()->toDateTimeString(),
-                    'completed_at' => null,
-                    'total_sheets' => 1,
-                    'current_sheet' => 1,
-                ]
+                $metadata
             );
 
             // Siempre despachar el Job de importación de CSV
-            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows);
+            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows)->onQueue("import_conciliations");
 
             // Despachar el evento inicial de progreso para la UI
             ImportProgressEvent::dispatch(
@@ -228,7 +225,7 @@ class ConciliationController extends Controller
             ]);
 
             // Limpiar metadatos de Redis si el proceso falla antes de despachar el Job
-            Redis::del("batch:{$batchId}:metadata");
+            Redis::connection("redis_6380")->del("batch:{$batchId}:metadata");
 
             return response()->json([
                 'message' => 'Error interno al procesar el archivo: ' . $e->getMessage(),
@@ -236,192 +233,6 @@ class ConciliationController extends Controller
                 'code' => '500',
             ], 500);
         }
-    }
-
-    public function uploadFile2(ConciliationUploadFileRequest $request)
-    {
-        $company_id = $request->input('company_id');
-        $user_id = $request->input('user_id');
-        $uploadedFile = $request->file('file');
-
-        // Guardar archivo temporalmente
-        $fileName = time() . '_' . $uploadedFile->getClientOriginalName();
-        $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        $fullPath = storage_path('app/public/' . $filePath);
-
-        // Obtener nombre y tamaño del archivo para metadatos
-        $originalFileName = $uploadedFile->getClientOriginalName();
-        $fileSize = $uploadedFile->getSize();
-
-        // Obtener el total de filas del archivo Excel (excluyendo encabezado)
-        $totalRows = Excel::toCollection(new \stdClass, $fullPath)[0]->count() - 1;
-        if ($totalRows < 0) {
-            $totalRows = 0;
-        }
-
-        // Definir un conjunto de colas disponibles
-        $availableQueues = [
-            'imports_1',
-            'imports_2',
-            'imports_3',
-            'imports_4',
-            'imports_5'
-        ];
-
-        $selectedQueue = null; // Inicializar a null
-
-        try {
-            // 1. Seleccionar una cola disponible ANTES de despachar el batch
-            $selectedQueue = ProcessBatchService::selectAvailableQueue($availableQueues);
-        } catch (Throwable $e) {
-            // Si no se puede seleccionar una cola, responder con error y limpiar el archivo temporal
-            if (Storage::exists($fullPath)) {
-                Storage::delete($fullPath);
-            }
-
-            return response()->json([
-                'message' => 'Error: ' . $e->getMessage(),
-                'error' => $e->getMessage(),
-            ], 503); // 503 Service Unavailable, ya que no hay recursos de cola
-        }
-
-        // Crear batch con dos jobs secuenciales
-        $initialJobs = [
-            new ValidateExcelStructureJob($fullPath),
-            new ProcessExcelDataJob($fullPath, $totalRows), // <-- totalRows se pasa aquí
-        ];
-
-        $batch = Bus::batch($initialJobs)
-            ->name('ProcessConciliation_' . now()->format('Y-m-d_H-i-s'))
-            ->onQueue($selectedQueue)
-            ->allowFailures()
-            ->before(function (Batch $batch) use ($fullPath, $totalRows, $originalFileName, $fileSize) {
-
-                // Guardar totalRows en Redis usando tu ID temporal
-                Redis::set("process:{$batch->id}:total_rows", $totalRows);
-
-                // Leer solo la primera fila (headers)
-                $import = new \App\Imports\ChunkDataImport(1, 1);
-                $data = Excel::toArray($import, $fullPath)[0];
-                Redis::set("batch:{$batch->id}:headers", json_encode($data[0] ?? []));
-
-                // Guardar metadatos estáticos en Redis como un hash
-                Redis::hmset("batch:{$batch->id}:metadata", [
-                    'total_rows' => $totalRows,
-                    'file_name' => $originalFileName,
-                    'file_size' => $fileSize,
-                    'started_at' => now()->toDateTimeString(),
-                    'completed_at' => null,
-                    'total_sheets' => 1, // Asumiendo una sola hoja
-                    'current_sheet' => 1, // Asumiendo una sola hoja
-                ]);
-
-                // Emitir evento de progreso inicial
-                event(new ImportProgressEvent(
-                    $batch->id, // Usar el batch ID real de Laravel
-                    0, // processedRecords
-                    'Iniciando proceso de importación',
-                    0, // errorCount
-                    'active', // backendStatus
-                    0, // currentElement
-                ));
-            })
-            ->then(function (Batch $batch) use ($fullPath) {
-                FinalizeImportDecisionJob::dispatch($batch->id, $fullPath);
-            })
-            ->catch(function (Batch $batch, Throwable $e) use ($fullPath) {
-
-                Log::error('ERROR EN EL CATCH CAPTURADO: ' . $e->getMessage());
-
-
-                $redisKey = "batch:{$batch->id}:errors";
-                $errorsFromRedis = Redis::lrange($redisKey, 0, -1);
-                $currentErrorCount = count($errorsFromRedis);
-
-                if (! empty($errorsFromRedis)) {
-                    $errorsToInsert = [];
-                    foreach ($errorsFromRedis as $errorJson) {
-                        $errorData = json_decode($errorJson, true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            continue;
-                        }
-                        $errorsToInsert[] = [
-                            'id' => Str::uuid(),
-                            'batch_id' => $batch->id,
-                            'row_number' => $errorData['row_number'] ?? null,
-                            'column_name' => $errorData['column_name'] ?? null,
-                            'error_message' => $errorData['error_message'] ?? 'Error desconocido',
-                            'error_type' => $errorData['error_type'] ?? 'unknown',
-                            'original_data' => json_encode($errorData['original_data'] ?? null),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
-                    if (! empty($errorsToInsert)) {
-                        try {
-                            DB::table('process_batche_errors')->insert($errorsToInsert);
-                        } catch (Throwable $dbE) {
-                        }
-                    }
-                }
-
-                $processBatchRecord = ProcessBatch::where('batch_id', $batch->id)->first();
-                $processedRecordsAtFailure = $processBatchRecord ? $processBatchRecord->processed_records : 0;
-                ProcessBatchService::finalizeProcess($batch->id, $currentErrorCount, false, 'failed');
-
-                event(new ImportProgressEvent(
-                    $batch->id,
-                    $processedRecordsAtFailure,
-                    'Se encontraron errores en la estructura del archivo',
-                    $currentErrorCount,
-                    'failed', // Backend status
-                    $processedRecordsAtFailure, // currentElement
-                ));
-
-                Redis::del("batch:{$batch->id}:errors");
-
-                if (Storage::exists($fullPath)) {
-                    Storage::delete($fullPath);
-                }
-            })
-            ->finally(function (Batch $batch) use ($selectedQueue) {
-
-                ProcessBatchService::releaseQueue($selectedQueue); // Liberar la cola
-            })
-            ->dispatch();
-
-        // 1. Iniciar registro en BD usando ProcessBatchService
-        $processBatch = ProcessBatchService::initProcess( // <-- Capturar el objeto ProcessBatch
-            $batch->id,
-            $company_id,
-            $user_id,
-            $totalRows,
-            [
-                'total_rows' => $totalRows,
-                'file_name' => $originalFileName,
-                'file_size' => $fileSize,
-                'started_at' => now()->toDateTimeString(),
-                'completed_at' => null,
-                'total_sheets' => 1, // Asumiendo una sola hoja
-                'current_sheet' => 1, // Asumiendo una sola hoja
-            ]
-        );
-        // Emitir evento de progreso inicial
-        event(new ImportProgressEvent(
-            $batch->id, // Usar el batch ID real de Laravel
-            0, // processedRecords
-            'Archivo recibido y en cola', // currentAction para el evento inicial
-            0, // errorCount
-            $processBatch->status, // backendStatus
-            0, // currentElement
-        ));
-
-        return response()->json([
-            'batch_id' => $batch->id,
-            'message' => 'Proceso iniciado',
-            'status' => 'success',
-            'code' => '200',
-        ]);
     }
 
     public function excelExportConciliationInvoices(Request $request)

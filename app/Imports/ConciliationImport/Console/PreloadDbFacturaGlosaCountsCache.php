@@ -18,7 +18,7 @@ class PreloadDbFacturaGlosaCountsCache extends Command
         $redisMasterKey = 'db_factura_glosa_counts_master';
         $forceRefresh = $this->option('force');
 
-        if (Redis::exists($redisMasterKey) && !$forceRefresh) {
+        if (Redis::connection("redis_6380")->exists($redisMasterKey) && !$forceRefresh) {
             $this->info('DB factura glosa counts master cache already exists. Use --force to refresh.');
             Log::info('DB factura glosa counts master cache already exists. Skipping preload.');
             return;
@@ -27,11 +27,11 @@ class PreloadDbFacturaGlosaCountsCache extends Command
         $this->info('Preloading DB factura glosa counts data into master Redis cache...');
         Log::info('Starting preload of DB factura glosa counts data into master Redis cache.');
 
-        Redis::del($redisMasterKey); // Clear existing cache if forcing or not exists
+        Redis::connection("redis_6380")->del($redisMasterKey); // Clear existing cache if forcing or not exists
 
         $count = 0;
         $startTime = microtime(true);
-        $pipeline = Redis::pipeline();
+        $pipeline = Redis::connection("redis_6380")->pipeline();
         $chunkSize = 1000; // Adjust chunk size based on your memory/performance needs
 
         AuditoryFinalReport::select('factura_id', DB::raw('COUNT(*) as total_count'))
@@ -52,7 +52,7 @@ class PreloadDbFacturaGlosaCountsCache extends Command
         Log::info(sprintf("Preload of db_factura_glosa_counts_master completed: %d unique factura_id counts in %.2f seconds.", $count, ($endTime - $startTime)));
 
         // Set an expiration for the master cache, e.g., 6 months (approx 180 days)
-        Redis::expire($redisMasterKey, 60 * 60 * 24 * 180);
+        Redis::connection("redis_6380")->expire($redisMasterKey, 60 * 60 * 24 * 180);
         Log::info("DB factura glosa counts master cache set to expire in 180 days.");
     }
 }

@@ -59,8 +59,8 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
         $this->startBenchmark();
 
         try {
-            Redis::hset("batch:{$this->batchId}:metadata", 'status', 'active');
-            Redis::hset("batch:{$this->batchId}:metadata", 'started_at', now()->toDateTimeString());
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'status', 'active');
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'started_at', now()->toDateTimeString());
 
             // Estado inicial del Job
             $this->dispatchProgressEvent(0, 'Iniciando importación', 'queued', 'Preparando...');
@@ -90,7 +90,7 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
 
             // Paso 3: Recolección y precarga de IDs de factura, y validación de facturas completas
             $this->dispatchProgressEvent($this->totalRows, 'Recolectando IDs de factura únicos', 'active', 'Iniciando...');
-            $uniqueFacturaIdsFromCsv = Redis::smembers("csv_unique_factura_ids:{$this->batchId}");
+            $uniqueFacturaIdsFromCsv = Redis::connection("redis_6380")->smembers("csv_unique_factura_ids:{$this->batchId}");
             Log::info(sprintf("Encontrados %d FACTURA_ID únicos en el CSV.", count($uniqueFacturaIdsFromCsv)));
             if (!empty($uniqueFacturaIdsFromCsv)) {
                 $this->preloadDbFacturaGlosaCounts($uniqueFacturaIdsFromCsv);
@@ -107,14 +107,14 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
 
             // Recopilar todos los errores
             $errors = array_merge($errors, $validationService->getErrors());
-            $errorCount = (string) Redis::llen("import_errors:{$this->batchId}");
+            $errorCount = (string) Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}");
 
             if (!empty($errors)) {
                 Log::error('Validation errors found:');
                 $this->dispatchProgressEvent($this->totalRows, 'Errores de validación encontrados', 'failed', (string)$errorCount . ' errores');
                 $this->storeErrorsFromRedis();
-                Redis::hset("batch:{$this->batchId}:metadata", 'status', 'failed'); // Cambiado a 'failed'
-                Redis::hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
+                Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'status', 'failed'); // Cambiado a 'failed'
+                Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
 
                 // Actualizar el estado y metadata en la tabla process_batches
                 $processBatch = ProcessBatch::where('batch_id', $this->batchId)->first();
@@ -137,8 +137,8 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
             $this->import11ConcurrentCsv($this->filePath); // Corregido el nombre de la función
 
             $this->dispatchProgressEvent($this->totalRows, 'Importación completada', 'completed', 'Finalizado');
-            Redis::hset("batch:{$this->batchId}:metadata", 'status', 'completed');
-            Redis::hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'status', 'completed');
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
 
             // Actualizar el estado y metadata en la tabla process_batches
             $processBatch = ProcessBatch::where('batch_id', $this->batchId)->first();
@@ -164,13 +164,13 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
             ]);
             $this->storeErrorsFromRedis();
             $this->dispatchProgressEvent($this->totalRows, 'Error crítico', 'failed', 'Fallo inesperado');
-            Redis::hset("batch:{$this->batchId}:metadata", 'status', 'failed');
-            Redis::hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'status', 'failed');
+            Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
 
             // Actualizar el estado y metadata en la tabla process_batches
             $processBatch = ProcessBatch::where('batch_id', $this->batchId)->first();
             if ($processBatch) {
-                $errorCount = (string) Redis::llen("import_errors:{$this->batchId}");
+                $errorCount = (string) Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}");
                 $metadata = json_decode($processBatch->metadata, true);
                 $metadata['completed_at'] = now()->toDateTimeString();
                 $processBatch->update([
@@ -191,7 +191,7 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
             $cacheService->clearByPrefix("csv_factura_rows:{$this->currentBatchId}:");
             $cacheService->clearByPrefix("db_factura_total_glosa_counts:{$this->currentBatchId}");
             $cacheService->clearByPrefix("csv_unique_factura_ids:{$this->currentBatchId}");
-            Redis::del("batch:{$this->currentBatchId}:imported_rows_count"); // Limpiar el contador de importación
+            Redis::connection("redis_6380")->del("batch:{$this->currentBatchId}:imported_rows_count"); // Limpiar el contador de importación
 
             // NOTA: La clave batch:{$this->currentBatchId}:metadata NO se elimina aquí.
             // Su expiración se maneja en el controlador/comando que la crea.
@@ -210,13 +210,13 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
         ]);
         $this->storeErrorsFromRedis();
         $this->dispatchProgressEvent(0, 'Fallo en la importación del Job', 'failed', 'Error en Job');
-        Redis::hset("batch:{$this->batchId}:metadata", 'status', 'failed');
-        Redis::hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
+        Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'status', 'failed');
+        Redis::connection("redis_6380")->hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
 
         // Actualizar el estado y metadata en la tabla process_batches
         $processBatch = ProcessBatch::where('batch_id', $this->batchId)->first();
         if ($processBatch) {
-            $errorCount = (string) Redis::llen("import_errors:{$this->batchId}");
+            $errorCount = (string) Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}");
             $metadata = json_decode($processBatch->metadata, true);
             $metadata['completed_at'] = now()->toDateTimeString();
             $processBatch->update([
@@ -238,7 +238,7 @@ class ProcessCsvImportJob implements ShouldQueue, ShouldBeUnique // Implementar 
      */
     protected function dispatchProgressEvent(int $processedRowsForMainProgress, string $currentAction, string $backendStatus, string $currentActionProgressDetail): void
     {
-        $errorCount = (string) Redis::llen("import_errors:{$this->batchId}");
+        $errorCount = (string) Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}");
 
         // El porcentaje de progreso principal se basa ÚNICAMENTE en las filas validadas.
         $progressPercentage = $this->totalRows > 0 ? round(($processedRowsForMainProgress / $this->totalRows) * 100, 2) : 0;
