@@ -16,7 +16,7 @@ return new class extends Migration
 
             $table->foreignUuid('auditory_final_report_id')->constrained();
             $table->string('response_status');
-            $table->string('autorization_number');
+            $table->string('autorization_number')->nullable();
             $table->decimal('accepted_value_ips', 15, 2);
             $table->decimal('accepted_value_eps', 15, 2);
             $table->decimal('eps_ratified_value', 15, 2);
