@@ -49,7 +49,9 @@ class CsvValidationService
     ];
 
     protected string $batchId;
+
     protected int $totalRows = 0;
+
     protected $eventDispatcher;
 
     public function __construct(string $batchId)
@@ -85,26 +87,27 @@ class CsvValidationService
     {
         $cachePrefix = config('database.redis.options.prefix', '');
 
-        Redis::connection("redis_6380")->del("import_errors:{$this->batchId}");
+        Redis::connection('redis_6380')->del("import_errors:{$this->batchId}");
 
-        $keysToClean = Redis::connection("redis_6380")->keys($cachePrefix . "csv_factura_total_counts:{$this->batchId}");
-        $keysToClean = array_merge($keysToClean, Redis::connection("redis_6380")->keys($cachePrefix . "csv_factura_rows:{$this->batchId}:*"));
-        $keysToClean = array_merge($keysToClean, Redis::connection("redis_6380")->keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}"));
+        $keysToClean = Redis::connection('redis_6380')->keys($cachePrefix."csv_factura_total_counts:{$this->batchId}");
+        $keysToClean = array_merge($keysToClean, Redis::connection('redis_6380')->keys($cachePrefix."csv_factura_rows:{$this->batchId}:*"));
+        $keysToClean = array_merge($keysToClean, Redis::connection('redis_6380')->keys($cachePrefix."csv_unique_factura_ids:{$this->batchId}"));
 
-        if (!empty($keysToClean)) {
+        if (! empty($keysToClean)) {
             // Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
-            Redis::connection("redis_6380")->del($keysToClean);
+            Redis::connection('redis_6380')->del($keysToClean);
         } else {
             // Log::info("DEBUG VALIDATION: No se encontraron claves de Redis para limpiar al inicio de la validación.");
         }
 
         $this->validateHeaders($filePath);
 
-        if (Redis::connection("redis_6380")->llen("import_errors:{$this->batchId}") > 0) {
+        if (Redis::connection('redis_6380')->llen("import_errors:{$this->batchId}") > 0) {
             // Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
             if ($this->eventDispatcher) {
                 ($this->eventDispatcher)(0, 'Error en cabeceras CSV', 'failed', '0');
             }
+
             return $this->getErrors();
         }
 
@@ -119,11 +122,12 @@ class CsvValidationService
         $handle = fopen($filePath, 'r');
         if ($handle === false) {
             $this->addError(0, 'file', 'Could not open CSV file.', 'file_error', $filePath, '');
+
             return;
         }
 
         $headers = fgetcsv($handle, 0, ';');
-        if ($headers && !empty($headers[0])) {
+        if ($headers && ! empty($headers[0])) {
             $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
         }
         fclose($handle); // Cerrar el archivo después de leer los encabezados
@@ -134,7 +138,7 @@ class CsvValidationService
         // Comparar las cabeceras leídas directamente con las cabeceras requeridas (sensible a la capitalización)
         $missingHeaders = array_diff($this->requiredHeaders, $headers);
 
-        if (!empty($missingHeaders)) {
+        if (! empty($missingHeaders)) {
             foreach ($missingHeaders as $missingHeader) {
                 $this->addError(
                     0, // Fila 0 para errores de cabecera
@@ -152,7 +156,7 @@ class CsvValidationService
             $this->addError(
                 0,
                 'headers',
-                sprintf("Number of headers mismatch. Expected %d, found %d.", count($this->requiredHeaders), count($headers)),
+                sprintf('Number of headers mismatch. Expected %d, found %d.', count($this->requiredHeaders), count($headers)),
                 'header_count_mismatch',
                 strval(count($headers)),
                 json_encode($headers)
@@ -169,7 +173,7 @@ class CsvValidationService
         LazyCollection::make(function () use ($filePath) {
             $handle = fopen($filePath, 'r');
             $actualHeaders = fgetcsv($handle, 0, ';'); // Leer los encabezados para mapeo
-            if ($actualHeaders && !empty($actualHeaders[0])) {
+            if ($actualHeaders && ! empty($actualHeaders[0])) {
                 $actualHeaders[0] = preg_replace('/^\xEF\xBB\xBF/', '', $actualHeaders[0]);
             }
             // Crear un mapeo de encabezados a sus índices originales (sensible a la capitalización)
@@ -202,10 +206,10 @@ class CsvValidationService
             $facturaId = trim($data['FACTURA_ID'] ?? '');
             $auditoryReportId = trim($data['ID'] ?? '');
 
-            if (!empty($facturaId) && !empty($auditoryReportId)) {
-                Redis::connection("redis_6380")->hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
-                Redis::connection("redis_6380")->rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
-                Redis::connection("redis_6380")->sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
+            if (! empty($facturaId) && ! empty($auditoryReportId)) {
+                Redis::connection('redis_6380')->hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
+                Redis::connection('redis_6380')->rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
+                Redis::connection('redis_6380')->sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
             }
 
             // 1. Validación de campos obligatorios
@@ -221,7 +225,7 @@ class CsvValidationService
             ];
 
             foreach ($requiredFields as $field) {
-                if (!isset($data[$field]) || trim($data[$field]) === '') {
+                if (! isset($data[$field]) || trim($data[$field]) === '') {
                     $this->addError($rowNumber, $field, "El campo '$field' es obligatorio", 'missing_field', $data[$field] ?? '', json_encode($data));
                 }
             }
@@ -234,7 +238,7 @@ class CsvValidationService
                 'Glosa para conciliación',
             ];
             // La comparación es directa, sin mb_strtoupper, para mantener la sensibilidad a la capitalización
-            if (!in_array(trim($data['ESTADO_RESPUESTA'] ?? ''), $validStatuses)) {
+            if (! in_array(trim($data['ESTADO_RESPUESTA'] ?? ''), $validStatuses)) {
                 $this->addError($rowNumber, 'ESTADO_RESPUESTA', 'Invalid response status (exact match required)', 'invalid_value', $data['ESTADO_RESPUESTA'] ?? '', json_encode($data));
             }
 
@@ -246,31 +250,31 @@ class CsvValidationService
             ];
 
             foreach ($numericPositiveFields as $field) {
-                if (!isset($data[$field]) || trim($data[$field]) === '') {
+                if (! isset($data[$field]) || trim($data[$field]) === '') {
                     continue;
                 }
 
                 $value = str_replace(',', '.', trim($data[$field]));
 
-                if (!is_numeric($value)) {
+                if (! is_numeric($value)) {
                     $this->addError($rowNumber, $field, "El campo '$field' debe ser un valor numérico", 'invalid_numeric', $data[$field], json_encode($data));
-                } elseif ((float)$value < 0) {
+                } elseif ((float) $value < 0) {
                     $this->addError($rowNumber, $field, "El campo '$field' debe ser un valor numérico positivo", 'negative_value', $data[$field], json_encode($data));
                 }
             }
 
             // 4. Validación cruzada de montos (usando Redis con clave específica del batch)
-            if (isset($data['ID']) && !empty(trim($data['ID']))) {
+            if (isset($data['ID']) && ! empty(trim($data['ID']))) {
                 $auditoryReportId = trim($data['ID']);
                 $redisKey = "auditory_glosa:{$this->batchId}:{$auditoryReportId}";
-                $expectedValorGlosa = Redis::connection("redis_6380")->get($redisKey);
+                $expectedValorGlosa = Redis::connection('redis_6380')->get($redisKey);
 
                 if (is_null($expectedValorGlosa)) {
                     $this->addError($rowNumber, 'ID', "ID '$auditoryReportId' no encontrado en auditory_final_reports o no precargado.", 'id_not_found', $data['ID'], json_encode($data));
                 } else {
-                    $valorAceptadoIps = (float)str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_IPS'] ?? '0'));
-                    $valorAceptadoEps = (float)str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_EPS'] ?? '0'));
-                    $valorRatificadoEps = (float)str_replace(',', '.', trim($data['VALOR_RATIFICADO_EPS'] ?? '0'));
+                    $valorAceptadoIps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_IPS'] ?? '0'));
+                    $valorAceptadoEps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_EPS'] ?? '0'));
+                    $valorRatificadoEps = (float) str_replace(',', '.', trim($data['VALOR_RATIFICADO_EPS'] ?? '0'));
 
                     $sumAcceptedValues = $valorAceptadoIps + $valorAceptadoEps + $valorRatificadoEps;
 
@@ -305,7 +309,7 @@ class CsvValidationService
                 $processedRows, // Progreso principal basado en filas validadas
                 'Validación de filas CSV completada',
                 'active',
-                (string)$rowNumber // Detalle en currentStudent
+                (string) $rowNumber // Detalle en currentStudent
             );
         }
     }
@@ -324,17 +328,18 @@ class CsvValidationService
             'created_at' => now()->toDateTimeString(),
             'updated_at' => now()->toDateTimeString(),
         ];
-        Redis::connection("redis_6380")->rpush("import_errors:{$this->batchId}", json_encode($error));
-        Redis::connection("redis_6380")->expire("import_errors:{$this->batchId}", 3600);
+        Redis::connection('redis_6380')->rpush("import_errors:{$this->batchId}", json_encode($error));
+        Redis::connection('redis_6380')->expire("import_errors:{$this->batchId}", 3600);
     }
 
     public function getErrors(): array
     {
-        $rawErrors = Redis::connection("redis_6380")->lrange("import_errors:{$this->batchId}", 0, -1);
+        $rawErrors = Redis::connection('redis_6380')->lrange("import_errors:{$this->batchId}", 0, -1);
         $errors = [];
         foreach ($rawErrors as $errorJson) {
             $errors[] = json_decode($errorJson, true);
         }
+
         return $errors;
     }
 }

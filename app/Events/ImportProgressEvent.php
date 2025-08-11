@@ -16,10 +16,15 @@ class ImportProgressEvent implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public string $batchId;
+
     public float $progress;
+
     public string $currentElement;
+
     public string $currentAction;
+
     public string $status;
+
     public array $metadata;
 
     public function __construct(
@@ -34,18 +39,18 @@ class ImportProgressEvent implements ShouldBroadcastNow
         $this->currentAction = $currentAction;
         $this->currentElement = (string) $currentElement;
 
-        $staticMetadata = Redis::connection("redis_6380")->hgetall("batch:{$this->batchId}:metadata");
+        $staticMetadata = Redis::connection('redis_6380')->hgetall("batch:{$this->batchId}:metadata");
 
         $totalRecords = (int) ($staticMetadata['total_rows'] ?? 0);
         $started_at = $staticMetadata['started_at'] ?? 'N/A';
 
-        $this->progress = $totalRecords > 0 ? round(((int)$processedRecords / $totalRecords) * 100, 2) : 0;
+        $this->progress = $totalRecords > 0 ? round(((int) $processedRecords / $totalRecords) * 100, 2) : 0;
         $this->status = $this->mapStatus($backendStatus);
 
         $this->metadata = [
             'total_records' => $totalRecords,
-            'processed_records' => (int)$processedRecords,
-            'errors_count' => (int)$errorCount,
+            'processed_records' => (int) $processedRecords,
+            'errors_count' => (int) $errorCount,
             'last_activity' => now()->toDateTimeString(),
             'started_at' => $started_at,
             'completed_at' => $staticMetadata['completed_at'] ?? 'N/A',
@@ -62,10 +67,10 @@ class ImportProgressEvent implements ShouldBroadcastNow
                 $startTime = Carbon::parse($started_at);
                 $elapsedSeconds = max(1, abs(Carbon::now()->diffInSeconds($startTime, false)));
 
-                if ((int)$processedRecords > 0) {
-                    $processingSpeed = round((int)$processedRecords / $elapsedSeconds, 2);
+                if ((int) $processedRecords > 0) {
+                    $processingSpeed = round((int) $processedRecords / $elapsedSeconds, 2);
                     $this->metadata['processing_speed'] = $processingSpeed;
-                    $remainingRecords = $totalRecords - (int)$processedRecords;
+                    $remainingRecords = $totalRecords - (int) $processedRecords;
                     if ($processingSpeed > 0 && $remainingRecords > 0) {
                         $estimatedTimeRemaining = round($remainingRecords / $processingSpeed);
                         $this->metadata['estimated_time_remaining'] = $estimatedTimeRemaining;

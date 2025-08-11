@@ -25,14 +25,14 @@ class ConciliationValidator
 
     // Campos obligatorios explícitos
     protected $requiredFields = [
-        "ID",
-        "FACTURA_ID",
-        "SERVICIO_ID",
-        "ESTADO_RESPUESTA",
-        "VALOR_ACEPTADO_IPS",
-        "VALOR_ACEPTADO_EPS",
-        "VALOR_RATIFICADO_EPS",
-        "OBSERVACIONES",
+        'ID',
+        'FACTURA_ID',
+        'SERVICIO_ID',
+        'ESTADO_RESPUESTA',
+        'VALOR_ACEPTADO_IPS',
+        'VALOR_ACEPTADO_EPS',
+        'VALOR_RATIFICADO_EPS',
+        'OBSERVACIONES',
     ];
 
     // Clave para almacenar el conteo de facturas en cache (para DB counts)
@@ -276,59 +276,61 @@ class ConciliationValidator
      * @return array Una lista de errores encontrados.
      */
     public function finalizeValidation(): array
-{
-    $errors = [];
-    if (! $this->batchId) {
-        Log::error('ConciliationValidator: batchId no está configurado en finalizeValidation. No se puede realizar la validación final.');
-        return [['error_type' => 'system_error', 'message' => 'Batch ID no disponible para validación final.']];
-    }
+    {
+        $errors = [];
+        if (! $this->batchId) {
+            Log::error('ConciliationValidator: batchId no está configurado en finalizeValidation. No se puede realizar la validación final.');
 
-    // 1. Obtener todos los conteos de Excel desde Redis (hash)
-    $excelCounts = Redis::hgetall(self::FACTURA_EXCEL_COUNT_CACHE_KEY . ":{$this->batchId}");
-    // Convertir los valores de string a int
-    $excelCounts = array_map('intval', $excelCounts);
-
-    if (empty($excelCounts)) {
-        $this->clearCountCache(); // Limpiar incluso si no hay conteos
-        return [];
-    }
-
-    $facturaIds = array_keys($excelCounts);
-    // Log::info("facturaIds: " . implode(', ', $facturaIds));
-
-    // 2. Obtener conteos de la base de datos desde Redis
-    $dbCounts = [];
-    foreach ($facturaIds as $facturaId) {
-        $redisKey = "invoice_audit:{$facturaId}:db_count";
-        $dbCount = Redis::connection('redis_6380')->get($redisKey);
-        $dbCounts[$facturaId] = $dbCount !== null ? (int) $dbCount : 0;
-    }
-
-    // Log::info("Conteo de Redis terminado para facturaIds");
-
-    // 3. Comparar conteos
-    foreach ($excelCounts as $facturaId => $excelCount) {
-        $dbCount = $dbCounts[$facturaId] ?? 0; // Obtener conteo de Redis, 0 si no se encuentra
-
-        if ($excelCount !== $dbCount) {
-            $errors[] = [
-                'error_type' => 'final_conciliation_error',
-                'row_number' => 0,
-                'column_name' => 'FACTURA_ID_CONCILIACION',
-                'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en Redis (db_count): {$dbCount}",
-                'error_value' => $facturaId,
-                'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
-                'timestamp' => now()->toISOString(),
-            ];
-            // Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs Redis (db_count: {$dbCount}).");
+            return [['error_type' => 'system_error', 'message' => 'Batch ID no disponible para validación final.']];
         }
+
+        // 1. Obtener todos los conteos de Excel desde Redis (hash)
+        $excelCounts = Redis::hgetall(self::FACTURA_EXCEL_COUNT_CACHE_KEY.":{$this->batchId}");
+        // Convertir los valores de string a int
+        $excelCounts = array_map('intval', $excelCounts);
+
+        if (empty($excelCounts)) {
+            $this->clearCountCache(); // Limpiar incluso si no hay conteos
+
+            return [];
+        }
+
+        $facturaIds = array_keys($excelCounts);
+        // Log::info("facturaIds: " . implode(', ', $facturaIds));
+
+        // 2. Obtener conteos de la base de datos desde Redis
+        $dbCounts = [];
+        foreach ($facturaIds as $facturaId) {
+            $redisKey = "invoice_audit:{$facturaId}:db_count";
+            $dbCount = Redis::connection('redis_6380')->get($redisKey);
+            $dbCounts[$facturaId] = $dbCount !== null ? (int) $dbCount : 0;
+        }
+
+        // Log::info("Conteo de Redis terminado para facturaIds");
+
+        // 3. Comparar conteos
+        foreach ($excelCounts as $facturaId => $excelCount) {
+            $dbCount = $dbCounts[$facturaId] ?? 0; // Obtener conteo de Redis, 0 si no se encuentra
+
+            if ($excelCount !== $dbCount) {
+                $errors[] = [
+                    'error_type' => 'final_conciliation_error',
+                    'row_number' => 0,
+                    'column_name' => 'FACTURA_ID_CONCILIACION',
+                    'error_message' => "La factura {$facturaId} está incompleta. Registros en Excel: {$excelCount}, Registros en Redis (db_count): {$dbCount}",
+                    'error_value' => $facturaId,
+                    'original_data' => ['factura_id' => $facturaId, 'excel_count' => $excelCount, 'db_count' => $dbCount],
+                    'timestamp' => now()->toISOString(),
+                ];
+                // Log::warning("Error de conciliación final para FACTURA_ID {$facturaId}: Conteo Excel ({$excelCount}) vs Redis (db_count: {$dbCount}).");
+            }
+        }
+
+        // Limpiar cache de conteos
+        $this->clearCountCache();
+
+        return $errors;
     }
-
-    // Limpiar cache de conteos
-    $this->clearCountCache();
-
-    return $errors;
-}
 
     /**
      * Limpia los datos de cache de conteo.

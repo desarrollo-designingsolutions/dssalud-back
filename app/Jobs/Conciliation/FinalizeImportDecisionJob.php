@@ -46,7 +46,6 @@ class FinalizeImportDecisionJob implements ShouldQueue
 
             // log::info("FinalizeImportDecisionJob: Procesando batch {$batchIdToUse} con {$processedRecords} registros procesados y {$initialRedisErrorCount} errores acumulados.");
 
-
             // Emitir evento de progreso: Finalizando
             event(new ImportProgressEvent(
                 $batchIdToUse,
@@ -91,92 +90,93 @@ class FinalizeImportDecisionJob implements ShouldQueue
                 Redis::del("batch:{$batchIdToUse}:staged_data");
                 $finalStatus = 'failed'; // O 'completed_with_errors' si quieres un estado intermedio
             } else {
-                    $stagedRecordsJson = Redis::lrange("batch:{$batchIdToUse}:staged_data", 0, -1);
-                    // log::info("FinalizeImportDecisionJob: Persistiendo staged_data para batch {$batchIdToUse} con " . count($stagedRecordsJson) . " registros.");
+                $stagedRecordsJson = Redis::lrange("batch:{$batchIdToUse}:staged_data", 0, -1);
+                // log::info("FinalizeImportDecisionJob: Persistiendo staged_data para batch {$batchIdToUse} con " . count($stagedRecordsJson) . " registros.");
 
-                    // log::info("Finalizando importación para batch {$batchIdToUse} con {$finalErrorCount} errores y {$totalRecords} registros procesados.");
-                    $insertBatchSize = 1000;
-                    $recordsToInsert = [];
-
-                  // Convertir a colección y procesar en chunks de 1000
-            collect($stagedRecordsJson)->chunk($insertBatchSize)->each(function ($chunk, $chunkIndex) use ($batchIdToUse, $insertBatchSize) {
+                // log::info("Finalizando importación para batch {$batchIdToUse} con {$finalErrorCount} errores y {$totalRecords} registros procesados.");
+                $insertBatchSize = 1000;
                 $recordsToInsert = [];
-                // log::info("Procesando chunk {$chunkIndex} de staged_data para batch {$batchIdToUse} con " . count($chunk) . " registros.");
 
-                foreach ($chunk as $index => $recordJson) {
-                    try {
-                        // // Log::info("Procesando registro {$index} de staged_data para batch {$batchIdToUse}");
-                        $formattedRow = json_decode($recordJson, true);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            Log::error('Fallo al decodificar JSON de staged_data desde Redis: ' . json_last_error_msg(), ['json' => $recordJson]);
+                // Convertir a colección y procesar en chunks de 1000
+                collect($stagedRecordsJson)->chunk($insertBatchSize)->each(function ($chunk, $chunkIndex) use ($batchIdToUse) {
+                    $recordsToInsert = [];
+                    // log::info("Procesando chunk {$chunkIndex} de staged_data para batch {$batchIdToUse} con " . count($chunk) . " registros.");
+
+                    foreach ($chunk as $index => $recordJson) {
+                        try {
+                            // // Log::info("Procesando registro {$index} de staged_data para batch {$batchIdToUse}");
+                            $formattedRow = json_decode($recordJson, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                Log::error('Fallo al decodificar JSON de staged_data desde Redis: '.json_last_error_msg(), ['json' => $recordJson]);
+                                Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
+                                    'row_number' => $index + 2,
+                                    'column_name' => 'SYSTEM_ERROR',
+                                    'error_message' => 'Fallo al decodificar JSON de staged_data: '.json_last_error_msg(),
+                                    'error_type' => 'system_processing_error',
+                                    'error_value' => null,
+                                    'original_data' => $recordJson,
+                                    'timestamp' => now()->toISOString(),
+                                    'batch_id' => $batchIdToUse,
+                                ]));
+                                Log::error("Error al decodificar JSON de staged_data para batch {$batchIdToUse} en el índice {$index}: ".json_last_error_msg());
+
+                                continue;
+                            }
+
+                            // // Log::info("Procesando registro {$index} de staged_data para batch {$batchIdToUse}: " . json_encode($formattedRow));
+
+                            $recordsToInsert[] = [
+                                'id' => Str::uuid(),
+                                'auditory_final_report_id' => $formattedRow['ID'] ?? null,
+                                'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
+                                'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
+                                'accepted_value_ips' => (float) ($formattedRow['VALOR_ACEPTADO_IPS'] ?? 0.0),
+                                'accepted_value_eps' => (float) ($formattedRow['VALOR_ACEPTADO_EPS'] ?? 0.0),
+                                'eps_ratified_value' => (float) ($formattedRow['VALOR_RATIFICADO_EPS'] ?? 0.0),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+
+                            // // Log::info("Agregando registro {$index} a recordsToInsert para batch {$batchIdToUse}");
+                        } catch (Throwable $e) {
+                            Log::error('Error al procesar registro de staged_data', [
+                                'batch_id' => $batchIdToUse,
+                                'index' => $index,
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString(),
+                                'record' => $recordJson,
+                            ]);
                             Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
                                 'row_number' => $index + 2,
                                 'column_name' => 'SYSTEM_ERROR',
-                                'error_message' => 'Fallo al decodificar JSON de staged_data: ' . json_last_error_msg(),
+                                'error_message' => 'Error al insertar en conciliation_results: '.$e->getMessage(),
                                 'error_type' => 'system_processing_error',
                                 'error_value' => null,
-                                'original_data' => $recordJson,
+                                'original_data' => json_decode($recordJson, true) ?: $recordJson,
                                 'timestamp' => now()->toISOString(),
                                 'batch_id' => $batchIdToUse,
                             ]));
-                            Log::error("Error al decodificar JSON de staged_data para batch {$batchIdToUse} en el índice {$index}: " . json_last_error_msg());
+
                             continue;
                         }
-
-                        // // Log::info("Procesando registro {$index} de staged_data para batch {$batchIdToUse}: " . json_encode($formattedRow));
-
-                        $recordsToInsert[] = [
-                            'id' => Str::uuid(),
-                            'auditory_final_report_id' => $formattedRow['ID'] ?? null,
-                            'response_status' => $formattedRow['ESTADO_RESPUESTA'] ?? null,
-                            'autorization_number' => $formattedRow['NUMERO_DE_AUTORIZACION'] ?? null,
-                            'accepted_value_ips' => (float) ($formattedRow['VALOR_ACEPTADO_IPS'] ?? 0.0),
-                            'accepted_value_eps' => (float) ($formattedRow['VALOR_ACEPTADO_EPS'] ?? 0.0),
-                            'eps_ratified_value' => (float) ($formattedRow['VALOR_RATIFICADO_EPS'] ?? 0.0),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-
-                        // // Log::info("Agregando registro {$index} a recordsToInsert para batch {$batchIdToUse}");
-                    } catch (Throwable $e) {
-                        Log::error("Error al procesar registro de staged_data", [
-                            'batch_id' => $batchIdToUse,
-                            'index' => $index,
-                            'error' => $e->getMessage(),
-                            'trace' => $e->getTraceAsString(),
-                            'record' => $recordJson
-                        ]);
-                        Redis::rpush("batch:{$batchIdToUse}:errors", json_encode([
-                            'row_number' => $index + 2,
-                            'column_name' => 'SYSTEM_ERROR',
-                            'error_message' => 'Error al insertar en conciliation_results: ' . $e->getMessage(),
-                            'error_type' => 'system_processing_error',
-                            'error_value' => null,
-                            'original_data' => json_decode($recordJson, true) ?: $recordJson,
-                            'timestamp' => now()->toISOString(),
-                            'batch_id' => $batchIdToUse,
-                        ]));
-                        continue;
                     }
-                }
 
-                if (!empty($recordsToInsert)) {
-                    // Log::info("Insertando " . count($recordsToInsert) . " registros en conciliation_results para batch {$batchIdToUse}");
-                    DB::table('conciliation_results')->insert($recordsToInsert);
-                } else {
-                    // Log::info("No se encontraron registros válidos para insertar en el chunk {$chunkIndex} para batch {$batchIdToUse}");
-                }
-            });
+                    if (! empty($recordsToInsert)) {
+                        // Log::info("Insertando " . count($recordsToInsert) . " registros en conciliation_results para batch {$batchIdToUse}");
+                        DB::table('conciliation_results')->insert($recordsToInsert);
+                    } else {
+                        // Log::info("No se encontraron registros válidos para insertar en el chunk {$chunkIndex} para batch {$batchIdToUse}");
+                    }
+                });
 
+                // if (!empty($recordsToInsert)) {
+                // //     log::info("externo Insertando últimos " . count($recordsToInsert) . " registros en conciliation_results para batch {$batchIdToUse}");
+                //     DB::transaction(function () use ($batchIdToUse) {
+                //         DB::table('conciliation_results')->insert($recordsToInsert);
+                //     });
+                // }
 
-                    // if (!empty($recordsToInsert)) {
-                    // //     log::info("externo Insertando últimos " . count($recordsToInsert) . " registros en conciliation_results para batch {$batchIdToUse}");
-                    //     DB::transaction(function () use ($batchIdToUse) {
-                    //         DB::table('conciliation_results')->insert($recordsToInsert);
-                    //     });
-                    // }
-
-                    Redis::del("batch:{$batchIdToUse}:staged_data");
+                Redis::del("batch:{$batchIdToUse}:staged_data");
                 $finalStatus = 'completed';
             }
 

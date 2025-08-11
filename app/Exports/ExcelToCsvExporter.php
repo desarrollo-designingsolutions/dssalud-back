@@ -4,17 +4,18 @@ namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class ExcelToCsvExporter implements FromCollection, WithHeadings, WithCustomCsvSettings
+class ExcelToCsvExporter implements FromCollection, WithCustomCsvSettings, WithHeadings
 {
     protected $dataCollection;
+
     protected $originalHeaders;
 
     /**
-     * @param Collection $dataCollection La colección de datos a exportar (sin la fila de encabezados).
-     * @param array $originalHeaders Las cabeceras exactas del archivo original.
+     * @param  Collection  $dataCollection  La colección de datos a exportar (sin la fila de encabezados).
+     * @param  array  $originalHeaders  Las cabeceras exactas del archivo original.
      */
     public function __construct(Collection $dataCollection, array $originalHeaders)
     {

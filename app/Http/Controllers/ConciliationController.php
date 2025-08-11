@@ -5,18 +5,12 @@ namespace App\Http\Controllers;
 use App\Events\ImportProgressEvent;
 use App\Exports\Conciliation\ConciliationExcelExport;
 use App\Exports\Conciliation\ConciliationInvoicesExcelExport;
-use App\Exports\ExcelToCsvExporter;
 use App\Helpers\Constants;
 use App\Http\Requests\Conciliation\ConciliationUploadFileRequest;
 use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
 use App\Http\Resources\Conciliation\ConciliationPaginateResource;
 use App\Http\Resources\Conciliation\ConciliationShowResource;
 use App\Imports\ConciliationImport\Jobs\ProcessCsvImportJob;
-use App\Imports\ExcelDataImporter;
-use App\Jobs\Conciliation\FinalizeImportDecisionJob;
-use App\Jobs\Conciliation\ProcessExcelDataJob;
-use App\Jobs\Conciliation\ValidateExcelStructureJob;
-use App\Models\ProcessBatch;
 use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
 use App\Services\Conciliation\ExcelStructureValidator;
@@ -24,15 +18,10 @@ use App\Services\ProcessBatchService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use SplFileObject;
 use Throwable;
 
 class ConciliationController extends Controller
@@ -137,12 +126,13 @@ class ConciliationController extends Controller
         }
 
         // Guardar archivo CSV
-          $fileName = $fileName . '_' . time() . '.csv';
+        $fileName = $fileName.'_'.time().'.csv';
         $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        $fullPath = storage_path('app/public/' . $filePath);
+        $fullPath = storage_path('app/public/'.$filePath);
 
-        if (!file_exists($fullPath)) {
+        if (! file_exists($fullPath)) {
             Log::error("Error al guardar el archivo CSV: {$fullPath}");
+
             return response()->json([
                 'message' => 'Error al guardar el archivo.',
                 'status' => 'error',
@@ -158,7 +148,7 @@ class ConciliationController extends Controller
             // Leer y validar encabezados
             $headers = fgetcsv($csvFile, 0, ';');
             if ($headers === false || empty($headers)) {
-                throw new \Exception("El archivo CSV está vacío o no tiene encabezados válidos.");
+                throw new \Exception('El archivo CSV está vacío o no tiene encabezados válidos.');
             }
 
             // Procesar filas
@@ -173,19 +163,18 @@ class ConciliationController extends Controller
             // Opcional: Eliminar el archivo Excel original si ya no se necesita
             // \Illuminate\Support\Facades\Storage::disk(Constants::DISK_FILES)->delete($filePath);
 
-
             // Almacenar metadatos iniciales del batch en Redis
             $metadata = [
-                'total_rows' => (string)$totalRows,
-                'file_name' => (string)$fileName,
-                'file_size' => (string)filesize($fullPath),
+                'total_rows' => (string) $totalRows,
+                'file_name' => (string) $fileName,
+                'file_size' => (string) filesize($fullPath),
                 'started_at' => now()->toDateTimeString(),
                 'completed_at' => 'N/A',
-                'current_sheet' => (string)1,
-                'total_sheets' => (string)1,
+                'current_sheet' => (string) 1,
+                'total_sheets' => (string) 1,
             ];
-            Redis::connection("redis_6380")->hmset("batch:{$batchId}:metadata", $metadata);
-            Redis::connection("redis_6380")->expire("batch:{$batchId}:metadata", 3600 * 24);
+            Redis::connection('redis_6380')->hmset("batch:{$batchId}:metadata", $metadata);
+            Redis::connection('redis_6380')->expire("batch:{$batchId}:metadata", 3600 * 24);
 
             // Iniciar registro en BD usando ProcessBatchService
             $processBatch = ProcessBatchService::initProcess(
@@ -197,7 +186,7 @@ class ConciliationController extends Controller
             );
 
             // Siempre despachar el Job de importación de CSV
-            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows)->onQueue("import_conciliations");
+            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows)->onQueue('import_conciliations');
 
             // Despachar el evento inicial de progreso para la UI
             ImportProgressEvent::dispatch(
@@ -218,17 +207,17 @@ class ConciliationController extends Controller
                 'code' => '200',
             ]);
         } catch (Throwable $e) {
-            Log::error("Error en uploadFile para batch ID {$batchId}: " . $e->getMessage(), [
+            Log::error("Error en uploadFile para batch ID {$batchId}: ".$e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             // Limpiar metadatos de Redis si el proceso falla antes de despachar el Job
-            Redis::connection("redis_6380")->del("batch:{$batchId}:metadata");
+            Redis::connection('redis_6380')->del("batch:{$batchId}:metadata");
 
             return response()->json([
-                'message' => 'Error interno al procesar el archivo: ' . $e->getMessage(),
+                'message' => 'Error interno al procesar el archivo: '.$e->getMessage(),
                 'status' => 'error',
                 'code' => '500',
             ], 500);

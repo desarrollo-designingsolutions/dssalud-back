@@ -15,13 +15,14 @@ class ProcessInvoiceAuditCounts implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 3600; // 1 hora de timeout por job
+
     protected $counts;
 
     /**
      * Create a new job instance.
      *
-     * @param array $counts Array de [facturaId => dbCount]
-     * @param string $queue Nombre de la cola (imports_1, imports_2, etc.)
+     * @param  array  $counts  Array de [facturaId => dbCount]
+     * @param  string  $queue  Nombre de la cola (imports_1, imports_2, etc.)
      */
     public function __construct(array $counts, string $queue = 'imports_2')
     {
@@ -47,6 +48,7 @@ class ProcessInvoiceAuditCounts implements ShouldQueue
             } catch (\Exception $e) {
                 // Registrar error y continuar
                 \Log::error("Error procesando invoice_audit ID {$facturaId}: {$e->getMessage()}");
+
                 continue;
             }
         }

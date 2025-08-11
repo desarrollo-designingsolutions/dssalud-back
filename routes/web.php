@@ -2,28 +2,25 @@
 
 use App\Http\Controllers\ConciliationController;
 use App\Jobs\File\ProcessMassUpload;
+use App\Jobs\ProcessInvoiceAuditCounts;
 use App\Models\Company;
 use App\Models\SupportType;
 use App\Models\User;
 use App\Notifications\BellNotification;
 use Aws\S3\S3Client;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-
-use App\Jobs\ProcessInvoiceAuditCounts;
-
-
-
-use Illuminate\Support\Facades\Redis;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+
 Route::get('/pruebaRedisExcel', function () {
- // Obtener todas las claves de Redis
+    // Obtener todas las claves de Redis
     $redisKeys = Redis::connection('redis_6380')->keys('invoice_audit:*:db_count');
 
     // Crear una nueva hoja de cálculo
-    $spreadsheet = new Spreadsheet();
+    $spreadsheet = new Spreadsheet;
     $sheet = $spreadsheet->getActiveSheet();
 
     // Agregar encabezados
@@ -33,7 +30,7 @@ Route::get('/pruebaRedisExcel', function () {
     foreach ($redisKeys as $index => $key) {
         // Extraer el UUID (la parte entre 'invoice_audit:' y ':db_count')
         $uuid = explode(':', $key)[1];
-        $sheet->setCellValue('A' . ($index + 2), $uuid);
+        $sheet->setCellValue('A'.($index + 2), $uuid);
     }
 
     // Crear una respuesta para descargar el archivo Excel
@@ -55,7 +52,7 @@ Route::get('/pruebaRedis', function () {
 
     // Retornar una respuesta al usuario
     return response()->json([
-        'message' => 'El procesamiento ha comenzado en segundo plano.', 
+        'message' => 'El procesamiento ha comenzado en segundo plano.',
     ]);
 });
 Route::get('/phpinfo', function () {

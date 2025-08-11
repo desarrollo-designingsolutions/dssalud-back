@@ -6,7 +6,6 @@ use App\Helpers\Constants;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Resources\User\UserFormResource;
 use App\Http\Resources\User\UserPaginateResource;
-use App\Models\ProcessBatch;
 use App\Repositories\CompanyRepository;
 use App\Repositories\RoleRepository;
 use App\Repositories\UserRepository;
@@ -178,5 +177,4 @@ class UserController extends Controller
             ];
         });
     }
-
 }

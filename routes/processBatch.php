@@ -12,4 +12,3 @@ use Illuminate\Support\Facades\Route;
 Route::get('/processBatch/errorsPaginate', [ProcessLogController::class, 'paginate']);
 
 Route::get('/processBatch/getUserProcesses/{id}', [ProcessLogController::class, 'getUserProcesses']);
-

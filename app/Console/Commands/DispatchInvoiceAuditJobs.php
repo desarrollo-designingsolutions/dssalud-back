@@ -2,14 +2,15 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Bus;
 use App\Jobs\ProcessInvoiceAuditCounts;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 class DispatchInvoiceAuditJobs extends Command
 {
     protected $signature = 'invoices:dispatch-audit-jobs';
+
     protected $description = 'Despacha jobs en lotes para procesar conteos de auditorías de facturas';
 
     public function handle()
@@ -22,15 +23,16 @@ class DispatchInvoiceAuditJobs extends Command
         $queues = ['imports_1', 'imports_2', 'imports_3', 'imports_4', 'imports_5', 'imports_6', 'imports_7', 'imports_8', 'imports_9', 'imports_10']; // Lista de colas
 
         // Procesar invoice_audits en lotes de 500
-        DB::table('invoice_audits')->orderBy('id')->chunk($batchSize, function ($facturas) use ($batchSize, &$processedChunks, &$batchIds, $queues) {
+        DB::table('invoice_audits')->orderBy('id')->chunk($batchSize, function ($facturas) use (&$processedChunks, &$batchIds, $queues) {
             $facturaIds = $facturas->pluck('id')->toArray();
 
             if (empty($facturaIds)) {
                 $this->info('No se encontraron IDs en este lote.');
+
                 return;
             }
 
-            $this->info('Procesando lote con ' . count($facturaIds) . ' IDs.');
+            $this->info('Procesando lote con '.count($facturaIds).' IDs.');
 
             try {
                 // Consulta agrupada para obtener conteos
@@ -38,7 +40,7 @@ class DispatchInvoiceAuditJobs extends Command
                     'SELECT ia.id, COUNT(afr.id) AS db_count
                     FROM invoice_audits ia
                     INNER JOIN auditory_final_reports afr ON afr.factura_id = ia.id
-                    WHERE ia.id IN (' . implode(',', array_fill(0, count($facturaIds), '?')) . ')
+                    WHERE ia.id IN ('.implode(',', array_fill(0, count($facturaIds), '?')).')
                     AND afr.valor_glosa > 0
                     GROUP BY ia.id',
                     $facturaIds
@@ -53,9 +55,9 @@ class DispatchInvoiceAuditJobs extends Command
                 // Despachar job con los conteos y la cola seleccionada
                 $batch = Bus::batch([
                     new ProcessInvoiceAuditCounts($counts, $queue),
-                ])->then(function () use ($processedChunks, $batchSize, $queue) {
+                ])->then(function () {
                     // $this->info("Lote {$processedChunks} completado (tamaño: {$batchSize}, cola: {$queue}).");
-                })->catch(function ($batch, $e) use ($processedChunks, $queue) {
+                })->catch(function ($batch, $e) {
                     // $this->error("Lote {$processedChunks} (cola: {$queue}) falló: {$e->getMessage()}");
                 })->dispatch();
 
@@ -69,6 +71,6 @@ class DispatchInvoiceAuditJobs extends Command
             $processedChunks++;
         });
 
-        $this->info('Todos los lotes han sido despachados. Batch IDs: ' . implode(', ', $batchIds));
+        $this->info('Todos los lotes han sido despachados. Batch IDs: '.implode(', ', $batchIds));
     }
 }

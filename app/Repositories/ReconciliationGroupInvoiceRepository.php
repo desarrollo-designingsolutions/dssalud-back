@@ -88,7 +88,7 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
                     'invoice_audit_id',
                 )),
 
-                ])
+            ])
             ->where(function ($query) use ($request) {
                 if (! empty($request['company_id'])) {
                     // $query->where('reconciliation_groups.company_id', $request['company_id']);

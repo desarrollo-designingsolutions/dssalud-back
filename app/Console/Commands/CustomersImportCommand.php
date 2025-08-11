@@ -15,14 +15,16 @@ class CustomersImportCommand extends Command
     use ImportHelper;
 
     protected $signature = 'import:customers {filePath}';
+
     protected $description = 'Import customers from CSV file using queues.';
 
     public function handle(): void
     {
         $filePath = $this->argument('filePath');
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             $this->error("El archivo CSV no existe en la ruta: {$filePath}");
+
             return;
         }
 
@@ -42,14 +44,14 @@ class CustomersImportCommand extends Command
         // Almacenar metadatos iniciales del batch en Redis para que el evento los lea
         // CORRECCIÓN: Usar Redis::hmset() para establecer múltiples campos de un hash
         Redis::hmset("batch:{$this->currentBatchId}:metadata", [
-            'total_rows' => (string)$totalRows,
-            'file_name' => (string)$fileName,
-            'file_size' => (string)$fileSize,
+            'total_rows' => (string) $totalRows,
+            'file_name' => (string) $fileName,
+            'file_size' => (string) $fileSize,
             'status' => 'queued',
             'started_at' => 'N/A',
             'completed_at' => 'N/A',
-            'current_sheet' => (string)1,
-            'total_sheets' => (string)1,
+            'current_sheet' => (string) 1,
+            'total_sheets' => (string) 1,
         ]);
         Redis::expire("batch:{$this->currentBatchId}:metadata", 3600 * 24);
 
@@ -67,6 +69,6 @@ class CustomersImportCommand extends Command
             '0'
         );
 
-        $this->info("Job de importación despachado a la cola.");
+        $this->info('Job de importación despachado a la cola.');
     }
 }

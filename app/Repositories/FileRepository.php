@@ -57,7 +57,7 @@ class FileRepository extends BaseRepository
                 ])
                 ->allowedSorts([
                     'observation',
-            ])
+                ])
                 ->where(function ($query) use ($request) {
                     if (isset($request['company_id']) && ! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);

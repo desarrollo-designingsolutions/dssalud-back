@@ -33,7 +33,7 @@ class ProcessLogController extends Controller
         });
     }
 
-     public function getUserProcesses(Request $request, $id)
+    public function getUserProcesses(Request $request, $id)
     {
         $processes = ProcessBatch::where('user_id', $id)
             ->orderBy('created_at', 'desc')
@@ -90,9 +90,6 @@ class ProcessLogController extends Controller
 
         return response()->json(['processes' => $processes], 200);
     }
-
-
-
 
     // Helper function to map backend status to frontend status
     private function mapBackendStatusToFrontend(string $backendStatus): string
