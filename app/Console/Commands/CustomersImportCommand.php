@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\ProcessCsvImportJob;
-use App\Traits\ImportHelper;
 use App\Events\ImportProgressEvent;
+use App\Imports\ConciliationImport\Jobs\ProcessCsvImportJob;
+use App\Imports\ConciliationImport\Traits\ImportHelper;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;

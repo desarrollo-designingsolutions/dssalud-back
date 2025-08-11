@@ -228,7 +228,7 @@ class CTFileValidator
         }
 
         $count = 0;
-        while (fgetcsv($handle, 0, ',') !== false) {
+        while (fgetcsv($handle, 0, ';') !== false) {
             $count++;
         }
 

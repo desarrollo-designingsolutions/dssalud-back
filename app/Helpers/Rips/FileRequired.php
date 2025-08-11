@@ -764,11 +764,11 @@ function openCsv(Request $request)
         $fileName = $file->getClientOriginalName();
 
         // Obtener los títulos y eliminarlos del array principal
-        $keys = str_getcsv(array_shift($csvData), ',');
+        $keys = str_getcsv(array_shift($csvData), ';');
 
         // Crear una colección con los datos del CSV junto con los números de fila
         $csvCollection = collect($csvData)->map(function ($line, $index) use ($keys, $fileName) {
-            $row = str_getcsv($line, ',');
+            $row = str_getcsv($line, ';');
             $dataWithKeys = array_combine($keys, $row);
             $dataWithKeys['row'] = $index + 2; // Sumar 2 para ajustar al número de fila real
             $dataWithKeys['file'] = $fileName;

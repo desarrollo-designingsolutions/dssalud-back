@@ -24,7 +24,7 @@ class ConciliationUploadFileRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            // 'file' => 'required|file|mimes:csv|max:10240',
+            'file' => 'required|file',
             'user_id' => 'nullable|string',
             'company_id' => 'nullable|string',
         ];

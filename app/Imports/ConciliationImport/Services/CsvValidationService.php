@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Imports\ConciliationImport\Services;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -41,15 +41,16 @@ class CsvValidationService
         'VALOR_APROBADO',
         'ESTADO_RESPUESTA',
         'NUMERO_DE_AUTORIZACION',
-        'VALOR_ACEPTADO_IPS',
-        'VALOR_ACEPTADO_EPS',
+        'RESPUESTA_DE_IPS',
+        'VALOR_ACEPTADO_POR_IPS',
+        'VALOR_ACEPTADO_POR_EPS',
         'VALOR_RATIFICADO_EPS',
         'OBSERVACIONES',
     ];
 
     protected string $batchId;
-    protected int $totalRows = 0; // Añadido para el progreso
-    protected $eventDispatcher; // Callback para despachar eventos
+    protected int $totalRows = 0;
+    protected $eventDispatcher;
 
     public function __construct(string $batchId)
     {
@@ -72,17 +73,23 @@ class CsvValidationService
         $this->eventDispatcher = $eventDispatcher;
     }
 
+    /**
+     * Nuevo método para obtener los encabezados requeridos.
+     */
+    public function getRequiredHeaders(): array
+    {
+        return $this->requiredHeaders;
+    }
+
     public function validateCsv(string $filePath): array
     {
-        // Asegurar que el prefijo se use también en la limpieza inicial
         $cachePrefix = config('database.redis.options.prefix', '');
 
-        Redis::del("import_errors:{$this->batchId}"); // Esto ya se prefija automáticamente
+        Redis::del("import_errors:{$this->batchId}");
 
-        // Limpiar las claves de recolección de factura para este batch antes de empezar
         $keysToClean = Redis::keys($cachePrefix . "csv_factura_total_counts:{$this->batchId}");
         $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_factura_rows:{$this->batchId}:*"));
-        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}")); // Asegurar que esta también se limpie
+        $keysToClean = array_merge($keysToClean, Redis::keys($cachePrefix . "csv_unique_factura_ids:{$this->batchId}"));
 
         if (!empty($keysToClean)) {
             Log::info(sprintf("DEBUG VALIDATION: Limpiando %d claves de Redis al inicio de la validación.", count($keysToClean)));
@@ -95,7 +102,6 @@ class CsvValidationService
 
         if (Redis::llen("import_errors:{$this->batchId}") > 0) {
             Log::warning("Header validation failed for batch ID: {$this->batchId}. Stopping further validation.");
-            // Disparar evento de finalización con errores si la validación de cabecera falla
             if ($this->eventDispatcher) {
                 ($this->eventDispatcher)(0, 'Error en cabeceras CSV', 'failed', '0');
             }
@@ -117,24 +123,40 @@ class CsvValidationService
         }
 
         $headers = fgetcsv($handle, 0, ';');
-        fclose($handle);
-
         if ($headers && !empty($headers[0])) {
             $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
         }
+        fclose($handle); // Cerrar el archivo después de leer los encabezados
 
         Log::info('Headers read from CSV:', [$headers]);
-        Log::info('Expected headers:', [$this->requiredHeaders]);
+        Log::info('Expected headers (exact match):', [$this->requiredHeaders]);
 
-        if ($headers === false || count($headers) !== count($this->requiredHeaders)) {
-            $this->addError(0, 'headers', 'Invalid number of headers or file is empty.', 'header_mismatch', strval(count($headers)), json_encode($headers));
-            return;
+        // Comparar las cabeceras leídas directamente con las cabeceras requeridas (sensible a la capitalización)
+        $missingHeaders = array_diff($this->requiredHeaders, $headers);
+
+        if (!empty($missingHeaders)) {
+            foreach ($missingHeaders as $missingHeader) {
+                $this->addError(
+                    0, // Fila 0 para errores de cabecera
+                    'headers',
+                    "Expected header '$missingHeader' not found in file (exact match required).",
+                    'header_missing',
+                    'N/A',
+                    json_encode($headers)
+                );
+            }
         }
 
-        foreach ($this->requiredHeaders as $index => $expectedHeader) {
-            if (!isset($headers[$index]) || trim($headers[$index]) !== $expectedHeader) {
-                $this->addError(0, 'headers', "Expected header '$expectedHeader' at position " . ($index + 1) . ", found '" . ($headers[$index] ?? 'N/A') . "'", 'header_mismatch', $headers[$index] ?? '', json_encode($headers));
-            }
+        // Verificar si el número total de cabeceras coincide
+        if (count($headers) !== count($this->requiredHeaders)) {
+            $this->addError(
+                0,
+                'headers',
+                sprintf("Number of headers mismatch. Expected %d, found %d.", count($this->requiredHeaders), count($headers)),
+                'header_count_mismatch',
+                strval(count($headers)),
+                json_encode($headers)
+            );
         }
     }
 
@@ -142,25 +164,39 @@ class CsvValidationService
     {
         $rowNumber = 1;
         $processedRows = 0;
-        $dispatchInterval = max(1, floor($this->totalRows / 100)); // Despachar al menos 100 veces por archivo, mínimo 1 por cada fila
+        $dispatchInterval = max(1, floor($this->totalRows / 100));
 
         LazyCollection::make(function () use ($filePath) {
             $handle = fopen($filePath, 'r');
-            fgetcsv($handle, 0, ';'); // Saltar cabecera
+            $actualHeaders = fgetcsv($handle, 0, ';'); // Leer los encabezados para mapeo
+            if ($actualHeaders && !empty($actualHeaders[0])) {
+                $actualHeaders[0] = preg_replace('/^\xEF\xBB\xBF/', '', $actualHeaders[0]);
+            }
+            // Crear un mapeo de encabezados a sus índices originales (sensible a la capitalización)
+            $headerMap = array_flip($actualHeaders);
+
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
-                yield $row;
+                yield ['row_data' => $row, 'header_map' => $headerMap];
             }
             fclose($handle);
-        })->each(function ($row) use (&$rowNumber, &$processedRows, $dispatchInterval) {
+        })->each(function ($item) use (&$rowNumber, &$processedRows, $dispatchInterval) {
+            $row = $item['row_data'];
+            $headerMap = $item['header_map'];
+
             $rowNumber++;
             $processedRows++;
 
-            if (count($row) !== count($this->requiredHeaders)) {
-                $this->addError($rowNumber, 'row_structure', 'Row has an incorrect number of columns.', 'column_count_mismatch', count($row), json_encode($row));
-                return;
-            }
+            // Crear un array de datos usando los requiredHeaders como claves y los valores de la fila
+            $data = [];
+            foreach ($this->requiredHeaders as $requiredHeader) {
+                $columnIndex = $headerMap[$requiredHeader] ?? null; // Buscar el índice exacto
 
-            $data = array_combine($this->requiredHeaders, $row);
+                if ($columnIndex !== null && isset($row[$columnIndex])) {
+                    $data[$requiredHeader] = $row[$columnIndex];
+                } else {
+                    $data[$requiredHeader] = ''; // Si no se encuentra, asignar vacío
+                }
+            }
 
             // Recolección de datos para la validación de "Facturas Completas"
             $facturaId = trim($data['FACTURA_ID'] ?? '');
@@ -170,13 +206,6 @@ class CsvValidationService
                 Redis::hincrby("csv_factura_total_counts:{$this->batchId}", $facturaId, 1);
                 Redis::rpush("csv_factura_rows:{$this->batchId}:{$facturaId}", $rowNumber);
                 Redis::sadd("csv_unique_factura_ids:{$this->batchId}", $facturaId);
-
-                // DEBUG: Verificar la creación de una clave de conteo de factura
-                if ($processedRows === 1) { // Solo para la primera fila para evitar logs excesivos
-                    $cachePrefix = config('database.redis.options.prefix', '');
-                    $prefixedKey = $cachePrefix . "csv_factura_total_counts:{$this->batchId}";
-                    Log::info("DEBUG VALIDATION: Clave de conteo de factura creada: {$prefixedKey}. Valor: " . Redis::hget("csv_factura_total_counts:{$this->batchId}", $facturaId));
-                }
             }
 
             // 1. Validación de campos obligatorios
@@ -185,8 +214,8 @@ class CsvValidationService
                 'FACTURA_ID',
                 'SERVICIO_ID',
                 'ESTADO_RESPUESTA',
-                'VALOR_ACEPTADO_IPS',
-                'VALOR_ACEPTADO_EPS',
+                'VALOR_ACEPTADO_POR_IPS',
+                'VALOR_ACEPTADO_POR_EPS',
                 'VALOR_RATIFICADO_EPS',
                 'OBSERVACIONES',
             ];
@@ -197,21 +226,22 @@ class CsvValidationService
                 }
             }
 
-            // 2. Validación para ESTADO_RESPUESTA
+            // 2. Validación para ESTADO_RESPUESTA (sensible a la capitalización)
             $validStatuses = [
                 'Glosa aceptada por IPS',
                 'Glosa No aceptada por IPS (Genera respuesta)',
                 'Glosa Subsanada por IPS (Genera respuesta y Envía soporte)',
                 'Glosa para conciliación',
             ];
-            if (!in_array($data['ESTADO_RESPUESTA'], $validStatuses)) {
-                $this->addError($rowNumber, 'ESTADO_RESPUESTA', 'Invalid response status', 'invalid_value', $data['ESTADO_RESPUESTA'], json_encode($data));
+            // La comparación es directa, sin mb_strtoupper, para mantener la sensibilidad a la capitalización
+            if (!in_array(trim($data['ESTADO_RESPUESTA'] ?? ''), $validStatuses)) {
+                $this->addError($rowNumber, 'ESTADO_RESPUESTA', 'Invalid response status (exact match required)', 'invalid_value', $data['ESTADO_RESPUESTA'] ?? '', json_encode($data));
             }
 
             // 3. Validación de campos numéricos y positivos
             $numericPositiveFields = [
-                'VALOR_ACEPTADO_IPS',
-                'VALOR_ACEPTADO_EPS',
+                'VALOR_ACEPTADO_POR_IPS',
+                'VALOR_ACEPTADO_POR_EPS',
                 'VALOR_RATIFICADO_EPS',
             ];
 
@@ -220,7 +250,7 @@ class CsvValidationService
                     continue;
                 }
 
-                $value = str_replace(',', '.', $data[$field]);
+                $value = str_replace(',', '.', trim($data[$field]));
 
                 if (!is_numeric($value)) {
                     $this->addError($rowNumber, $field, "El campo '$field' debe ser un valor numérico", 'invalid_numeric', $data[$field], json_encode($data));
@@ -238,9 +268,11 @@ class CsvValidationService
                 if (is_null($expectedValorGlosa)) {
                     $this->addError($rowNumber, 'ID', "ID '$auditoryReportId' no encontrado en auditory_final_reports o no precargado.", 'id_not_found', $data['ID'], json_encode($data));
                 } else {
-                    $sumAcceptedValues = (float)str_replace(',', '.', $data['VALOR_ACEPTADO_IPS']) +
-                                         (float)str_replace(',', '.', $data['VALOR_ACEPTADO_EPS']) +
-                                         (float)str_replace(',', '.', $data['VALOR_RATIFICADO_EPS']);
+                    $valorAceptadoIps = (float)str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_IPS'] ?? '0'));
+                    $valorAceptadoEps = (float)str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_EPS'] ?? '0'));
+                    $valorRatificadoEps = (float)str_replace(',', '.', trim($data['VALOR_RATIFICADO_EPS'] ?? '0'));
+
+                    $sumAcceptedValues = $valorAceptadoIps + $valorAceptadoEps + $valorRatificadoEps;
 
                     $expectedValorGlosaFloat = (float) $expectedValorGlosa;
 
@@ -255,17 +287,26 @@ class CsvValidationService
                 }
             }
 
-            // Despachar evento de progreso periódicamente
             if ($processedRows % $dispatchInterval === 0 || $processedRows === $this->totalRows) {
                 if ($this->eventDispatcher) {
-                    ($this->eventDispatcher)($processedRows, 'Validando filas CSV', 'active', (string)$rowNumber);
+                    ($this->eventDispatcher)(
+                        $processedRows, // Progreso principal basado en filas validadas
+                        'Validando filas CSV',
+                        'active',
+                        sprintf('%d/%d filas validadas', $rowNumber, $this->totalRows) // Detalle en currentStudent
+                    );
                 }
             }
         });
 
-        // Despachar evento final después de la validación de filas (si no se hizo en el bucle)
+        // Asegurar que el evento final de esta fase envía el 100% del progreso de validación de filas.
         if ($this->eventDispatcher && ($processedRows % $dispatchInterval !== 0 || $processedRows > 0)) {
-             ($this->eventDispatcher)($processedRows, 'Validación de filas CSV completada', 'active', (string)$rowNumber);
+            ($this->eventDispatcher)(
+                $processedRows, // Progreso principal basado en filas validadas
+                'Validación de filas CSV completada',
+                'active',
+                (string)$rowNumber // Detalle en currentStudent
+            );
         }
     }
 

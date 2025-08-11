@@ -1131,7 +1131,7 @@
                 const formData = new FormData(form);
                 const emailsInput = formData.get('emails[]') || '';
                 formData.delete('emails[]');
-                const emails = emailsInput.split(',').filter(email => email.trim() !== '');
+                const emails = emailsInput.split(';').filter(email => email.trim() !== '');
                 if (emails.length === 0) {
                     // showError({ emails: ['Por favor, ingrese al menos un correo electrónico válido.'] });
                     // return;

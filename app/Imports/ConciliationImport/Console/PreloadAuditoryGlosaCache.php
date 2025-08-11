@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Imports\ConciliationImport\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;

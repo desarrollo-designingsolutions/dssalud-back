@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use App\Events\ImportProgressEvent;
 use App\Exports\Conciliation\ConciliationExcelExport;
 use App\Exports\Conciliation\ConciliationInvoicesExcelExport;
+use App\Exports\ExcelToCsvExporter;
 use App\Helpers\Constants;
 use App\Http\Requests\Conciliation\ConciliationUploadFileRequest;
 use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
 use App\Http\Resources\Conciliation\ConciliationPaginateResource;
 use App\Http\Resources\Conciliation\ConciliationShowResource;
+use App\Imports\ConciliationImport\Jobs\ProcessCsvImportJob;
+use App\Imports\ExcelDataImporter;
 use App\Jobs\Conciliation\FinalizeImportDecisionJob;
 use App\Jobs\Conciliation\ProcessExcelDataJob;
 use App\Jobs\Conciliation\ValidateExcelStructureJob;
-use App\Jobs\ProcessCsvImportJob;
 use App\Models\ProcessBatch;
 use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
@@ -22,6 +24,7 @@ use App\Services\ProcessBatchService;
 use App\Traits\HttpResponseTrait;
 use Illuminate\Bus\Batch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -115,21 +118,25 @@ class ConciliationController extends Controller
         $company_id = $request->input('company_id');
         $user_id = $request->input('user_id');
         $uploadedFile = $request->file('file');
-
-        // Generar un batch ID único para esta importación
         $batchId = (string) Str::uuid();
 
-        // Guardar archivo temporalmente
-        $originalFileName = $uploadedFile->getClientOriginalName();
-        // Usar el batchId en el nombre del archivo para asegurar unicidad y trazabilidad
-        $fileName = $batchId . '_' . time() . '_' . $originalFileName;
-        // Asegúrate de que Constants::DISK_FILES apunte a un disco público o accesible por el Job
-        $filePath = $uploadedFile->storeAs('temp', $fileName, 'public'); // Usar 'public' si Constants::DISK_FILES es 'public'
-        $fullPath = storage_path('app/public/' . $filePath); // Ruta completa para el Job
+        // Validar que el archivo sea CSV
+        $fileExtension = strtolower($uploadedFile->getClientOriginalExtension());
+        if ($fileExtension !== 'csv') {
+            return response()->json([
+                'message' => 'Solo se permiten archivos en formato CSV.',
+                'status' => 'error',
+                'code' => '400',
+            ], 400);
+        }
 
-        // Verificar si el archivo se guardó correctamente
+        // Guardar archivo CSV
+        $fileName = $batchId . '_' . time() . '.csv';
+        $filePath = $uploadedFile->storeAs('temp', $fileName, 'public');
+        $fullPath = storage_path('app/public/' . $filePath);
+
         if (!file_exists($fullPath)) {
-            Log::error("Error al guardar el archivo temporal: {$fullPath}");
+            Log::error("Error al guardar el archivo CSV: {$fullPath}");
             return response()->json([
                 'message' => 'Error al guardar el archivo.',
                 'status' => 'error',
@@ -137,65 +144,75 @@ class ConciliationController extends Controller
             ], 500);
         }
 
-        $totalRows = 0;
-        $fileSize = filesize($fullPath);
-
         try {
-            // Contar el número total de filas en el CSV (saltando la cabecera)
-            $file = new SplFileObject($fullPath, 'r');
-            $file->setFlags(SplFileObject::SKIP_EMPTY | SplFileObject::READ_AHEAD);
-            $file->fgets(); // Saltar cabecera
-            foreach ($file as $line) {
-                $totalRows++;
-            }
-            $file = null; // Liberar el archivo
+            // Procesar el CSV directamente
+            $totalRows = 0;
+            $csvFile = fopen($fullPath, 'r');
 
-            // Almacenar metadatos iniciales del batch en Redis para que el evento los lea
+            // Leer y validar encabezados
+            $headers = fgetcsv($csvFile, 0, ';');
+            if ($headers === false || empty($headers)) {
+                throw new \Exception("El archivo CSV está vacío o no tiene encabezados válidos.");
+            }
+
+            // Procesar filas
+            while (($row = fgetcsv($csvFile, 0, ';')) !== false) {
+                $totalRows++;
+                // Aquí tu lógica de procesamiento de cada fila
+            }
+
+            fclose($csvFile);
+
+            Log::info("Archivo CSV procesado exitosamente. Total de filas: {$totalRows}");
+
+            // Opcional: Eliminar el archivo Excel original si ya no se necesita
+            // \Illuminate\Support\Facades\Storage::disk('public')->delete($filePath);
+
+
+            // Almacenar metadatos iniciales del batch en Redis
             Redis::hmset("batch:{$batchId}:metadata", [
                 'total_rows' => (string)$totalRows,
-                'file_name' => (string)$originalFileName,
-                'file_size' => (string)$fileSize,
-                'status' => 'queued', // Estado inicial
-                'started_at' => 'N/A', // Se actualizará cuando el Job inicie
+                'file_name' => (string)$fileName,
+                'file_size' => (string)filesize($fullPath),
+                'status' => 'queued',
+                'started_at' => 'N/A',
                 'completed_at' => 'N/A',
                 'current_sheet' => (string)1,
                 'total_sheets' => (string)1,
             ]);
-            // Establecer una expiración para los metadatos del batch en Redis (ej. 24 horas)
             Redis::expire("batch:{$batchId}:metadata", 3600 * 24);
 
-            // 1. Iniciar registro en BD usando ProcessBatchService
-            // Asegúrate de que ProcessBatchService::initProcess acepte estos parámetros
+            // Iniciar registro en BD usando ProcessBatchService
             $processBatch = ProcessBatchService::initProcess(
-                $batchId, // Usar el batchId generado
+                $batchId,
                 $company_id,
                 $user_id,
                 $totalRows,
                 [
                     'total_rows' => $totalRows,
-                    'file_name' => $originalFileName,
-                    'file_size' => $fileSize,
-                    'started_at' => now()->toDateTimeString(), // Registrar el inicio en DB
+                    'file_name' => $fullPath,
+                    'file_size' => filesize($fullPath),
+                    'started_at' => now()->toDateTimeString(),
                     'completed_at' => null,
                     'total_sheets' => 1,
                     'current_sheet' => 1,
                 ]
             );
 
-            // Despachar el Job de importación a la cola
+            // Siempre despachar el Job de importación de CSV
             ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows);
 
             // Despachar el evento inicial de progreso para la UI
             ImportProgressEvent::dispatch(
                 $batchId,
-                (string) 0, // Procesados
+                (string) 0,
                 'Archivo encolado para procesamiento',
-                (string) 0, // Errores
+                (string) 0,
                 'queued',
-                '0' // Elemento actual
+                '0'
             );
 
-            Log::info("Archivo {$originalFileName} encolado para procesamiento con Batch ID: {$batchId}");
+            Log::info("Archivo {$fullPath} encolado para procesamiento con Batch ID: {$batchId}");
 
             return response()->json([
                 'batch_id' => $batchId,

@@ -71,7 +71,7 @@ class InternalFileValidator
         $row = 1;
         $isValid = true;
 
-        while (($line = fgetcsv($handle, 0, ',')) !== false) {
+        while (($line = fgetcsv($handle, 0, ';')) !== false) {
             $actualColumns = count($line);
             if ($actualColumns !== $expected) {
                 // Suponiendo que num_invoice está en la primera columna (ajústalo según tu formato)

@@ -18,7 +18,7 @@ class ImportProgressEvent implements ShouldBroadcastNow
     public string $batchId;
     public string $fileName;
     public float $progress;
-    public string $currentStudent;
+    public string $currentElement;
     public string $currentAction;
     public string $status;
     public array $metadata;
@@ -33,7 +33,7 @@ class ImportProgressEvent implements ShouldBroadcastNow
     ) {
         $this->batchId = $batchId;
         $this->currentAction = $currentAction;
-        $this->currentStudent = (string) $currentElement;
+        $this->currentElement = (string) $currentElement;
 
         $staticMetadata = Redis::hgetall("batch:{$this->batchId}:metadata");
 
@@ -106,7 +106,7 @@ class ImportProgressEvent implements ShouldBroadcastNow
             'batch_id' => $this->batchId,
             'file_name' => $this->fileName,
             'progress' => $this->progress,
-            'current_student' => $this->currentStudent,
+            'current_element' => $this->currentElement,
             'current_action' => $this->currentAction,
             'status' => $this->status,
             'metadata' => $this->metadata,
