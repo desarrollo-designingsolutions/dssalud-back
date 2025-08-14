@@ -21,10 +21,10 @@
                     <td>{{ $row['origin'] }}</td>
                     <td>{{ $row['modality'] }}</td>
                     <td>{{ $row['contract_number'] }}</td>
-                    {{-- <td>{{ $row['status_description'] }}</td>
+                    <td>{{ $row['status_description'] }}</td>
                     <td>{{ $row['sum_accepted_value_ips'] }}</td>
                     <td>{{ $row['sum_accepted_value_eps'] }}</td>
-                    <td>{{ $row['sum_eps_ratified_value'] }}</td> --}}
+                    <td>{{ $row['sum_eps_ratified_value'] }}</td>
 
 
                 </tr>
