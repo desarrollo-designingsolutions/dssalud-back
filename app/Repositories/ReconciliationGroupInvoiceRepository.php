@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\ReconciliationGroupInvoice;
+use App\Models\ConciliationResult;
 use App\QueryBuilder\Sort\RelatedTableSort;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
@@ -22,6 +23,15 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
 
         // return $this->cacheService->remember($cacheKey, function () use ($request) {
         $query = QueryBuilder::for($this->model->query())
+
+        ->addSelect([
+    'sum_accepted_value_eps' => ConciliationResult::selectRaw('SUM(accepted_value_eps)')
+        ->whereColumn('invoice_audit_id', 'reconciliation_group_invoices.invoice_audit_id'),
+    'sum_accepted_value_ips' => ConciliationResult::selectRaw('SUM(accepted_value_ips)')
+        ->whereColumn('invoice_audit_id', 'reconciliation_group_invoices.invoice_audit_id'),
+    'sum_eps_ratified_value' => ConciliationResult::selectRaw('SUM(eps_ratified_value)')
+        ->whereColumn('invoice_audit_id', 'reconciliation_group_invoices.invoice_audit_id')
+])
 
             ->allowedFilters([
 
@@ -87,6 +97,9 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
                     'contract_number',
                     'invoice_audit_id',
                 )),
+                "sum_accepted_value_eps",
+                "sum_accepted_value_ips",
+                "sum_eps_ratified_value",
 
             ])
             ->where(function ($query) use ($request) {

@@ -377,9 +377,9 @@ trait ImportHelper
                         'invoice_audit_id' => (string) $row[1],
                         'response_status' => (string) $row[29],
                         'autorization_number' => (string) $row[30],
-                        'accepted_value_ips' => (float) str_replace(',', '.', $row[31]),
-                        'accepted_value_eps' => (float) str_replace(',', '.', $row[32]),
-                        'eps_ratified_value' => (float) str_replace(',', '.', $row[33]),
+                        'accepted_value_ips' => (float) str_replace(',', '.', $row[32]),
+                        'accepted_value_eps' => (float) str_replace(',', '.', $row[33]),
+                        'eps_ratified_value' => (float) str_replace(',', '.', $row[34]),
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];

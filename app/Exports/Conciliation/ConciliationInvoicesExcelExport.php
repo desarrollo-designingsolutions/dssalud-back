@@ -30,6 +30,11 @@ class ConciliationInvoicesExcelExport implements FromView, ShouldAutoSize, WithE
                 'origin' => $value->invoiceAudit?->origin,
                 'modality' => $value->invoiceAudit?->modality,
                 'contract_number' => $value->invoiceAudit?->contract_number,
+                // 'status_description' => $value->conciliation_invoice?->status?->description(),
+                // 'status_backgroundColor' => $value->conciliation_invoice?->status?->backgroundColor(),
+                // 'sum_accepted_value_ips' => formatNumber($value->sum_accepted_value_ips),
+                // 'sum_accepted_value_eps' => formatNumber($value->sum_accepted_value_eps),
+                // 'sum_eps_ratified_value' => formatNumber($value->sum_eps_ratified_value),
             ];
         });
 

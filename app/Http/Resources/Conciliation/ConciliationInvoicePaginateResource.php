@@ -23,6 +23,9 @@ class ConciliationInvoicePaginateResource extends JsonResource
             'contract_number' => $this->invoiceAudit?->contract_number,
             'status_description' => $this->conciliation_invoice?->status?->description(),
             'status_backgroundColor' => $this->conciliation_invoice?->status?->backgroundColor(),
+            'sum_accepted_value_ips' => formatNumber($this->sum_accepted_value_ips),
+            'sum_accepted_value_eps' => formatNumber($this->sum_accepted_value_eps),
+            'sum_eps_ratified_value' => formatNumber($this->sum_eps_ratified_value),
         ];
     }
 }
