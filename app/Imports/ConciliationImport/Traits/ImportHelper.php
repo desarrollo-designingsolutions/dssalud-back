@@ -334,25 +334,22 @@ trait ImportHelper
             $totalRows++;
         }
         $file = null; // Reset file pointer
-        Log::info("Total de filas en el CSV: {$totalRows}");
 
         $batchId = $this->currentBatchId;
         $totalRowsForEvent = $this->totalRowsForJobProgress; // Total de filas del archivo para el progreso principal
 
         // Inicializar contador de Redis para filas importadas
-        $redis = Redis::connection('redis_6380');
-        $redis->set("batch:{$batchId}:imported_rows_count", 0);
-        $redis->expire("batch:{$batchId}:imported_rows_count", 3600 * 24); // Expiración de 24 horas
-        Log::info("Contador de filas importadas inicializado en Redis para batch: {$batchId}");
+        Redis::connection('redis_6380')->set("batch:{$batchId}:imported_rows_count", 0);
+        Redis::connection('redis_6380')->expire("batch:{$batchId}:imported_rows_count", 3600 * 24); // Expiración de 24 horas
 
         for ($i = 0; $i < $numberOfProcesses; $i++) {
+            // CORREGIDO: Eliminado $this de la cláusula use. $this ya es accesible y su inclusión explícita causa el error de serialización.
             $tasks[] = function () use ($filePath, $i, $numberOfProcesses, $now, $batchId) {
                 DB::reconnect();
                 $handle = fopen($filePath, 'r');
                 fgets($handle); // Skip header
                 $currentLine = 0;
                 $dataToSave = [];
-                $invoicesToUpdate = [];
 
                 while (($line = fgets($handle)) !== false) {
                     if ($currentLine++ % $numberOfProcesses !== $i) {
@@ -361,8 +358,18 @@ trait ImportHelper
                     $row = str_getcsv($line, ';');
 
                     // Aplica trim y ensureUtf8 a todo el arreglo $row
-                    $row = array_map('trim', $row);
-                    $row = ensureUtf8($row);
+                    $row = array_map('trim', $row); // Elimina espacios en blanco de cada elemento
+                    $row = ensureUtf8($row); // Convierte todas las cadenas a UTF-8
+
+                    // Verificar si auditory_final_report_id ya existe con estado CONCILIATION_INVOICE_EST_002
+                    // $auditory_final_report_id = (string) $row[1];
+                    // if (DB::table('conciliation_results')
+                    //     ->where('auditory_final_report_id', $auditory_final_report_id)
+                    //     ->exists()
+                    // ) {
+                    //     Log::info("Saltando auditory_final_report_id duplicado: {$auditory_final_report_id} ");
+                    //     continue;
+                    // }
 
                     $dataToSave[] = [
                         'id' => (string) Str::uuid(),
@@ -370,219 +377,77 @@ trait ImportHelper
                         'invoice_audit_id' => (string) $row[1],
                         'response_status' => (string) $row[29],
                         'autorization_number' => (string) $row[30],
-                        'accepted_value_ips' => (float) str_replace(',', '.', $row[32]),
-                        'accepted_value_eps' => (float) str_replace(',', '.', $row[33]),
-                        'eps_ratified_value' => (float) str_replace(',', '.', $row[34]),
+                        'accepted_value_ips' => (float) str_replace(',', '.', $row[31]),
+                        'accepted_value_eps' => (float) str_replace(',', '.', $row[32]),
+                        'eps_ratified_value' => (float) str_replace(',', '.', $row[33]),
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
 
-                    // Acumular sumas en Redis para invoice_audit_id
-                    $invoice_audit_id = (string) $row[1];
-                    $accepted_value_ips = is_numeric(str_replace(',', '.', $row[32])) ? (float) str_replace(',', '.', $row[32]) : 0.0;
-                    $accepted_value_eps = is_numeric(str_replace(',', '.', $row[33])) ? (float) str_replace(',', '.', $row[33]) : 0.0;
-                    $eps_ratified_value = is_numeric(str_replace(',', '.', $row[34])) ? (float) str_replace(',', '.', $row[34]) : 0.0;
-
-                    // Validación adicional para valores no numéricos
-                    if (!is_numeric(str_replace(',', '.', $row[32])) || !is_numeric(str_replace(',', '.', $row[33])) || !is_numeric(str_replace(',', '.', $row[34]))) {
-                        Log::warning("Valores no numéricos en la línea {$currentLine} para invoice_audit_id {$invoice_audit_id}: " . json_encode([
-                            'VALOR_ACEPTADO_POR_IPS' => $row[32],
-                            'VALOR_ACEPTADO_POR_EPS' => $row[33],
-                            'VALOR_RATIFICADO_EPS' => $row[34],
-                        ]));
-                    }
-
-                    // Usar Redis para acumular sumas
-                    $redis = Redis::connection('redis_6380');
-                    $redisKey = "batch:{$batchId}:sums:{$invoice_audit_id}";
-                    $redis->hincrbyfloat($redisKey, 'sum_accepted_value_ips', $accepted_value_ips);
-                    $redis->hincrbyfloat($redisKey, 'sum_accepted_value_eps', $accepted_value_eps);
-                    $redis->hincrbyfloat($redisKey, 'sum_eps_ratified_value', $eps_ratified_value);
-                    $redis->expire($redisKey, 3600 * 24);
-
-                    // Log para verificar acumulación en Redis
-                    Log::debug("Acumulado en Redis para clave {$redisKey}: IPS={$accepted_value_ips}, EPS={$accepted_value_eps}, RATIFIED={$eps_ratified_value}");
-
-                    // Recolectar invoice_audit_id para actualizar status
-                    $invoicesToUpdate[] = $invoice_audit_id;
+                    // Recolectar datos para actualizar conciliation_invoices
+                    $invoicesToUpdate[] = [
+                        'invoice_audit_id' => (string) $row[1],
+                        'status' => "CONCILIATION_INVOICE_EST_002", //estado finalizado
+                    ];
 
                     if (count($dataToSave) === 1000) {
                         // Insertar en conciliation_results
                         DB::table('conciliation_results')->insert($dataToSave);
 
-                        // Actualizar conciliation_invoices en lotes (solo status)
-                        if (!empty($invoicesToUpdate)) {
-                            DB::transaction(function () use ($invoicesToUpdate) {
+                        // Actualizar conciliation_invoices en lotes
+                        DB::transaction(function () use ($invoicesToUpdate) {
+                            $ids = array_column($invoicesToUpdate, 'invoice_audit_id');
+                            if (!empty($ids)) {
                                 DB::table('conciliation_invoices')
-                                    ->whereIn('invoice_audit_id', array_unique($invoicesToUpdate))
+                                    ->whereIn('invoice_audit_id', $ids)
                                     ->update(['status' => 'CONCILIATION_INVOICE_EST_002']);
-                            });
-                            Log::info("Actualizados " . count(array_unique($invoicesToUpdate)) . " registros en conciliation_invoices (status)");
-                        }
+                            }
+                        });
+                        Log::info("Actualizados " . count($invoicesToUpdate) . " registros en conciliation_invoices");
 
                         $dataToSave = [];
                         $invoicesToUpdate = [];
                     }
 
                     // Incrementar contador global de Redis para filas importadas
-                    $redis->incr("batch:{$batchId}:imported_rows_count");
+                    $currentImportedCount = Redis::connection('redis_6380')->incr("batch:{$batchId}:imported_rows_count");
                 }
 
                 // Insertar y actualizar registros restantes
                 if (!empty($dataToSave)) {
                     DB::table('conciliation_results')->insert($dataToSave);
-                    if (!empty($invoicesToUpdate)) {
-                        DB::transaction(function () use ($invoicesToUpdate) {
+                    DB::transaction(function () use ($invoicesToUpdate) {
+                        $ids = array_column($invoicesToUpdate, 'invoice_audit_id');
+                        if (!empty($ids)) {
                             DB::table('conciliation_invoices')
-                                ->whereIn('invoice_audit_id', array_unique($invoicesToUpdate))
+                                ->whereIn('invoice_audit_id', $ids)
                                 ->update(['status' => 'CONCILIATION_INVOICE_EST_002']);
-                        });
-                        Log::info("Actualizados " . count(array_unique($invoicesToUpdate)) . " registros en conciliation_invoices (status)");
-                    }
+                        }
+                    });
+                    Log::info("Actualizados " . count($invoicesToUpdate) . " registros en conciliation_invoices");
                 }
 
                 fclose($handle);
+
                 return true;
             };
         }
         Concurrency::run($tasks);
 
-        // Actualizar sumas en conciliation_invoices desde Redis (optimizado en lotes)
-        $this->processRedisSumsConcurrently($batchId);
-
         // Asegurar que el evento final de importación se despacha después de que todas las tareas concurrentes completen
-        $finalImportedCount = (string) $redis->get("batch:{$batchId}:imported_rows_count");
-        Log::info("Total de filas importadas según Redis: {$finalImportedCount}");
+        $finalImportedCount = (string) Redis::connection('redis_6380')->get("batch:{$batchId}:imported_rows_count");
+        // CORREGIDO: Llamar a dispatchProgressEvent del trait. Esto es seguro aquí porque no está dentro de un closure serializado.
         $this->dispatchProgressEvent(
-            $totalRowsForEvent,
+            $totalRowsForEvent, // processedRecords para el evento (progreso principal es 100% de validación)
             'Importación completada',
             'completed',
-            sprintf('%s/%d registros importados', $finalImportedCount, $totalRows)
+            sprintf('%s/%d registros importados', $finalImportedCount, $totalRows) // Detalle en currentStudent
         );
 
         // Limpiar el contador de filas importadas de Redis
-        $redis->del("batch:{$batchId}:imported_rows_count");
-        Log::info("Contador de filas importadas eliminado de Redis para batch {$batchId}");
-
-        // Limpiar las claves de sumas de Redis
-        if (!empty($keys)) {
-            $redis->del($keys);
-            Log::info("Limpiadas " . count($keys) . " claves de sumas en Redis para batch {$batchId}");
-        }
+        Redis::connection('redis_6380')->del("batch:{$batchId}:imported_rows_count");
     }
 
-    /**
-     * Procesa las sumas acumuladas en Redis y actualiza la tabla conciliation_invoices de manera concurrente.
-     *
-     * @param string $batchId ID del lote actual
-     * @param int $numberOfProcesses Número de procesos concurrentes a utilizar (opcional)
-     * @param int $chunkSize Tamaño de los lotes para actualización (opcional)
-     */
-    protected function processRedisSumsConcurrently(
-        string $batchId,
-        int $numberOfProcesses = 10,
-        int $chunkSize = 1000
-    ): void {
-        $redis = Redis::connection('redis_6380');
-
-        // Obtener todas las claves de sumas para este batch (con prefijo correcto)
-        $pattern = "laravel_database_batch:{$batchId}:sums:*";
-        $keys = $redis->keys($pattern);
-        Log::info("Buscando claves con patrón: {$pattern}");
-        Log::info("Encontradas " . count($keys) . " claves de sumas en Redis para batch {$batchId}");
-
-        if (empty($keys)) {
-            // Intento alternativo sin el prefijo laravel_database_
-            $pattern = "batch:{$batchId}:sums:*";
-            $keys = $redis->keys($pattern);
-            Log::info("Intento alternativo con patrón: {$pattern}");
-            Log::info("Encontradas " . count($keys) . " claves alternativas");
-
-            if (empty($keys)) {
-                Log::warning("No se encontraron claves de sumas en Redis para el batch {$batchId}");
-                // Debug adicional: mostrar algunas claves existentes para diagnóstico
-                $sampleKeys = $redis->keys("*");
-                Log::info("Claves de muestra en Redis: " . json_encode(array_slice($sampleKeys, 0, 5)));
-                return;
-            }
-        }
-
-        // Preparar tareas concurrentes
-        $tasks = [];
-        $chunks = array_chunk($keys, ceil(count($keys) / $numberOfProcesses));
-
-        foreach ($chunks as $chunkIndex => $chunkKeys) {
-            $tasks[] = function () use ($redis, $batchId, $chunkKeys, $chunkSize, $chunkIndex) {
-                DB::reconnect();
-                $processedInThisProcess = 0;
-                $startTime = microtime(true);
-
-                foreach ($chunkKeys as $key) {
-                    try {
-                        $realKey = str_replace('laravel_database_', '', $key);
-                        $sums = $redis->hgetall($realKey);
-
-                        // Extraer invoice_audit_id correctamente
-                        $invoiceAuditId = str_replace(
-                            ["laravel_database_batch:{$batchId}:sums:", "batch:{$batchId}:sums:"],
-                            "",
-                            $key
-                        );
-
-                        Log::debug("Procesando clave: {$realKey} para invoice: {$invoiceAuditId}");
-                        Log::debug("Valores obtenidos: " . json_encode($sums));
-
-                        // Procesamiento directo de valores
-                        $sumAcceptedValueIps = isset($sums['sum_accepted_value_ips'])
-                            ? (float)$sums['sum_accepted_value_ips']
-                            : 0.0;
-
-                        $sumAcceptedValueEps = isset($sums['sum_accepted_value_eps'])
-                            ? (float)$sums['sum_accepted_value_eps']
-                            : 0.0;
-
-                        $sumEpsRatifiedValue = isset($sums['sum_eps_ratified_value'])
-                            ? (float)$sums['sum_eps_ratified_value']
-                            : 0.0;
-
-                        // Actualizar la base de datos
-                        $updated = DB::table('conciliation_invoices')
-                            ->where('invoice_audit_id', $invoiceAuditId)
-                            ->update([
-                                'sum_accepted_value_ips' => $sumAcceptedValueIps,
-                                'sum_accepted_value_eps' => $sumAcceptedValueEps,
-                                'sum_eps_ratified_value' => $sumEpsRatifiedValue,
-                            ]);
-
-                        if ($updated === 0) {
-                            Log::warning("No se actualizó ningún registro para invoice_audit_id: {$invoiceAuditId}");
-                        }
-
-                        $processedInThisProcess++;
-                    } catch (\Exception $e) {
-                        Log::error("Error procesando clave {$key}: " . $e->getMessage());
-                        throw $e;
-                    }
-                }
-
-                $elapsed = round(microtime(true) - $startTime, 2);
-                Log::info("Proceso {$chunkIndex} completado. Registros procesados: {$processedInThisProcess}. Tiempo: {$elapsed}s");
-                return $processedInThisProcess;
-            };
-        }
-
-        Log::info("Iniciando {$numberOfProcesses} procesos para actualizar sumas...");
-        $results = Concurrency::run($tasks);
-
-        $totalProcessed = array_sum($results);
-        Log::info("Actualización de sumas completada. Total registros actualizados: {$totalProcessed}");
-
-        // Limpiar solo si se procesaron correctamente
-        if ($totalProcessed > 0) {
-            $redis->del($keys);
-            Log::info("Eliminadas " . count($keys) . " claves de sumas de Redis para el batch {$batchId}");
-        }
-    }
 
     public function getUniqueValuesFromCsv(string $filePath, $columnNames): array
     {
