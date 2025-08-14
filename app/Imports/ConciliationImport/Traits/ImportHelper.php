@@ -449,7 +449,7 @@ trait ImportHelper
     }
 
 
-    public function getUniqueValuesFromCsv(string $filePath, $columnNames): array
+    public function getUniqueValuesFromCsv(string $filePath, $columnNames, $dispatchInterval = 100): array
     {
         $columnNames = is_array($columnNames) ? $columnNames : [$columnNames];
         $uniqueValues = array_fill_keys($columnNames, []);
@@ -475,23 +475,42 @@ trait ImportHelper
         foreach ($columnNames as $columnName) {
             $index = array_search($columnName, $headers);
             if ($index === false) {
-                Log::error("Error: Columna '{$columnName}' no encontrada en el CSV2.", ['headers' => $headers]);
+                Log::error("Error: Columna '{$columnName}' no encontrada en el CSV.", ['headers' => $headers]);
                 fclose($handle);
                 return $uniqueValues;
             }
             $columnIndices[$columnName] = $index;
         }
 
+        $processedRows = 0;
+        $totalRows = $this->countCsvRows($filePath); // Necesitarás implementar esta función
+
         LazyCollection::make(function () use ($handle) {
             while (($row = fgetcsv($handle, 0, ';')) !== false) {
                 yield $row;
             }
             fclose($handle);
-        })->each(function ($row) use ($columnIndices, &$uniqueValues) {
+        })->each(function ($row) use ($columnIndices, &$uniqueValues, &$processedRows, $totalRows, $dispatchInterval) {
             foreach ($columnIndices as $columnName => $index) {
-                if (isset($row[$index]) && !empty(trim($row[$index]))) {
-                    $value = (string) trim($row[$index]);
-                    $uniqueValues[$columnName][$value] = true;
+                if (isset($row[$index])) {
+                    $value = trim($row[$index]);
+                    if ($value !== '') {
+                        $uniqueValues[$columnName][$value] = true;
+                    }
+                }
+            }
+
+            $processedRows++;
+
+            // Despachar evento de progreso periódicamente
+            if ($processedRows % $dispatchInterval === 0 || $processedRows === $totalRows) {
+                if (method_exists($this, 'dispatchProgressEvent')) {
+                    $this->dispatchProgressEvent(
+                        $totalRows,
+                        'Procesando archivo CSV',
+                        'active',
+                        sprintf('%d/%d filas procesadas', $processedRows, $totalRows)
+                    );
                 }
             }
         });
@@ -501,5 +520,19 @@ trait ImportHelper
         }
 
         return $uniqueValues;
+    }
+
+    /**
+     * Cuenta el número total de filas en el archivo CSV (sin contar el encabezado)
+     */
+    protected function countCsvRows(string $filePath): int
+    {
+        $file = new \SplFileObject($filePath, 'r');
+        $file->seek(PHP_INT_MAX); // Busca el final del archivo
+        $totalRows = $file->key();
+        $file = null; // Cierra el archivo
+
+        // Restamos 1 para excluir el encabezado
+        return max(0, $totalRows - 1);
     }
 }
