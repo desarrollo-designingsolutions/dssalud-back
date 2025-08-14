@@ -20,4 +20,9 @@ class ReconciliationGroupInvoice extends Model
     {
         return $this->belongsTo(InvoiceAudit::class, 'invoice_audit_id');
     }
+
+    public function conciliation_invoice()
+    {
+        return $this->hasOne(ConciliationInvoice::class, 'invoice_audit_id',"invoice_audit_id");
+    }
 }

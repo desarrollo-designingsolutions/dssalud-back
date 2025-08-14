@@ -44,8 +44,8 @@ trait ImportHelper
 
         $formattedTime = match (true) {
             $executionTime >= 60 => sprintf('%dm %ds', floor($executionTime / 60), $executionTime % 60),
-            $executionTime >= 1 => round($executionTime, 2).'s',
-            default => round($executionTime * 1000).'ms',
+            $executionTime >= 1 => round($executionTime, 2) . 's',
+            default => round($executionTime * 1000) . 'ms',
         };
 
         // Registrar las métricas en el log (funcionalidad original)
@@ -77,154 +77,7 @@ trait ImportHelper
         ]);
     }
 
-    /**
-     * Extrae todos los IDs únicos de una columna específica del CSV.
-     */
-    protected function getUniqueIdsFromCsv(string $filePath, string $columnName): array
-    {
-        $ids = [];
-        $handle = fopen($filePath, 'r');
-        if ($handle === false) {
-            Log::error('Error: No se pudo abrir el archivo CSV para extraer IDs.', ['path' => $filePath]);
 
-            return [];
-        }
-
-        $headers = fgetcsv($handle, 0, ';');
-        if ($headers && ! empty($headers[0])) {
-            $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
-        }
-        $columnIndex = array_search($columnName, $headers);
-
-        if ($columnIndex === false) {
-            Log::error("Error: Columna '{$columnName}' no encontrada en el CSV al extraer IDs.", ['headers' => $headers]);
-            fclose($handle);
-
-            return [];
-        }
-
-        LazyCollection::make(function () use ($handle) {
-            while (($row = fgetcsv($handle, 0, ';')) !== false) {
-                yield $row;
-            }
-            fclose($handle);
-        })->each(function ($row) use (&$ids, $columnIndex) {
-            if (isset($row[$columnIndex]) && ! empty(trim($row[$columnIndex]))) {
-                $id = (string) trim($row[$columnIndex]);
-                $ids[$id] = true;
-            }
-        });
-
-        // Log::info("DEBUG CSV IDs: IDs extraídos del CSV para precarga (primeros 10): " . json_encode(array_slice(array_keys($ids), 0, 10)));
-        return array_keys($ids);
-    }
-
-    /**
-     * Precarga los ID y valor_glosa de AuditoryFinalReport a Redis,
-     * pero solo para los IDs presentes en el archivo de importación.
-     * Ahora lee de la caché maestra global de Redis, o la precarga si no existe.
-     */
-    protected function preloadAuditoryGlosaForCsvIds(array $fileIds): void
-    {
-        $redisMasterKey = 'auditory_glosa_master';
-        $cacheService = app(CacheService::class);
-
-        // Log::info("DEBUG PRELOAD GLOSA: Iniciando precarga para batch ID: {$this->currentBatchId}. IDs a procesar: " . count($fileIds));
-        // Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs del archivo: " . json_encode(array_slice($fileIds, 0, 10)));
-
-        $cacheService->clearByPrefix("auditory_glosa:{$this->currentBatchId}:");
-        // Log::info("DEBUG PRELOAD GLOSA: Limpiando claves de 'auditory_glosa' para el batch actual al inicio de la precarga.");
-
-        $preloadStartTime = microtime(true);
-        $count = 0;
-        $foundIdsInMasterCache = [];
-        $idsToLoadFromDb = [];
-        $chunkSize = 1000;
-
-        // Paso 1: Identificar qué IDs del archivo ya están en la caché maestra y cuáles faltan
-        if (Redis::connection('redis_6380')->exists($redisMasterKey)) {
-            // Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' ya existe. Verificando IDs del archivo...");
-            foreach (array_chunk($fileIds, $chunkSize) as $idChunk) {
-                $idChunk = array_map('strval', $idChunk); // Asegurar que los IDs en el chunk son cadenas
-                $glosaValues = Redis::connection('redis_6380')->hmget($redisMasterKey, $idChunk);
-                foreach ($idChunk as $index => $id) {
-                    if (! is_null($glosaValues[$index])) {
-                        $foundIdsInMasterCache[] = $id;
-                    } else {
-                        $idsToLoadFromDb[] = $id;
-                    }
-                }
-            }
-            // Log::info(sprintf("DEBUG PRELOAD GLOSA: %d IDs del archivo ya están en caché maestra. %d IDs necesitan ser cargados de DB.", count($foundIdsInMasterCache), count($idsToLoadFromDb)));
-        } else {
-            // Log::info("DEBUG PRELOAD GLOSA: La caché maestra '{$redisMasterKey}' no existe. Todos los IDs del archivo necesitan ser cargados de DB.");
-            $idsToLoadFromDb = $fileIds;
-        }
-
-        // Paso 2: Cargar los IDs faltantes de la DB a la caché maestra
-        if (! empty($idsToLoadFromDb)) {
-            // Log::info(sprintf("DEBUG PRELOAD GLOSA: Cargando %d IDs de auditory_final_reports desde la base de datos a la caché maestra...", count($idsToLoadFromDb)));
-            // Log::info("DEBUG PRELOAD GLOSA: Primeros 10 IDs a cargar de DB: " . json_encode(array_slice($idsToLoadFromDb, 0, 10)));
-            $dbLoadCount = 0;
-            $dbLoadStartTime = microtime(true);
-            $dbPipeline = Redis::connection('redis_6380')->pipeline();
-            $processedChunks = 0;
-
-            foreach (array_chunk($idsToLoadFromDb, $chunkSize) as $idChunkForDb) {
-                $processedChunks++;
-                $idChunkForDb = array_map('strval', $idChunkForDb); // Asegurar que los IDs para whereIn son cadenas
-                // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Procesando chunk %d con %d IDs. Primeros 5 IDs: %s", $processedChunks, count($idChunkForDb), implode(', ', array_slice($idChunkForDb, 0, 5))));
-
-                $dbReports = AuditoryFinalReport::select('id', 'valor_glosa')
-                    ->whereIn('id', $idChunkForDb)
-                    ->get(); // Usar get() para procesar el chunk completo
-
-                // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Chunk %d - Recibidos %d reportes de la DB.", $processedChunks, $dbReports->count()));
-                // Log::info("DEBUG PRELOAD GLOSA DB: Primeros 5 IDs encontrados en DB para este chunk: " . json_encode(array_slice($dbReports->pluck('id')->toArray(), 0, 5)));
-
-                foreach ($dbReports as $report) {
-                    $dbPipeline->hset($redisMasterKey, (string) $report->id, (string) $report->valor_glosa);
-                    $dbLoadCount++;
-                }
-            }
-            // Log::info("DEBUG PRELOAD GLOSA DB: Ejecutando pipeline de Redis para la carga de DB...");
-            $dbPipeline->execute();
-            // Log::info("DEBUG PRELOAD GLOSA DB: Pipeline de Redis ejecutado.");
-            Redis::connection('redis_6380')->expire($redisMasterKey, 60 * 60 * 24 * 180); // 6 meses
-            $dbLoadEndTime = microtime(true);
-            // Log::info(sprintf("DEBUG PRELOAD GLOSA DB: Carga de %d IDs desde DB a caché maestra completada en %.2f segundos.", $dbLoadCount, ($dbLoadEndTime - $dbLoadStartTime)));
-        } else {
-            // Log::info("DEBUG PRELOAD GLOSA: No hay IDs del archivo que necesiten ser cargados de la base de datos a la caché maestra.");
-        }
-
-        // Paso 3: Poblar la caché específica del batch desde la caché maestra (ahora actualizada)
-        $finalFoundIdsForBatch = [];
-        $pipeline = Redis::connection('redis_6380')->pipeline();
-        foreach (array_chunk($fileIds, $chunkSize) as $idChunk) {
-            $idChunk = array_map('strval', $idChunk); // Asegurar que los IDs en el chunk son cadenas
-            $glosaValues = Redis::connection('redis_6380')->hmget($redisMasterKey, $idChunk);
-            foreach ($idChunk as $index => $id) {
-                if (! is_null($glosaValues[$index])) {
-                    $redisKey = "auditory_glosa:{$this->currentBatchId}:{$id}";
-                    $pipeline->set($redisKey, (string) $glosaValues[$index]);
-                    $finalFoundIdsForBatch[] = $id;
-                    $count++;
-                }
-            }
-        }
-        $pipeline->execute();
-
-        $preloadEndTime = microtime(true);
-        // Log::info(sprintf("DEBUG PRELOAD GLOSA: Resumen de precarga de glosa (para batch): %d registros en %.2f segundos.", $count, ($preloadEndTime - $preloadStartTime)));
-
-        $notFoundIds = array_diff($fileIds, $finalFoundIdsForBatch);
-        if (! empty($notFoundIds)) {
-            Log::warning(sprintf("ATENCIÓN PRELOAD GLOSA: %d IDs del archivo no se encontraron en la caché maestra '{$redisMasterKey}' y no fueron precargados para este batch. Primeros 10 IDs no encontrados:", count($notFoundIds)));
-            Log::warning(json_encode(array_slice($notFoundIds, 0, 10)));
-        } else {
-            // Log::info("DEBUG PRELOAD GLOSA: Todos los IDs del archivo se encontraron en la caché maestra '{$redisMasterKey}' y fueron precargados para este batch.");
-        }
-    }
 
     /**
      * Precarga los conteos de FACTURA_ID de AuditoryFinalReport (donde valor_glosa > 0) a Redis.
@@ -421,7 +274,7 @@ trait ImportHelper
             if (json_last_error() === JSON_ERROR_NONE) {
                 $errorsToInsert[] = $decodedError;
             } else {
-                Log::error('Failed to decode JSON error from Redis: '.json_last_error_msg(), ['json' => $errorJson]);
+                Log::error('Failed to decode JSON error from Redis: ' . json_last_error_msg(), ['json' => $errorJson]);
             }
         }
 
@@ -436,7 +289,7 @@ trait ImportHelper
                         DB::table('process_batches_errors')->insert($chunk);
                         // Log::info(sprintf('Successfully inserted a chunk of %d errors into process_batches_errors table.', count($chunk)));
                     } catch (\Exception $e) {
-                        Log::error('Failed to bulk insert errors into process_batches_errors: '.$e->getMessage());
+                        Log::error('Failed to bulk insert errors into process_batches_errors: ' . $e->getMessage());
                         Log::error('Database insertion failed for errors chunk:', [
                             'exception' => $e->getMessage(),
                             'code' => $e->getCode(),
@@ -496,39 +349,84 @@ trait ImportHelper
                 $handle = fopen($filePath, 'r');
                 fgets($handle); // Skip header
                 $currentLine = 0;
-                $customers = [];
+                $dataToSave = [];
 
                 while (($line = fgets($handle)) !== false) {
                     if ($currentLine++ % $numberOfProcesses !== $i) {
                         continue;
                     }
                     $row = str_getcsv($line, ';');
-                    $customers[] = [
+
+                    // Aplica trim y ensureUtf8 a todo el arreglo $row
+                    $row = array_map('trim', $row); // Elimina espacios en blanco de cada elemento
+                    $row = ensureUtf8($row); // Convierte todas las cadenas a UTF-8
+
+                    // Verificar si auditory_final_report_id ya existe con estado CONCILIATION_INVOICE_EST_002
+                    // $auditory_final_report_id = (string) $row[1];
+                    // if (DB::table('conciliation_results')
+                    //     ->where('auditory_final_report_id', $auditory_final_report_id)
+                    //     ->exists()
+                    // ) {
+                    //     Log::info("Saltando auditory_final_report_id duplicado: {$auditory_final_report_id} ");
+                    //     continue;
+                    // }
+
+                    $dataToSave[] = [
                         'id' => (string) Str::uuid(),
-                        'auditory_final_report_id' => (string) trim($row[0]),
-                        'response_status' => (string) trim($row[29]),
-                        'autorization_number' => (string) trim($row[30]),
-                        'accepted_value_ips' => (float) str_replace(',', '.', trim($row[31])),
-                        'accepted_value_eps' => (float) str_replace(',', '.', trim($row[32])),
-                        'eps_ratified_value' => (float) str_replace(',', '.', trim($row[33])),
+                        'auditory_final_report_id' => (string) $row[0],
+                        'invoice_audit_id' => (string) $row[1],
+                        'response_status' => (string) $row[29],
+                        'autorization_number' => (string) $row[30],
+                        'accepted_value_ips' => (float) str_replace(',', '.', $row[31]),
+                        'accepted_value_eps' => (float) str_replace(',', '.', $row[32]),
+                        'eps_ratified_value' => (float) str_replace(',', '.', $row[33]),
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
-                    if (count($customers) === 1000) {
-                        DB::table('conciliation_results')->insert($customers);
-                        $customers = [];
+
+                    // Recolectar datos para actualizar conciliation_invoices
+                    $invoicesToUpdate[] = [
+                        'invoice_audit_id' => (string) $row[1],
+                        'status' => "CONCILIATION_INVOICE_EST_002", //estado finalizado
+                    ];
+
+                    if (count($dataToSave) === 1000) {
+                        // Insertar en conciliation_results
+                        DB::table('conciliation_results')->insert($dataToSave);
+
+                        // Actualizar conciliation_invoices en lotes
+                        DB::transaction(function () use ($invoicesToUpdate) {
+                            $ids = array_column($invoicesToUpdate, 'invoice_audit_id');
+                            if (!empty($ids)) {
+                                DB::table('conciliation_invoices')
+                                    ->whereIn('invoice_audit_id', $ids)
+                                    ->update(['status' => 'CONCILIATION_INVOICE_EST_002']);
+                            }
+                        });
+                        Log::info("Actualizados " . count($invoicesToUpdate) . " registros en conciliation_invoices");
+
+                        $dataToSave = [];
+                        $invoicesToUpdate = [];
                     }
 
                     // Incrementar contador global de Redis para filas importadas
                     $currentImportedCount = Redis::connection('redis_6380')->incr("batch:{$batchId}:imported_rows_count");
+                }
 
-                    // NOTA: Se ha eliminado la llamada a dispatchProgressEvent aquí para evitar problemas de serialización.
-                    // El progreso de importación se reflejará principalmente a través del contador de Redis
-                    // y el evento final de "Importación completada".
+                // Insertar y actualizar registros restantes
+                if (!empty($dataToSave)) {
+                    DB::table('conciliation_results')->insert($dataToSave);
+                    DB::transaction(function () use ($invoicesToUpdate) {
+                        $ids = array_column($invoicesToUpdate, 'invoice_audit_id');
+                        if (!empty($ids)) {
+                            DB::table('conciliation_invoices')
+                                ->whereIn('invoice_audit_id', $ids)
+                                ->update(['status' => 'CONCILIATION_INVOICE_EST_002']);
+                        }
+                    });
+                    Log::info("Actualizados " . count($invoicesToUpdate) . " registros en conciliation_invoices");
                 }
-                if (! empty($customers)) {
-                    DB::table('conciliation_results')->insert($customers);
-                }
+
                 fclose($handle);
 
                 return true;
@@ -548,5 +446,60 @@ trait ImportHelper
 
         // Limpiar el contador de filas importadas de Redis
         Redis::connection('redis_6380')->del("batch:{$batchId}:imported_rows_count");
+    }
+
+
+    public function getUniqueValuesFromCsv(string $filePath, $columnNames): array
+    {
+        $columnNames = is_array($columnNames) ? $columnNames : [$columnNames];
+        $uniqueValues = array_fill_keys($columnNames, []);
+
+        $handle = fopen($filePath, 'r');
+        if ($handle === false) {
+            Log::error('Error: No se pudo abrir el archivo CSV para extraer valores.', ['path' => $filePath]);
+            return $uniqueValues;
+        }
+
+        $headers = fgetcsv($handle, 0, ';');
+        if ($headers && !empty($headers[0])) {
+            $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
+        }
+
+        if ($headers === false || empty($headers)) {
+            Log::error('Error: El archivo CSV está vacío o no tiene encabezados válidos.', ['path' => $filePath]);
+            fclose($handle);
+            return $uniqueValues;
+        }
+
+        $columnIndices = [];
+        foreach ($columnNames as $columnName) {
+            $index = array_search($columnName, $headers);
+            if ($index === false) {
+                Log::error("Error: Columna '{$columnName}' no encontrada en el CSV2.", ['headers' => $headers]);
+                fclose($handle);
+                return $uniqueValues;
+            }
+            $columnIndices[$columnName] = $index;
+        }
+
+        LazyCollection::make(function () use ($handle) {
+            while (($row = fgetcsv($handle, 0, ';')) !== false) {
+                yield $row;
+            }
+            fclose($handle);
+        })->each(function ($row) use ($columnIndices, &$uniqueValues) {
+            foreach ($columnIndices as $columnName => $index) {
+                if (isset($row[$index]) && !empty(trim($row[$index]))) {
+                    $value = (string) trim($row[$index]);
+                    $uniqueValues[$columnName][$value] = true;
+                }
+            }
+        });
+
+        foreach ($uniqueValues as $columnName => &$values) {
+            $values = array_keys($values);
+        }
+
+        return $uniqueValues;
     }
 }

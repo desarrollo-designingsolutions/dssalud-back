@@ -5,6 +5,8 @@ namespace App\Imports\ConciliationImport\Jobs;
 use App\Events\ImportProgressEvent;
 use App\Imports\ConciliationImport\Services\CsvValidationService;
 use App\Imports\ConciliationImport\Traits\ImportHelper;
+use App\Models\AuditoryFinalReport;
+use App\Models\InvoiceAudit;
 use App\Models\ProcessBatch;
 use App\Services\CacheService;
 use Illuminate\Bus\Queueable; // Importar la interfaz
@@ -68,31 +70,21 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             // Estado inicial del Job
             $this->dispatchProgressEvent(0, 'Iniciando importación', 'queued', 'Preparando...');
 
-            // Paso 1: Extracción y precarga de glosa
-            $this->dispatchProgressEvent(0, 'Extrayendo IDs para precarga de glosa', 'active', 'Iniciando...');
-            $csvIdsForGlosaSum = $this->getUniqueIdsFromCsv($this->filePath, 'ID');
-            // Log::info(sprintf("Encontrados %d IDs únicos en el CSV para precarga de glosa.", count($csvIdsForGlosaSum)));
-            if (! empty($csvIdsForGlosaSum)) {
-                $this->preloadAuditoryGlosaForCsvIds($csvIdsForGlosaSum);
-                // Log::info("Precarga de datos de glosa completada.");
-            } else {
-                // Log::warning("No se encontraron IDs en el CSV para precargar datos de auditoría para la validación de suma.");
-            }
-            $this->dispatchProgressEvent(0, 'Precarga de glosa completada', 'active', sprintf('%d IDs precargados', count($csvIdsForGlosaSum)));
-
-            // Paso 2: Validación de cabeceras y filas (aquí es donde el 'progress' principal aumentará)
-            $validationService = new CsvValidationService($this->batchId);
+             $validationService = new CsvValidationService($this->batchId);
             $validationService->setTotalRows($this->totalRows);
             $validationService->setEventDispatcher(function ($processedRecordsCurrentPhase, $action, $status, $element) {
                 // Este callback es llamado por CsvValidationService y actualiza el progreso principal
                 $this->dispatchProgressEvent($processedRecordsCurrentPhase, $action, $status, $element);
             });
 
+
+
+
             // Log::info("Validando cabeceras y filas del CSV...");
             $errors = $validationService->validateCsv($this->filePath);
 
             // Paso 3: Recolección y precarga de IDs de factura, y validación de facturas completas
-            $this->dispatchProgressEvent($this->totalRows, 'Recolectando IDs de factura únicos', 'active', 'Iniciando...');
+            $this->dispatchProgressEvent($this->totalRows, 'Recolectando IDs de factura únicos', 'active', 'Recolectando IDs de factura únicos...');
             $uniqueFacturaIdsFromCsv = Redis::connection('redis_6380')->smembers("csv_unique_factura_ids:{$this->batchId}");
             // Log::info(sprintf("Encontrados %d FACTURA_ID únicos en el CSV.", count($uniqueFacturaIdsFromCsv)));
             if (! empty($uniqueFacturaIdsFromCsv)) {
@@ -114,7 +106,7 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
 
             if (! empty($errors)) {
                 // Log::error('Validation errors found:');
-                $this->dispatchProgressEvent($this->totalRows, 'Errores de validación encontrados', 'failed', (string) $errorCount.' errores');
+                $this->dispatchProgressEvent($this->totalRows, 'Errores de validación encontrados', 'failed', (string) $errorCount . ' errores');
                 $this->storeErrorsFromRedis();
                 Redis::connection('redis_6380')->hset("batch:{$this->batchId}:metadata", 'status', 'failed'); // Cambiado a 'failed'
                 Redis::connection('redis_6380')->hset("batch:{$this->batchId}:metadata", 'completed_at', now()->toDateTimeString());
@@ -158,7 +150,7 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             // Log::info("Job de importación completado exitosamente para batch ID: {$this->batchId}");
 
         } catch (Throwable $e) {
-            Log::error(get_class($e).' '.Str::of($e->getMessage())->limit(100)->value());
+            Log::error(get_class($e) . ' ' . Str::of($e->getMessage())->limit(100)->value());
             Log::error('Error durante la importación en Job:', [
                 'exception' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -190,7 +182,6 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             $cacheService = app(CacheService::class);
 
             $cacheService->clearByPrefix("import_errors:{$this->currentBatchId}");
-            $cacheService->clearByPrefix("auditory_glosa:{$this->currentBatchId}:");
             $cacheService->clearByPrefix("csv_factura_total_counts:{$this->currentBatchId}");
             $cacheService->clearByPrefix("csv_factura_rows:{$this->currentBatchId}:");
             $cacheService->clearByPrefix("db_factura_total_glosa_counts:{$this->currentBatchId}");
