@@ -41,10 +41,12 @@ class ProcessConciliationChunk implements ShouldQueue
         $request['offset'] = $this->offset;
         $request['limit'] = $this->limit;
 
+        // Log::info("request",[$request]);
 
 
         $data = $repository->getConciliationInvoicesChunk($request);
 
+        // Log::info("data",[$data]);
 
                 // Log::info("data buscada");
         // Procesar y guardar en archivo temporal
@@ -66,10 +68,7 @@ class ProcessConciliationChunk implements ShouldQueue
 
         // Guardar chunk en archivo temporal
         $filePath = 'temp/exports/' . $this->tempFileName;
-
-                    // Log::info("Guardando chunk en archivo temporal: {$filePath}");
-
-        $existingContent = Storage::exists($filePath) ? Storage::get($filePath) : '';
+        $existingContent = Storage::disk(Constants::DISK_FILES)->exists($filePath) ? Storage::disk(Constants::DISK_FILES)->get($filePath) : '';
 
                     // Log::info("Contenido existente en el archivo temporal: " . strlen($existingContent) . " bytes");
 
@@ -77,8 +76,8 @@ class ProcessConciliationChunk implements ShouldQueue
         try {
         $stream = fopen('php://temp', 'w+');
 
-        if (Storage::exists($filePath)) {
-            fwrite($stream, Storage::get($filePath));
+        if (Storage::disk(Constants::DISK_FILES)->exists($filePath)) {
+            fwrite($stream, Storage::disk(Constants::DISK_FILES)->get($filePath));
         }
 
         foreach ($rows as $row) {
@@ -86,7 +85,7 @@ class ProcessConciliationChunk implements ShouldQueue
         }
 
         rewind($stream);
-        Storage::put($filePath, stream_get_contents($stream));
+        Storage::disk(Constants::DISK_FILES)->put($filePath, stream_get_contents($stream));
     } catch (\Exception $e) {
         // Log::error("Error al guardar el chunk en el archivo temporal: " . $e->getMessage());
         if (is_resource($stream)) {
@@ -100,5 +99,7 @@ class ProcessConciliationChunk implements ShouldQueue
 
     // Liberar memoria explícitamente
     unset($rows, $data, $stream);
+        Storage::disk(Constants::DISK_FILES)->put($filePath, stream_get_contents($stream));
+        fclose($stream);
     }
 }

@@ -11,6 +11,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use App\Models\ReconciliationGroupInvoice;
+use App\Models\User;
+use App\Notifications\BellNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -55,7 +57,7 @@ class CreateConciliationExport implements ShouldQueue
             'Suma valor eps ratificado'
         ];
 
-        Storage::put('temp/exports/' . $tempFileName, implode(',', $headers) . "\n");
+        Storage::disk(Constants::DISK_FILES)->put('temp/exports/' . $tempFileName, implode(',', $headers) . "\n");
 
         // Crear batch de jobs
         $jobs = [];
@@ -64,6 +66,7 @@ class CreateConciliationExport implements ShouldQueue
             $cleanRequest = $this->cleanRequest($this->request);
         // Log::info("cleanRequest", [$cleanRequest]);
         // Log::info("chunks", [$chunks]);
+            // Log::info("cleanRequest", [$cleanRequest]);
 
             $jobs[] = new ProcessConciliationChunk(
                 $cleanRequest, // Datos limpios
@@ -74,22 +77,52 @@ class CreateConciliationExport implements ShouldQueue
         }
 
         $fileName = $this->fileName;
+        $userId = $this->userId;
         // Ejecutar batch
         $batch = Bus::batch($jobs)
             ->name('conciliation_export')
+<<<<<<< HEAD
             ->catch(function (Throwable $e) {
         Log::error('Error en el batch: '.$e->getMessage());
     })
             ->finally(function () use ($tempFileName,$fileName) {
+=======
+            ->finally(function () use ($tempFileName, $fileName,$userId) {
+>>>>>>> 0e3704b407d317b8576b2e67bed4d9e239b9203e
                 // Cuando todos los chunks estén listos, podemos:
                 // 1. Convertir el CSV a Excel si es necesario
                 // 2. Mover el archivo a la ubicación final
                 // 3. Notificar al usuario
 
                 $finalPath = 'exports/' . $fileName;
-                Storage::move('temp/exports/' . $tempFileName, $finalPath);
+                Storage::disk(Constants::DISK_FILES)->move('temp/exports/' . $tempFileName, $finalPath);
 
+
+                // Obtener URL completa para descarga
+                $absolutePath = env('SYSTEM_URL_BACK') . 'storage/' . $finalPath;
+                // Ejemplo resultado: "http://tudominio.com/storage/exports/archivo.xlsx"
+
+
+                Log::info("absolutePath",[$absolutePath]);
+
+<<<<<<< HEAD
                 // Log::info("finalizo");
+=======
+                Log::info("finalizo");
+
+                $user = User::select("id")->find($userId);
+                $data =  [
+                    'title' => "Listado de facturas procesado con éxito",
+                    'subtitle' => "Da click en la notificación para descargar",
+                    'action_url' => $absolutePath,
+                    'openInNewTab' => true,
+                ];
+
+                Log::info("user",[$user]);
+                Log::info("data",[$data]);
+
+                $user->notify(new BellNotification($data));
+>>>>>>> 0e3704b407d317b8576b2e67bed4d9e239b9203e
             })
             ->onqueue('import_conciliations')
             ->dispatch();
