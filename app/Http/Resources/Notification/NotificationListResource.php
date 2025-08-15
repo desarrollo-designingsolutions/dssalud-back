@@ -22,6 +22,7 @@ class NotificationListResource extends JsonResource
             'title' => $info['title'],
             'subtitle' => truncate_text($info['subtitle'], 65),
             'action_url' => $info['action_url'],
+            'openInNewTab' => $info['openInNewTab'],
             'time' => $this->created_at->diffForHumans(),
             'isSeen' => $this->read_at ? true : false,
             'img' => isset($info['img']) ? $info['img'] : null,
