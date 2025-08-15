@@ -57,7 +57,7 @@ class ProcessConciliationChunk implements ShouldQueue
                 $item->invoiceAudit?->origin,
                 $item->invoiceAudit?->modality,
                 $item->invoiceAudit?->contract_number,
-                $item->conciliation_invoice?->status?->description(),
+                $item->conciliation_invoice?->status,
                 formatNumber($item->sum_accepted_value_ips),
                 formatNumber($item->sum_accepted_value_eps),
                 formatNumber($item->sum_eps_ratified_value),
