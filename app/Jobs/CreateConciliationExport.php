@@ -36,7 +36,7 @@ class CreateConciliationExport implements ShouldQueue
             !empty($this->request['reconciliation_group_id']),
             fn($q) => $q->where('reconciliation_group_id', $this->request['reconciliation_group_id'])
         )->count();
-        Log::info("totalCount", [$totalCount]);
+        // Log::info("totalCount", [$totalCount]);
 
         $chunkSize = 500; // Tamaño de cada chunk
         $chunks = ceil($totalCount / $chunkSize);
@@ -62,7 +62,8 @@ class CreateConciliationExport implements ShouldQueue
         for ($i = 0; $i < $chunks; $i++) {
             $offset = $i * $chunkSize;
             $cleanRequest = $this->cleanRequest($this->request);
-        Log::info("cleanRequest", [$cleanRequest]);
+        // Log::info("cleanRequest", [$cleanRequest]);
+        // Log::info("chunks", [$chunks]);
 
             $jobs[] = new ProcessConciliationChunk(
                 $cleanRequest, // Datos limpios
@@ -76,6 +77,9 @@ class CreateConciliationExport implements ShouldQueue
         // Ejecutar batch
         $batch = Bus::batch($jobs)
             ->name('conciliation_export')
+            ->catch(function (Throwable $e) {
+        Log::error('Error en el batch: '.$e->getMessage());
+    })
             ->finally(function () use ($tempFileName,$fileName) {
                 // Cuando todos los chunks estén listos, podemos:
                 // 1. Convertir el CSV a Excel si es necesario
@@ -85,8 +89,9 @@ class CreateConciliationExport implements ShouldQueue
                 $finalPath = 'exports/' . $fileName;
                 Storage::move('temp/exports/' . $tempFileName, $finalPath);
 
-                Log::info("finalizo");
+                // Log::info("finalizo");
             })
+            ->onqueue('import_conciliations')
             ->dispatch();
 
         return $batch;
