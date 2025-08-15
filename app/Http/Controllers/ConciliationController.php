@@ -11,6 +11,7 @@ use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
 use App\Http\Resources\Conciliation\ConciliationPaginateResource;
 use App\Http\Resources\Conciliation\ConciliationShowResource;
 use App\Imports\ConciliationImport\Jobs\ProcessCsvImportJob;
+use App\Jobs\CreateConciliationExport;
 use App\Repositories\ReconciliationGroupInvoiceRepository;
 use App\Repositories\ReconciliationGroupRepository;
 use App\Services\Conciliation\ExcelStructureValidator;
@@ -225,20 +226,40 @@ class ConciliationController extends Controller
     }
 
     public function excelExportConciliationInvoices(Request $request)
-    {
-        return $this->execute(function () use ($request) {
-            $request['typeData'] = 'all';
+{
+    return $this->execute(function () use ($request) {
+        $fileName = 'conciliation_invoices_'.now()->format('Ymd_His').'.xlsx';
 
-            $data = $this->reconciliationGroupInvoiceRepository->paginateConciliationInvoices($request->all());
+        // Disparamos el job principal
+        CreateConciliationExport::dispatch(
+            $request->all(),
+            $request->input("user_id"),
+            $fileName
+        );
 
-            $excel = Excel::raw(new ConciliationInvoicesExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
+        return [
+            'code' => 202, // Accepted
+            'message' => 'La exportación está siendo procesada. Recibirás una notificación cuando esté lista para descargar.',
+            'download_url' => null // O podrías devolver una URL para verificar el estado
+        ];
+    });
+}
 
-            $excelBase64 = base64_encode($excel);
+    // public function excelExportConciliationInvoices(Request $request)
+    // {
+    //     return $this->execute(function () use ($request) {
+    //         $request['typeData'] = 'all';
 
-            return [
-                'code' => 200,
-                'excel' => $excelBase64,
-            ];
-        });
-    }
+    //         $data = $this->reconciliationGroupInvoiceRepository->paginateConciliationInvoices($request->all());
+
+    //         $excel = Excel::raw(new ConciliationInvoicesExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
+
+    //         $excelBase64 = base64_encode($excel);
+
+    //         return [
+    //             'code' => 200,
+    //             'excel' => $excelBase64,
+    //         ];
+    //     });
+    // }
 }
