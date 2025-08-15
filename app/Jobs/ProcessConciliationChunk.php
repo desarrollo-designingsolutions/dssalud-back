@@ -57,7 +57,7 @@ class ProcessConciliationChunk implements ShouldQueue
                 $item->invoiceAudit?->origin,
                 $item->invoiceAudit?->modality,
                 $item->invoiceAudit?->contract_number,
-                $item->conciliation_invoice?->status,
+                "hola",
                 formatNumber($item->sum_accepted_value_ips),
                 formatNumber($item->sum_accepted_value_eps),
                 formatNumber($item->sum_eps_ratified_value),
@@ -66,7 +66,7 @@ class ProcessConciliationChunk implements ShouldQueue
 
         // Guardar chunk en archivo temporal
         $filePath = 'temp/exports/' . $this->tempFileName;
-        $existingContent = Storage::disk(Constants::DISK_FILES)->exists($filePath) ? Storage::disk(Constants::DISK_FILES)->get($filePath) : '';
+        $existingContent = Storage::exists($filePath) ? Storage::get($filePath) : '';
 
         $stream = fopen('php://temp', 'w+');
         if (!empty($existingContent)) {
@@ -78,7 +78,7 @@ class ProcessConciliationChunk implements ShouldQueue
         }
 
         rewind($stream);
-        Storage::disk(Constants::DISK_FILES)->put($filePath, stream_get_contents($stream));
+        Storage::put($filePath, stream_get_contents($stream));
         fclose($stream);
     }
 }

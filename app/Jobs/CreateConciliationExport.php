@@ -55,7 +55,7 @@ class CreateConciliationExport implements ShouldQueue
             'Suma valor eps ratificado'
         ];
 
-        Storage::disk(Constants::DISK_FILES)->put('temp/exports/' . $tempFileName, implode(',', $headers) . "\n");
+        Storage::put('temp/exports/' . $tempFileName, implode(',', $headers) . "\n");
 
         // Crear batch de jobs
         $jobs = [];
@@ -83,7 +83,7 @@ class CreateConciliationExport implements ShouldQueue
                 // 3. Notificar al usuario
 
                 $finalPath = 'exports/' . $fileName;
-                Storage::disk(Constants::DISK_FILES)->move('temp/exports/' . $tempFileName, $finalPath);
+                Storage::move('temp/exports/' . $tempFileName, $finalPath);
 
                 Log::info("finalizo");
             })
