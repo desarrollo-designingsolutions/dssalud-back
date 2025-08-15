@@ -48,10 +48,9 @@ class ProcessConciliationChunk implements ShouldQueue
 
         // Log::info("data",[$data]);
 
-                // Log::info("data buscada");
         // Procesar y guardar en archivo temporal
         $rows = [];
-                    foreach ($data as $key=> $item) {
+        foreach ($data as $item) {
             $rows[] = [
                 $item->invoiceAudit?->invoice_number,
                 formatNumber($item->invoiceAudit?->total_value),
@@ -63,21 +62,15 @@ class ProcessConciliationChunk implements ShouldQueue
                 formatNumber($item->sum_accepted_value_eps),
                 formatNumber($item->sum_eps_ratified_value),
             ];
-                    // Log::info("cada chunk procesado {$key} de {$this->limit} registros");
         }
 
         // Guardar chunk en archivo temporal
         $filePath = 'temp/exports/' . $this->tempFileName;
         $existingContent = Storage::disk(Constants::DISK_FILES)->exists($filePath) ? Storage::disk(Constants::DISK_FILES)->get($filePath) : '';
 
-                    // Log::info("Contenido existente en el archivo temporal: " . strlen($existingContent) . " bytes");
-
-
-        try {
         $stream = fopen('php://temp', 'w+');
-
-        if (Storage::disk(Constants::DISK_FILES)->exists($filePath)) {
-            fwrite($stream, Storage::disk(Constants::DISK_FILES)->get($filePath));
+        if (!empty($existingContent)) {
+            fwrite($stream, $existingContent);
         }
 
         foreach ($rows as $row) {
@@ -85,20 +78,6 @@ class ProcessConciliationChunk implements ShouldQueue
         }
 
         rewind($stream);
-        Storage::disk(Constants::DISK_FILES)->put($filePath, stream_get_contents($stream));
-    } catch (\Exception $e) {
-        // Log::error("Error al guardar el chunk en el archivo temporal: " . $e->getMessage());
-        if (is_resource($stream)) {
-            fclose($stream); // Asegura el cierre del recurso
-        }
-    }finally {
-        if (is_resource($stream)) {
-            fclose($stream); // Asegura el cierre del recurso
-        }
-    }
-
-    // Liberar memoria explícitamente
-    unset($rows, $data, $stream);
         Storage::disk(Constants::DISK_FILES)->put($filePath, stream_get_contents($stream));
         fclose($stream);
     }

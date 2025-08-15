@@ -67,7 +67,6 @@ class CreateConciliationExport implements ShouldQueue
             $cleanRequest = $this->cleanRequest($this->request);
             // Log::info("cleanRequest", [$cleanRequest]);
             // Log::info("chunks", [$chunks]);
-            // Log::info("cleanRequest", [$cleanRequest]);
 
             $jobs[] = new ProcessConciliationChunk(
                 $cleanRequest, // Datos limpios
@@ -82,6 +81,7 @@ class CreateConciliationExport implements ShouldQueue
         // Ejecutar batch
         $batch = Bus::batch($jobs)
             ->name('conciliation_export')
+            ->onqueue('download_files')
             ->catch(function (Throwable $e) {
                 Log::error('Error en el batch: ' . $e->getMessage());
             })
@@ -116,7 +116,6 @@ class CreateConciliationExport implements ShouldQueue
 
                 $user->notify(new BellNotification($data));
             })
-            ->onqueue('import_conciliations')
             ->dispatch();
 
         return $batch;

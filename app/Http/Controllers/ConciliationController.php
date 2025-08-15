@@ -235,7 +235,7 @@ class ConciliationController extends Controller
             $request->all(),
             $request->input("user_id"),
             $fileName
-        );
+        )->onqueue('download_files');
 
         return [
             'code' => 202, // Accepted
