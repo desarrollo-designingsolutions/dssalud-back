@@ -127,9 +127,9 @@ class ConciliationController extends Controller
         }
 
         // Guardar archivo CSV
-        $fileName = $fileName.'_'.time().'.csv';
+        $fileName = $fileName . '_' . time() . '.csv';
         $filePath = $uploadedFile->storeAs('temp', $fileName, Constants::DISK_FILES);
-        $fullPath = storage_path('app/public/'.$filePath);
+        $fullPath = storage_path('app/public/' . $filePath);
 
         if (! file_exists($fullPath)) {
             Log::error("Error al guardar el archivo CSV: {$fullPath}");
@@ -208,7 +208,7 @@ class ConciliationController extends Controller
                 'code' => '200',
             ]);
         } catch (Throwable $e) {
-            Log::error("Error en uploadFile para batch ID {$batchId}: ".$e->getMessage(), [
+            Log::error("Error en uploadFile para batch ID {$batchId}: " . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
@@ -218,7 +218,7 @@ class ConciliationController extends Controller
             Redis::connection('redis_6380')->del("batch:{$batchId}:metadata");
 
             return response()->json([
-                'message' => 'Error interno al procesar el archivo: '.$e->getMessage(),
+                'message' => 'Error interno al procesar el archivo: ' . $e->getMessage(),
                 'status' => 'error',
                 'code' => '500',
             ], 500);
@@ -226,40 +226,22 @@ class ConciliationController extends Controller
     }
 
     public function excelExportConciliationInvoices(Request $request)
-{
-    return $this->execute(function () use ($request) {
-        $fileName = 'conciliation_invoices_'.now()->format('Ymd_His').'.xlsx';
+    {
+        return $this->execute(function () use ($request) {
+            $fileName = 'conciliation_invoices_' . now()->format('Ymd_His') . '.xlsx';
 
-        // Disparamos el job principal
-        CreateConciliationExport::dispatch(
-            $request->all(),
-            $request->input("user_id"),
-            $fileName
-        )->onqueue('download_files');
+            // Disparamos el job principal
+            CreateConciliationExport::dispatch(
+                $request->all(),
+                $request->input("user_id"),
+                $fileName
+            )->onqueue('download_files');
 
-        return [
-            'code' => 202, // Accepted
-            'message' => 'La exportación está siendo procesada. Recibirás una notificación cuando esté lista para descargar.',
-            'download_url' => null // O podrías devolver una URL para verificar el estado
-        ];
-    });
-}
-
-    // public function excelExportConciliationInvoices(Request $request)
-    // {
-    //     return $this->execute(function () use ($request) {
-    //         $request['typeData'] = 'all';
-
-    //         $data = $this->reconciliationGroupInvoiceRepository->paginateConciliationInvoices($request->all());
-
-    //         $excel = Excel::raw(new ConciliationInvoicesExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
-
-    //         $excelBase64 = base64_encode($excel);
-
-    //         return [
-    //             'code' => 200,
-    //             'excel' => $excelBase64,
-    //         ];
-    //     });
-    // }
+            return [
+                'code' => 200, // Accepted
+                'message' => 'La exportación está siendo procesada. Recibirás una notificación cuando esté lista para descargar.',
+                'download_url' => null // O podrías devolver una URL para verificar el estado
+            ];
+        });
+    }
 }
