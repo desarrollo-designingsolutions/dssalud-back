@@ -38,7 +38,7 @@ class CreateConciliationExport implements ShouldQueue
         )->count();
         Log::info("totalCount", [$totalCount]);
 
-        $chunkSize = 1; // Tamaño de cada chunk
+        $chunkSize = 500; // Tamaño de cada chunk
         $chunks = ceil($totalCount / $chunkSize);
         $tempFileName = 'conciliation_' . now()->format('Ymd_His') . '.csv';
 
