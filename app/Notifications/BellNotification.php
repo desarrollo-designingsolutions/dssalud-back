@@ -33,6 +33,7 @@ class BellNotification extends Notification
             'title' => $this->data['title'],
             'subtitle' => $this->data['subtitle'],
             'action_url' => $this->getActionUrl(),
+            'openInNewTab' => $this->getOpenInNewTab(),
             'img' => $this->getImg($notifiable),
             'text' => $this->getText($notifiable),
         ];
@@ -50,6 +51,7 @@ class BellNotification extends Notification
             'title' => $this->data['title'],
             'subtitle' => $this->data['subtitle'],
             'action_url' => $this->getActionUrl(),
+            'openInNewTab' => $this->getOpenInNewTab(),
             'img' => $this->getImg($notifiable),
             'text' => $this->getText($notifiable),
         ]);
@@ -73,6 +75,10 @@ class BellNotification extends Notification
     protected function getActionUrl()
     {
         return $this->data['action_url'] ?? null;
+    }
+    protected function getOpenInNewTab()
+    {
+        return $this->data['openInNewTab'] ?? false;
     }
 
     protected function getImg($notifiable)
