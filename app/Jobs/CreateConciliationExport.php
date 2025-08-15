@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Notifications\BellNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class CreateConciliationExport implements ShouldQueue
 {
@@ -64,8 +65,8 @@ class CreateConciliationExport implements ShouldQueue
         for ($i = 0; $i < $chunks; $i++) {
             $offset = $i * $chunkSize;
             $cleanRequest = $this->cleanRequest($this->request);
-        // Log::info("cleanRequest", [$cleanRequest]);
-        // Log::info("chunks", [$chunks]);
+            // Log::info("cleanRequest", [$cleanRequest]);
+            // Log::info("chunks", [$chunks]);
             // Log::info("cleanRequest", [$cleanRequest]);
 
             $jobs[] = new ProcessConciliationChunk(
@@ -81,14 +82,10 @@ class CreateConciliationExport implements ShouldQueue
         // Ejecutar batch
         $batch = Bus::batch($jobs)
             ->name('conciliation_export')
-<<<<<<< HEAD
             ->catch(function (Throwable $e) {
-        Log::error('Error en el batch: '.$e->getMessage());
-    })
-            ->finally(function () use ($tempFileName,$fileName) {
-=======
-            ->finally(function () use ($tempFileName, $fileName,$userId) {
->>>>>>> 0e3704b407d317b8576b2e67bed4d9e239b9203e
+                Log::error('Error en el batch: ' . $e->getMessage());
+            })
+            ->finally(function () use ($tempFileName, $fileName, $userId) {
                 // Cuando todos los chunks estén listos, podemos:
                 // 1. Convertir el CSV a Excel si es necesario
                 // 2. Mover el archivo a la ubicación final
@@ -103,12 +100,8 @@ class CreateConciliationExport implements ShouldQueue
                 // Ejemplo resultado: "http://tudominio.com/storage/exports/archivo.xlsx"
 
 
-                Log::info("absolutePath",[$absolutePath]);
 
-<<<<<<< HEAD
                 // Log::info("finalizo");
-=======
-                Log::info("finalizo");
 
                 $user = User::select("id")->find($userId);
                 $data =  [
@@ -118,11 +111,10 @@ class CreateConciliationExport implements ShouldQueue
                     'openInNewTab' => true,
                 ];
 
-                Log::info("user",[$user]);
-                Log::info("data",[$data]);
+                // Log::info("user", [$user]);
+                // Log::info("data", [$data]);
 
                 $user->notify(new BellNotification($data));
->>>>>>> 0e3704b407d317b8576b2e67bed4d9e239b9203e
             })
             ->onqueue('import_conciliations')
             ->dispatch();
