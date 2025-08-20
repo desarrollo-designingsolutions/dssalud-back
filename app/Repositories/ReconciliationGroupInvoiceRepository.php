@@ -215,7 +215,7 @@ class ReconciliationGroupInvoiceRepository extends BaseRepository
             ])
             ->allowedFilters([/* tus filtros actuales */])
             ->allowedSorts([/* tus sorts actuales */])
-            ->with(['invoiceAudit'])
+            ->with(['invoiceAudit.auditoryFinalReport'])
             ->when(!empty($request['reconciliation_group_id']), function ($query) use ($request) {
                 $query->where('reconciliation_group_id', $request['reconciliation_group_id']);
             });

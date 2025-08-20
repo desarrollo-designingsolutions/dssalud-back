@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ConciliationUploadFileRequest extends FormRequest
+class ConciliationChangeStatusSaveRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +24,11 @@ class ConciliationUploadFileRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'file' => 'required|file',
-            'user_id' => 'required|string',
-            'company_id' => 'required|string',
+            'reconciliation_group_id' => 'required',
+            'status' => 'required',
+            'reason' => 'required',
+            'user_id' => 'required',
+            'company_id' => 'required',
         ];
 
         return $rules;
@@ -35,12 +37,11 @@ class ConciliationUploadFileRequest extends FormRequest
     public function messages()
     {
         return [
-            'file.required' => 'El archivo es obligatorio.',
-            'file.file' => 'El archivo proporcionado no es válido.',
-            'user_id.string' => 'El ID del docente debe ser una cadena de texto.',
-            'user_id.required' => 'El archivo es obligatorio.',
-            'company_id.string' => 'El ID de la compañía debe ser una cadena de texto.',
-            'company_id.required' => 'El archivo es obligatorio.',
+            'reconciliation_group_id.required' => 'El campo es obligatorio',
+            'status.required' => 'El campo es obligatorio',
+            'reason.required' => 'El campo es obligatorio',
+            'company_id.required' => 'El campo es obligatorio',
+            'user_id.required' => 'El campo es obligatorio',
         ];
     }
 

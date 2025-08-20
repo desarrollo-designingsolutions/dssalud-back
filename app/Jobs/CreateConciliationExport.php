@@ -65,8 +65,6 @@ class CreateConciliationExport implements ShouldQueue
         for ($i = 0; $i < $chunks; $i++) {
             $offset = $i * $chunkSize;
             $cleanRequest = $this->cleanRequest($this->request);
-            // Log::info("cleanRequest", [$cleanRequest]);
-            // Log::info("chunks", [$chunks]);
 
             $jobs[] = new ProcessConciliationChunk(
                 $cleanRequest, // Datos limpios

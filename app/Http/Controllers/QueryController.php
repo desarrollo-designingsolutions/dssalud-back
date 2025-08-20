@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
+use App\Enums\ReconciliationGroup\StatusReconciliationGroupEnum;
 use App\Enums\Role\RoleTypeEnum;
 use App\Enums\Schedule\ScheduleResponseStatusEnum;
 use App\Enums\TypeEvent\TypeEventEnum;
@@ -298,6 +299,23 @@ class QueryController extends Controller
             'code' => 200,
             'reconciliationGroup_arrayInfo' => $dataReconciliationGroup,
             'reconciliationGroup_countLinks' => $reconciliationGroup->lastPage(),
+        ];
+    }
+
+    public function selectStatusReconciliationGroupEnum(Request $request)
+    {
+        $data = StatusReconciliationGroupEnum::cases();
+
+        $data = collect($data)->map(function ($item) {
+            return [
+                'value' => $item,
+                'title' => $item->description(),
+            ];
+        });
+
+        return [
+            'statusReconciliationGroupEnum_arrayInfo' => $data->values(),
+            'statusReconciliationGroupEnum_countLinks' => 1,
         ];
     }
 }

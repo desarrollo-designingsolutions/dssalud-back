@@ -20,6 +20,7 @@ class ConciliationShowResource extends JsonResource
             'name' => $this->name,
             'third_id' => $this->third_id,
             'third_name' => $this->third?->name,
+            'status_description' => $this->status?->description(),
         ];
     }
 }

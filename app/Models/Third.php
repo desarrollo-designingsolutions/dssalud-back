@@ -76,4 +76,10 @@ class Third extends Model
             ? 'pending' // 'Pendiente'
             : 'finished'; // 'Finalizado'
     }
+
+
+    public function departmentAndCity()
+    {
+        return $this->hasOne(ThirdDepartment::class);
+    }
 }

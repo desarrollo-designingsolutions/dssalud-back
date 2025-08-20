@@ -3,12 +3,13 @@
 namespace App\Repositories;
 
 use App\Helpers\Constants;
-use App\Models\AuditoryFinalReport;
+use App\Models\ConciliationChangeStatus;
+use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-class AuditoryFinalReportRepository extends BaseRepository
+class ConciliationChangeStatusRepository extends BaseRepository
 {
-    public function __construct(AuditoryFinalReport $modelo)
+    public function __construct(ConciliationChangeStatus $modelo)
     {
         parent::__construct($modelo);
     }
@@ -19,14 +20,25 @@ class AuditoryFinalReportRepository extends BaseRepository
 
         return $this->cacheService->remember($cacheKey, function () use ($request) {
             $query = QueryBuilder::for($this->model->query())
-                ->allowedFilters([])
-                ->allowedSorts([])
+
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($subQuery) {});
+                    }),
+                ])
+                ->allowedSorts([
+                ])
                 ->where(function ($query) use ($request) {
                     if (! empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 });
-            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+            if (empty($request['typeData'])) {
+                $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+            } else {
+                $query = $query->get();
+            }
 
             return $query;
         }, Constants::REDIS_TTL);
@@ -80,30 +92,5 @@ class AuditoryFinalReportRepository extends BaseRepository
         });
 
         return $data;
-    }
-
-
-    public function getInvoicesChunk($invoices_ids = [])
-    {
-        return AuditoryFinalReport::whereIn("factura_id", $invoices_ids)->get()
-            ->map(function ($value) {
-                return [
-                    "iddd" => $value->invoiceAudit?->id,
-                    "invoice_number" => $value->invoiceAudit?->invoice_number,
-                    "sub_invoice_number" => $value->invoiceAudit?->invoice_number,
-                    "gloss_code" =>  $value->codigos_glosa,
-                    "contract_number" => $value->contrato,
-                    "total_value" => formatNumber($value->invoiceAudit?->total_value),
-                    "invoiced_month" => $value->invoiceAudit?->date_entry,
-                    "affiliated_department" => $value->invoiceAudit?->third?->departmentAndCity?->departamento,
-                    "initial_gloss_value" => formatNumber($value->valor_glosa),
-                    "pending_value" => "0",
-                    "accepted_value_eps" => formatNumber($value->conciliationResult?->accepted_value_eps),
-                    "accepted_value_ips" => formatNumber($value->conciliationResult?->accepted_value_ips),
-                    "ratified_value" => formatNumber($value->conciliationResult?->eps_ratified_value),
-                    "justification" => "viene de la observacion de la tabla conciliation result",
-
-                ];
-            });
     }
 }
