@@ -19,7 +19,7 @@ class ThirdDepartmentSeeder extends Seeder
      */
     public function run(): void
     {
-        $filePath = public_path('seeders/thirds_departments.xlsx');
+        $filePath = database_path('db/thirds_departments.xlsx');
 
         $excelService = new ExcelService;
         $sheet = null;
