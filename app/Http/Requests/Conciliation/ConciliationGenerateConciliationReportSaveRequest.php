@@ -26,6 +26,7 @@ class ConciliationGenerateConciliationReportSaveRequest extends FormRequest
         $rules = [
             'reconciliation_group_id' => 'required',
             'company_id' => 'required',
+            'user_id' => 'required',
             'dateConciliation' => 'required',
             'nameIPSrepresentative' => 'required',
             'positionIPSrepresentative' => 'required',
@@ -41,6 +42,7 @@ class ConciliationGenerateConciliationReportSaveRequest extends FormRequest
         return [
             'reconciliation_group_id.required' => 'El campo es obligatorio',
             'company_id.required' => 'El campo es obligatorio',
+            'user_id.required' => 'El campo es obligatorio',
             'dateConciliation.required' => 'El campo es obligatorio',
             'nameIPSrepresentative.required' => 'El campo es obligatorio',
             'positionIPSrepresentative.required' => 'El campo es obligatorio',

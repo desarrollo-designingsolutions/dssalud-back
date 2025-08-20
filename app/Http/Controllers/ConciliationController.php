@@ -14,6 +14,7 @@ use App\Http\Resources\Conciliation\ConciliationInvoicePaginateResource;
 use App\Http\Resources\Conciliation\ConciliationPaginateResource;
 use App\Http\Resources\Conciliation\ConciliationShowResource;
 use App\Imports\ConciliationImport\Jobs\ProcessCsvImportJob;
+use App\Jobs\Conciliation\CreateConciliationReport;
 use App\Jobs\CreateConciliationExport;
 use App\Models\AuditoryFinalReport;
 use App\Models\InvoiceAudit;
@@ -317,128 +318,24 @@ class ConciliationController extends Controller
     public function generateConciliationReportSave(ConciliationGenerateConciliationReportSaveRequest $request)
     {
         return $this->execute(function () use ($request) {
+            // Guardar el reporte de conciliación
+            $conciliationReport = $this->conciliationReportRepository->store($request->except(["user_id"]));
 
-            $conciliationReport = $this->conciliationReportRepository->store($request->all());
-            $reconciliationGroup = $this->reconciliationGroupRepository->find(
-                id: $request->input("reconciliation_group_id"),
-                with: ["invoices:id"],
-                select: ["id", "third_id"]
-            );
+            // Generar nombre único para el archivo
+            $fileName = 'conciliation_report_' . now()->format('Ymd_His') . '.xlsx';
 
-            $invoices_ids = $reconciliationGroup->invoices->pluck("id");
-            $invoices = AuditoryFinalReport::whereIn("factura_id", $invoices_ids)->get()
-                ->map(function ($value) {
-                    return [
-                        "iddd" => $value->invoiceAudit?->id,
-                        "invoice_number" => $value->invoiceAudit?->invoice_number,
-                        "sub_invoice_number" => $value->invoiceAudit?->invoice_number,
-                        "gloss_code" =>  $value->codigos_glosa,
-                        "contract_number" => $value->contrato,
-                        "total_value" => formatNumber($value->invoiceAudit?->total_value),
-                        "invoiced_month" => $value->invoiceAudit?->date_entry,
-                        "affiliated_department" => $value->invoiceAudit?->third?->departmentAndCity?->departamento,
-                        "initial_gloss_value" => formatNumber($value->valor_glosa),
-                        "pending_value" => "0",
-                        "accepted_value_eps" => formatNumber($value->conciliationResult?->accepted_value_eps),
-                        "accepted_value_ips" => formatNumber($value->conciliationResult?->accepted_value_ips),
-                        "ratified_value" => formatNumber($value->conciliationResult?->eps_ratified_value),
-                        "justification" => "viene de la observacion de la tabla conciliation result",
-
-                    ];
-                });
-            $third = $reconciliationGroup->third;
-            // Concatenar las modalidades separadas por comas
-            $modalities = $third->invoiceAudits->pluck('modality')->unique()->implode(',');
-
-            $total_value = 0;
-            $initial_gloss_value = 0;
-            $accepted_value_eps = 0;
-            $accepted_value_ips = 0;
-            $ratified_value = 0;
-
-            $invoices = $this->reconciliationGroupInvoiceRepository->getConciliationInvoicesChunk($request)
-                ->map(function ($value) use (&$total_value, &$initial_gloss_value, &$accepted_value_eps, &$accepted_value_ips, &$ratified_value) {
-                    $total_value += $value->invoiceAudit?->total_value ?? 0;
-                    $initial_gloss_value += $value->invoiceAudit?->auditoryFinalReport?->valor_glosa ?? 0;
-                    $accepted_value_eps += $value->accepted_value_eps ?? 0;
-                    $accepted_value_ips += $value->accepted_value_ips ?? 0;
-                    $ratified_value += $value->eps_ratified_value ?? 0;
-
-                    return [
-                        "invoice_number" => $value->invoiceAudit?->invoice_number,
-                        "sub_invoice_number" => $value->invoiceAudit?->invoice_number,
-                        "gloss_code" => "?????",
-                        "contract_number" => $value->invoiceAudit?->contract_number,
-                        "total_value" => formatNumber($value->invoiceAudit?->total_value),
-                        "invoiced_month" => $value->invoiceAudit?->date_entry,
-                        "affiliated_department" => $value->invoiceAudit?->third?->departmentAndCity?->departamento,
-                        "initial_gloss_value" => formatNumber($value->invoiceAudit?->auditoryFinalReport?->valor_glosa),
-                        "pending_value" => "0",
-                        "accepted_value_eps" => formatNumber($value->accepted_value_eps),
-                        "accepted_value_ips" => formatNumber($value->accepted_value_ips),
-                        "ratified_value" => formatNumber($value->eps_ratified_value),
-                        "justification" => "viene de la observacion de la tabla conciliation result",
-                    ];
-                });
-
-
-            // Formatear la fecha actual en español
-            $currentDate = Carbon::now();
-            $currentDate->setLocale('es');
-            $day = str_pad($currentDate->day, 2, '0', STR_PAD_LEFT); // Ensure two digits for day
-            $month = $currentDate->monthName;
-            $year = $currentDate->year;
-            $formattedDateReport = "$day del mes de $month de $year";
-
-
-
-
-            $data = [
-                'modalities' => $modalities,
-                'third' => [
-                    'name'       => $third->name,
-                    'nit'          => $third->nit,
-                    'departament' => $third->departmentAndCity?->departamento,
-                    'city'    => $third->departmentAndCity?->municipio,
-                ],
-                'dateConciliation' => $conciliationReport->dateConciliation,
-                'formattedDateReport' => $formattedDateReport,
-                'totales' => [
-                    'total_value' => formatNumber($total_value),
-                    'initial_gloss_value' => formatNumber($initial_gloss_value),
-                    'pending_value' => formatNumber(0),
-                    'accepted_value_eps' => formatNumber($accepted_value_eps),
-                    'accepted_value_ips' => formatNumber($accepted_value_ips),
-                    'ratified_value' => formatNumber($ratified_value),
-                ],
-                'signatures' => [
-                    'nameIPSrepresentative' => $conciliationReport->nameIPSrepresentative,
-                    'positionIPSrepresentative' => $conciliationReport->positionIPSrepresentative,
-                    'elaborator_full_name' => $conciliationReport->elaborator?->full_name,
-                    'elaborator_position' => $conciliationReport->elaborator_position,
-                    'reviewer_full_name' => $conciliationReport->reviewer?->full_name,
-                    'reviewer_position' => $conciliationReport->reviewer_position,
-                    'approver_full_name' => $conciliationReport->approver?->full_name,
-                    'approver_position' => $conciliationReport->approver_position,
-                    'legal_representative_full_name' => $conciliationReport->legal_representative?->full_name,
-                    'legal_representative_position' => $conciliationReport->legal_representative_position,
-                    'health_audit_director_full_name' => $conciliationReport->health_audit_director?->full_name,
-                    'health_audit_director_position' => $conciliationReport->health_audit_director_position,
-                    'vp_planning_control_full_name' => $conciliationReport->vp_planning_control?->full_name,
-                    'vp_planning_control_position' => $conciliationReport->vp_planning_control_position,
-                ],
-                'invoices' => $invoices,
-            ];
-
-            $excel = Excel::raw(new ConciliationGenerateConciliationReportExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
-
-            $excelBase64 = base64_encode($excel);
-
+            // Disparamos el job principal
+            CreateConciliationReport::dispatch(
+                $request->all(),
+                $request->input("user_id"),
+                $fileName,
+                $request->input("reconciliation_group_id")
+            )->onqueue('download_files');
 
             return [
                 'code' => 200,
-                'message' => "Registro actualizado con éxito.",
-                'excel' => $excelBase64,
+                'message' => "El reporte de conciliación se está generando en segundo plano. Se le notificará cuando esté listo.",
+                'file_name' => $fileName
             ];
         });
     }
