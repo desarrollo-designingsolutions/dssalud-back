@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Conciliation;
 
+use App\Helpers\Constants;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use App\Models\ConciliationResult;
+use App\Services\CacheService;
 use Illuminate\Support\Facades\Redis;
 
 class ProcessConciliationReportChunk implements ShouldQueue
@@ -43,15 +45,24 @@ class ProcessConciliationReportChunk implements ShouldQueue
 
         try {
             // Obtener resultados
-            $results = ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
-                ->with([
-                    'invoiceAudit',
-                    'invoiceAudit.auditoryFinalReport',
-                    'invoiceAudit.third.departmentAndCity'
-                ])
-                ->offset($this->offset)
-                ->limit($this->limit)
-                ->get();
+            $request = [
+                "reconciliationGroupId" => $this->reconciliationGroupId,
+                "offset" => $this->offset,
+                "limit" => $this->limit,
+            ];
+            $cacheService = new CacheService();
+            $cacheKey = $cacheService->generateKey("ConciliationResult_donloadFile:", $request, 'string');
+            return $cacheService->remember($cacheKey, function () {
+                return ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
+                    ->with([
+                        'invoiceAudit',
+                        'invoiceAudit.auditoryFinalReport',
+                        'invoiceAudit.third.departmentAndCity'
+                    ])
+                    ->offset($this->offset)
+                    ->limit($this->limit)
+                    ->get();
+            }, Constants::REDIS_TTL);
 
             // Crear nueva conexión Redis en cada job
             $redis = Redis::connection();
@@ -96,7 +107,6 @@ class ProcessConciliationReportChunk implements ShouldQueue
 
             // Ejecutar todas las operaciones
             $pipe->execute();
-
         } catch (\Exception $e) {
             Log::error("Error en ProcessConciliationReportChunk - Process: {$this->processId}, User: {$this->userId}: " . $e->getMessage());
             throw $e;
