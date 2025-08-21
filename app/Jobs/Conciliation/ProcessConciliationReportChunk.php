@@ -8,27 +8,31 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use App\Helpers\Constants;
 use Illuminate\Support\Facades\Log;
-use App\Models\AuditoryFinalReport;
 use App\Models\ConciliationResult;
+use Illuminate\Support\Facades\Redis;
 
 class ProcessConciliationReportChunk implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $reconciliationGroupId; // Cambiado
+    protected $reconciliationGroupId;
     protected $offset;
     protected $limit;
-    protected $tempFileName;
+    protected $invoicesKey;
+    protected $totalsKey;
+    protected $processId;
+    protected $userId;
 
-    public function __construct($reconciliationGroupId, $offset, $limit, $tempFileName)
+    public function __construct($reconciliationGroupId, $offset, $limit, $invoicesKey, $totalsKey, $processId, $userId)
     {
         $this->reconciliationGroupId = $reconciliationGroupId;
         $this->offset = $offset;
         $this->limit = $limit;
-        $this->tempFileName = $tempFileName;
+        $this->invoicesKey = $invoicesKey;
+        $this->totalsKey = $totalsKey;
+        $this->processId = $processId;
+        $this->userId = $userId;
     }
 
     public function handle()
@@ -37,77 +41,65 @@ class ProcessConciliationReportChunk implements ShouldQueue
             return;
         }
 
-        // Obtener directamente los conciliation results con paginación (CONSULTA MUCHO MÁS EFICIENTE)
-        $results = ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
-            ->with([
-                'invoiceAudit',
-                'invoiceAudit.auditoryFinalReport', // Relación a auditoryFinalReport
-                'invoiceAudit.third.departmentAndCity'
-            ])
-            ->offset($this->offset)
-            ->limit($this->limit)
-            ->get();
+        try {
+            // Obtener resultados
+            $results = ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
+                ->with([
+                    'invoiceAudit',
+                    'invoiceAudit.auditoryFinalReport',
+                    'invoiceAudit.third.departmentAndCity'
+                ])
+                ->offset($this->offset)
+                ->limit($this->limit)
+                ->get();
 
-        // Variables para calcular totales
-        $totals = [
-            'total_value' => 0,
-            'initial_gloss_value' => 0,
-            'accepted_value_eps' => 0,
-            'accepted_value_ips' => 0,
-            'ratified_value' => 0
-        ];
+            // Crear nueva conexión Redis en cada job
+            $redis = Redis::connection();
 
-        // Procesar resultados para el reporte
-        $processedInvoices = $results->map(function ($result) use (&$totals) {
-            $totalValue = $result->invoiceAudit?->total_value ?? 0;
-            $initialGlossValue = $result->invoiceAudit?->auditoryFinalReport?->valor_glosa ?? 0;
-            $acceptedValueEps = $result->accepted_value_eps ?? 0;
-            $acceptedValueIps = $result->accepted_value_ips ?? 0;
-            $ratifiedValue = $result->eps_ratified_value ?? 0;
+            // Usar pipeline para múltiples operaciones Redis
+            $pipe = $redis->pipeline();
 
-            // Acumular totales
-            $totals['total_value'] += $totalValue;
-            $totals['initial_gloss_value'] += $initialGlossValue;
-            $totals['accepted_value_eps'] += $acceptedValueEps;
-            $totals['accepted_value_ips'] += $acceptedValueIps;
-            $totals['ratified_value'] += $ratifiedValue;
+            foreach ($results as $result) {
+                $totalValue = $result->invoiceAudit?->total_value ?? 0;
+                $initialGlossValue = $result->invoiceAudit?->auditoryFinalReport?->valor_glosa ?? 0;
+                $acceptedValueEps = $result->accepted_value_eps ?? 0;
+                $acceptedValueIps = $result->accepted_value_ips ?? 0;
+                $ratifiedValue = $result->eps_ratified_value ?? 0;
 
-            return [
-                "invoice_number" => $result->invoiceAudit?->invoice_number,
-                "sub_invoice_number" => $result->invoiceAudit?->invoice_number,
-                "gloss_code" => $result->invoiceAudit?->auditoryFinalReport?->codigos_glosa ?? "?????",
-                "contract_number" => $result->invoiceAudit?->contract_number,
-                "total_value" => formatNumber($totalValue),
-                "invoiced_month" => $result->invoiceAudit?->date_entry,
-                "affiliated_department" => $result->invoiceAudit?->third?->departmentAndCity?->departamento,
-                "initial_gloss_value" => formatNumber($initialGlossValue),
-                "pending_value" => "0",
-                "accepted_value_eps" => formatNumber($acceptedValueEps),
-                "accepted_value_ips" => formatNumber($acceptedValueIps),
-                "ratified_value" => formatNumber($ratifiedValue),
-                "justification" => "viene de la observacion de la tabla conciliation result",
-            ];
-        });
+                // Datos del invoice
+                $invoiceData = [
+                    "invoice_number" => $result->invoiceAudit?->invoice_number,
+                    "sub_invoice_number" => $result->invoiceAudit?->invoice_number,
+                    "gloss_code" => $result->invoiceAudit?->auditoryFinalReport?->codigos_glosa ?? "?????",
+                    "contract_number" => $result->invoiceAudit?->contract_number,
+                    "total_value" => formatNumber($totalValue),
+                    "invoiced_month" => $result->invoiceAudit?->date_entry,
+                    "affiliated_department" => $result->invoiceAudit?->third?->departmentAndCity?->departamento,
+                    "initial_gloss_value" => formatNumber($initialGlossValue),
+                    "pending_value" => "0",
+                    "accepted_value_eps" => formatNumber($acceptedValueEps),
+                    "accepted_value_ips" => formatNumber($acceptedValueIps),
+                    "ratified_value" => formatNumber($ratifiedValue),
+                    "justification" => "viene de la observacion de la tabla conciliation result",
+                ];
 
-        // Guardar chunk en archivo temporal (JSON)
-        $filePath = 'temp/conciliation_reports/' . $this->tempFileName;
+                // Agregar a lista de invoices
+                $pipe->rpush($this->invoicesKey, json_encode($invoiceData));
 
-        // Leer datos existentes
-        if (Storage::disk(Constants::DISK_FILES)->exists($filePath)) {
-            $existingData = json_decode(Storage::disk(Constants::DISK_FILES)->get($filePath), true);
-        } else {
-            $existingData = ['invoices' => [], 'totals' => []];
+                // Actualizar totales atómicamente
+                $pipe->hincrbyfloat($this->totalsKey, 'total_value', $totalValue);
+                $pipe->hincrbyfloat($this->totalsKey, 'initial_gloss_value', $initialGlossValue);
+                $pipe->hincrbyfloat($this->totalsKey, 'accepted_value_eps', $acceptedValueEps);
+                $pipe->hincrbyfloat($this->totalsKey, 'accepted_value_ips', $acceptedValueIps);
+                $pipe->hincrbyfloat($this->totalsKey, 'ratified_value', $ratifiedValue);
+            }
+
+            // Ejecutar todas las operaciones
+            $pipe->execute();
+
+        } catch (\Exception $e) {
+            Log::error("Error en ProcessConciliationReportChunk - Process: {$this->processId}, User: {$this->userId}: " . $e->getMessage());
+            throw $e;
         }
-
-        // Combinar datos
-        $existingData['invoices'] = array_merge($existingData['invoices'], $processedInvoices->toArray());
-
-
-        // Combinar totales
-        foreach ($totals as $key => $value) {
-            $existingData['totals'][$key] = ($existingData['totals'][$key] ?? 0) + $value;
-        }
-
-        Storage::disk(Constants::DISK_FILES)->put($filePath, json_encode($existingData));
     }
 }
