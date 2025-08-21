@@ -102,6 +102,7 @@ class ProcessConciliationReportChunk implements ShouldQueue
         // Combinar datos
         $existingData['invoices'] = array_merge($existingData['invoices'], $processedInvoices->toArray());
 
+
         // Combinar totales
         foreach ($totals as $key => $value) {
             $existingData['totals'][$key] = ($existingData['totals'][$key] ?? 0) + $value;

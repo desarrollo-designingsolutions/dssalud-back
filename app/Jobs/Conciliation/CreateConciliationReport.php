@@ -63,17 +63,7 @@ class CreateConciliationReport implements ShouldQueue
             $chunks = ceil($totalCount / $chunkSize);
             $tempFileName = 'conciliation_report_' . now()->format('Ymd_His') . '.json';
 
-            // Crear archivo temporal
-            Storage::disk(Constants::DISK_FILES)->put('temp/conciliation_reports/' . $tempFileName, json_encode([
-                'invoices' => [],
-                'totals' => [
-                    'total_value' => 0,
-                    'initial_gloss_value' => 0,
-                    'accepted_value_eps' => 0,
-                    'accepted_value_ips' => 0,
-                    'ratified_value' => 0
-                ]
-            ]));
+
 
             // Crear batch de jobs
             $jobs = [];
@@ -96,6 +86,19 @@ class CreateConciliationReport implements ShouldQueue
             $batch = Bus::batch($jobs)
                 ->name('conciliation_report_export')
                 ->onqueue('download_files')
+                ->before(function () use($tempFileName) {
+                    // Crear archivo temporal
+                    Storage::disk(Constants::DISK_FILES)->put('temp/conciliation_reports/' . $tempFileName, json_encode([
+                        'invoices' => [],
+                        'totals' => [
+                            'total_value' => 0,
+                            'initial_gloss_value' => 0,
+                            'accepted_value_eps' => 0,
+                            'accepted_value_ips' => 0,
+                            'ratified_value' => 0
+                        ]
+                    ]));
+                })
                 ->catch(function (Throwable $e) use ($userId) {
                     Log::error('Error en el batch de conciliación: ' . $e->getMessage());
 
