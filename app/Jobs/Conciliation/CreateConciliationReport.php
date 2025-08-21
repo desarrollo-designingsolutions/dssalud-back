@@ -130,11 +130,8 @@ class CreateConciliationReport implements ShouldQueue
                     self::cleanupRedisStatic($reconciliationGroupId, $userId, $processId);
 
                     // Notificar error al usuario
-                    Log::info("userId",[$userId]);
                     $user = User::find($userId);
-                    Log::info("user",[$user]);
                     if ($user) {
-                        Log::info("siiiiii");
                         $user->notify(new BellNotification([
                             'title' => "Error al generar reporte de conciliación",
                             'subtitle' => "Ocurrió un error durante la generación del reporte",
