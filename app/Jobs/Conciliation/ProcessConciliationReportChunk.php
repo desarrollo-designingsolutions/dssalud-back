@@ -12,19 +12,20 @@ use Illuminate\Support\Facades\Storage;
 use App\Helpers\Constants;
 use Illuminate\Support\Facades\Log;
 use App\Models\AuditoryFinalReport;
+use App\Models\ConciliationResult;
 
 class ProcessConciliationReportChunk implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $invoicesIds;
+    protected $reconciliationGroupId; // Cambiado
     protected $offset;
     protected $limit;
     protected $tempFileName;
 
-    public function __construct($invoicesIds, $offset, $limit, $tempFileName)
+    public function __construct($reconciliationGroupId, $offset, $limit, $tempFileName)
     {
-        $this->invoicesIds = $invoicesIds;
+        $this->reconciliationGroupId = $reconciliationGroupId;
         $this->offset = $offset;
         $this->limit = $limit;
         $this->tempFileName = $tempFileName;
@@ -36,16 +37,15 @@ class ProcessConciliationReportChunk implements ShouldQueue
             return;
         }
 
-        // Obtener los IDs del chunk actual
-        $chunkIds = array_slice($this->invoicesIds, $this->offset, $this->limit);
-
-        // Obtener las facturas del chunk
-        $invoices = AuditoryFinalReport::whereIn("factura_id", $chunkIds)
+        // Obtener directamente los conciliation results con paginación (CONSULTA MUCHO MÁS EFICIENTE)
+        $results = ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
             ->with([
                 'invoiceAudit',
-                'conciliationResult',
+                'invoiceAudit.auditoryFinalReport', // Relación a auditoryFinalReport
                 'invoiceAudit.third.departmentAndCity'
             ])
+            ->offset($this->offset)
+            ->limit($this->limit)
             ->get();
 
         // Variables para calcular totales
@@ -57,13 +57,13 @@ class ProcessConciliationReportChunk implements ShouldQueue
             'ratified_value' => 0
         ];
 
-        // Procesar facturas para el reporte
-        $processedInvoices = $invoices->map(function ($value) use (&$totals) {
-            $totalValue = $value->invoiceAudit?->total_value ?? 0;
-            $initialGlossValue = $value->valor_glosa ?? 0;
-            $acceptedValueEps = $value->conciliationResult?->accepted_value_eps ?? 0;
-            $acceptedValueIps = $value->conciliationResult?->accepted_value_ips ?? 0;
-            $ratifiedValue = $value->conciliationResult?->eps_ratified_value ?? 0;
+        // Procesar resultados para el reporte
+        $processedInvoices = $results->map(function ($result) use (&$totals) {
+            $totalValue = $result->invoiceAudit?->total_value ?? 0;
+            $initialGlossValue = $result->invoiceAudit?->auditoryFinalReport?->valor_glosa ?? 0;
+            $acceptedValueEps = $result->accepted_value_eps ?? 0;
+            $acceptedValueIps = $result->accepted_value_ips ?? 0;
+            $ratifiedValue = $result->eps_ratified_value ?? 0;
 
             // Acumular totales
             $totals['total_value'] += $totalValue;
@@ -73,13 +73,13 @@ class ProcessConciliationReportChunk implements ShouldQueue
             $totals['ratified_value'] += $ratifiedValue;
 
             return [
-                "invoice_number" => $value->invoiceAudit?->invoice_number,
-                "sub_invoice_number" => $value->invoiceAudit?->invoice_number,
-                "gloss_code" => $value->codigos_glosa,
-                "contract_number" => $value->contrato,
+                "invoice_number" => $result->invoiceAudit?->invoice_number,
+                "sub_invoice_number" => $result->invoiceAudit?->invoice_number,
+                "gloss_code" => $result->invoiceAudit?->auditoryFinalReport?->codigos_glosa ?? "?????",
+                "contract_number" => $result->invoiceAudit?->contract_number,
                 "total_value" => formatNumber($totalValue),
-                "invoiced_month" => $value->invoiceAudit?->date_entry,
-                "affiliated_department" => $value->invoiceAudit?->third?->departmentAndCity?->departamento,
+                "invoiced_month" => $result->invoiceAudit?->date_entry,
+                "affiliated_department" => $result->invoiceAudit?->third?->departmentAndCity?->departamento,
                 "initial_gloss_value" => formatNumber($initialGlossValue),
                 "pending_value" => "0",
                 "accepted_value_eps" => formatNumber($acceptedValueEps),

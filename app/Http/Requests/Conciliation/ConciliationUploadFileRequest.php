@@ -27,6 +27,7 @@ class ConciliationUploadFileRequest extends FormRequest
             'file' => 'required|file',
             'user_id' => 'required|string',
             'company_id' => 'required|string',
+            'reconciliation_group_id' => 'required|string',
         ];
 
         return $rules;
@@ -41,6 +42,7 @@ class ConciliationUploadFileRequest extends FormRequest
             'user_id.required' => 'El archivo es obligatorio.',
             'company_id.string' => 'El ID de la compañía debe ser una cadena de texto.',
             'company_id.required' => 'El archivo es obligatorio.',
+            'reconciliation_group_id.required' => 'El archivo es obligatorio.',
         ];
     }
 

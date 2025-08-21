@@ -34,6 +34,8 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
 
     public int $tries = 3;
 
+    public string $reconciliation_group_id;
+
     // Definir el ID único para el Job
     public function uniqueId(): string
     {
@@ -46,11 +48,12 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
         return 3600; // Por ejemplo, 1 hora. Ajusta según sea necesario.
     }
 
-    public function __construct(string $filePath, string $batchId, int $totalRows)
+    public function __construct(string $filePath, string $batchId, int $totalRows, string $reconciliation_group_id)
     {
         $this->filePath = $filePath;
         $this->batchId = $batchId;
         $this->totalRows = $totalRows;
+        $this->reconciliation_group_id = $reconciliation_group_id;
         $this->currentBatchId = $batchId;
         $this->totalRowsForJobProgress = $totalRows; // Asignar al trait
     }
@@ -70,15 +73,12 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             // Estado inicial del Job
             $this->dispatchProgressEvent(0, 'Iniciando importación', 'queued', 'Preparando...');
 
-             $validationService = new CsvValidationService($this->batchId);
+            $validationService = new CsvValidationService($this->batchId);
             $validationService->setTotalRows($this->totalRows);
             $validationService->setEventDispatcher(function ($processedRecordsCurrentPhase, $action, $status, $element) {
                 // Este callback es llamado por CsvValidationService y actualiza el progreso principal
                 $this->dispatchProgressEvent($processedRecordsCurrentPhase, $action, $status, $element);
             });
-
-
-
 
             // Log::info("Validando cabeceras y filas del CSV...");
             $errors = $validationService->validateCsv($this->filePath);
@@ -130,7 +130,7 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             // // Paso 4: Importación de datos
             // Log::info('CSV headers and rows are valid. Proceeding with import...');
             $this->dispatchProgressEvent($this->totalRows, 'Importando datos', 'finalizing', 'Iniciando...');
-            $this->import11ConcurrentCsv($this->filePath); // Corregido el nombre de la función
+            $this->import11ConcurrentCsv($this->filePath,$this->reconciliation_group_id); // Corregido el nombre de la función
 
             $this->dispatchProgressEvent($this->totalRows, 'Importación completada', 'completed', 'Finalizado');
             Redis::connection('redis_6380')->hset("batch:{$this->batchId}:metadata", 'status', 'completed');

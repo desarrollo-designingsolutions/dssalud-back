@@ -41,4 +41,9 @@ class ReconciliationGroup extends Model
         return $this->hasMany(AuditoryFinalReport::class,"nit","third_id");
     }
 
+    public function conciliationResult()
+    {
+        return $this->hasMany(ConciliationResult::class,"reconciliation_group_id","id");
+    }
+
 }

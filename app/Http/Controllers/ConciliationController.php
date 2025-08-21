@@ -120,6 +120,7 @@ class ConciliationController extends Controller
 
     public function uploadFile(ConciliationUploadFileRequest $request)
     {
+        $reconciliation_group_id = $request->input('reconciliation_group_id');
         $company_id = $request->input('company_id');
         $user_id = $request->input('user_id');
         $uploadedFile = $request->file('file');
@@ -202,7 +203,7 @@ class ConciliationController extends Controller
             );
 
             // Siempre despachar el Job de importación de CSV
-            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows)->onQueue('import_conciliations');
+            ProcessCsvImportJob::dispatch($fullPath, $batchId, $totalRows,$reconciliation_group_id)->onQueue('import_conciliations');
 
             // Despachar el evento inicial de progreso para la UI
             ImportProgressEvent::dispatch(

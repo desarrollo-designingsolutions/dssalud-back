@@ -318,7 +318,7 @@ trait ImportHelper
      *
      * @param  string  $filePath  Ruta completa al archivo CSV.
      */
-    protected function import11ConcurrentCsv(string $filePath): void
+    protected function import11ConcurrentCsv(string $filePath, string $reconciliation_group_id): void
     {
         // Log::info("iniciando import11Concurrent desde CSV");
         $now = now()->format('Y-m-d H:i:s');
@@ -344,7 +344,7 @@ trait ImportHelper
 
         for ($i = 0; $i < $numberOfProcesses; $i++) {
             // CORREGIDO: Eliminado $this de la cláusula use. $this ya es accesible y su inclusión explícita causa el error de serialización.
-            $tasks[] = function () use ($filePath, $i, $numberOfProcesses, $now, $batchId) {
+            $tasks[] = function () use ($filePath, $i, $numberOfProcesses, $now, $batchId, $reconciliation_group_id) {
                 DB::reconnect();
                 $handle = fopen($filePath, 'r');
                 fgets($handle); // Skip header
@@ -361,25 +361,19 @@ trait ImportHelper
                     $row = array_map('trim', $row); // Elimina espacios en blanco de cada elemento
                     $row = ensureUtf8($row); // Convierte todas las cadenas a UTF-8
 
-                    // Verificar si auditory_final_report_id ya existe con estado CONCILIATION_INVOICE_EST_002
-                    // $auditory_final_report_id = (string) $row[1];
-                    // if (DB::table('conciliation_results')
-                    //     ->where('auditory_final_report_id', $auditory_final_report_id)
-                    //     ->exists()
-                    // ) {
-                    //     Log::info("Saltando auditory_final_report_id duplicado: {$auditory_final_report_id} ");
-                    //     continue;
-                    // }
 
                     $dataToSave[] = [
                         'id' => (string) Str::uuid(),
                         'auditory_final_report_id' => (string) $row[0],
                         'invoice_audit_id' => (string) $row[1],
+                        'reconciliation_group_id' => $reconciliation_group_id,
                         'response_status' => (string) $row[29],
                         'autorization_number' => (string) $row[30],
                         'accepted_value_ips' => (float) str_replace(',', '.', $row[32]),
                         'accepted_value_eps' => (float) str_replace(',', '.', $row[33]),
                         'eps_ratified_value' => (float) str_replace(',', '.', $row[34]),
+                        'eps_ratified_value' => (float) str_replace(',', '.', $row[34]),
+                        'observation' =>  $row[35],
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];

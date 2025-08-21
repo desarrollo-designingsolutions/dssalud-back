@@ -17,6 +17,7 @@ use Throwable;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\Conciliation\ConciliationGenerateConciliationReportExcelExport;
+use App\Models\ConciliationResult;
 use App\Repositories\ConciliationReportRepository;
 use App\Repositories\ReconciliationGroupRepository;
 
@@ -40,11 +41,10 @@ class CreateConciliationReport implements ShouldQueue
     public function handle()
     {
         try {
-            // Obtener el reconciliation group con las invoices
+            // Obtener el reconciliation group
             $reconciliationGroupRepository = app(ReconciliationGroupRepository::class);
             $reconciliationGroup = $reconciliationGroupRepository->find(
                 id: $this->reconciliationGroupId,
-                with: ["invoices:id"],
                 select: ["id", "third_id"]
             );
 
@@ -52,19 +52,18 @@ class CreateConciliationReport implements ShouldQueue
                 throw new \Exception("No se encontró el grupo de conciliación");
             }
 
-            // Obtener IDs de facturas
-            $invoicesIds = $reconciliationGroup->invoices->pluck("id")->toArray();
-            $totalCount = count($invoicesIds);
+            // Obtener el conteo TOTAL de conciliation results para este grupo (MUCHO MÁS EFICIENTE)
+            $totalCount = ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)->count();
 
             if ($totalCount === 0) {
-                throw new \Exception("No se encontraron facturas para procesar");
+                throw new \Exception("No se encontraron resultados de conciliación para procesar");
             }
 
-            $chunkSize = 500; // Tamaño de cada chunk
+            $chunkSize = 500;
             $chunks = ceil($totalCount / $chunkSize);
             $tempFileName = 'conciliation_report_' . now()->format('Ymd_His') . '.json';
 
-            // Crear archivo temporal vacío
+            // Crear archivo temporal
             Storage::disk(Constants::DISK_FILES)->put('temp/conciliation_reports/' . $tempFileName, json_encode([
                 'invoices' => [],
                 'totals' => [
@@ -82,7 +81,7 @@ class CreateConciliationReport implements ShouldQueue
                 $offset = $i * $chunkSize;
 
                 $jobs[] = new ProcessConciliationReportChunk(
-                    $invoicesIds,
+                    $this->reconciliationGroupId, // Pasamos el group ID
                     $offset,
                     $chunkSize,
                     $tempFileName
@@ -175,7 +174,6 @@ class CreateConciliationReport implements ShouldQueue
                             'invoices' => $invoicesData,
                         ];
 
-                        Log::info("data", [$data]);
                         // Generar Excel
                         $excel = Excel::raw(new ConciliationGenerateConciliationReportExcelExport($data), \Maatwebsite\Excel\Excel::XLSX);
 
@@ -191,8 +189,6 @@ class CreateConciliationReport implements ShouldQueue
 
                         // Notificar al usuario
                         $user = User::find($userId);
-                        Log::info("userId",[$userId]);
-                        Log::info("user",[$user]);
                         if ($user) {
                             $user->notify(new BellNotification([
                                 'title' => "Acta de conciliación generado con éxito",
@@ -232,5 +228,4 @@ class CreateConciliationReport implements ShouldQueue
             }
         }
     }
-
 }
