@@ -81,7 +81,7 @@ class ProcessCsvImportJob implements ShouldBeUnique, ShouldQueue // Implementar 
             });
 
             // Log::info("Validando cabeceras y filas del CSV...");
-            $errors = $validationService->validateCsv($this->filePath);
+            $errors = $validationService->validateCsv($this->filePath,$this->reconciliation_group_id);
 
             // Paso 3: Recolección y precarga de IDs de factura, y validación de facturas completas
             $this->dispatchProgressEvent($this->totalRows, 'Recolectando IDs de factura únicos', 'active', 'Recolectando IDs de factura únicos...');

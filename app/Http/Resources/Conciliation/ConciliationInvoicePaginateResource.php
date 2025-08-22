@@ -15,6 +15,7 @@ class ConciliationInvoicePaginateResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'invoice_audit_id' => $this->invoice_audit_id,
             'id' => $this->id,
             'invoice_number' => $this->invoiceAudit?->invoice_number,
             'total_value' => formatNumber($this->invoiceAudit?->total_value),
