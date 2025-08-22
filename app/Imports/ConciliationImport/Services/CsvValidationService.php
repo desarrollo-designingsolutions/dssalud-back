@@ -5,6 +5,7 @@ namespace App\Imports\ConciliationImport\Services;
 use App\Imports\ConciliationImport\Traits\ImportHelper;
 use App\Models\AuditoryFinalReport;
 use App\Models\InvoiceAudit;
+use App\Models\ReconciliationGroupInvoice;
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
@@ -90,7 +91,7 @@ class CsvValidationService
         return $this->requiredHeaders;
     }
 
-    public function validateCsv(string $filePath): array
+    public function validateCsv(string $filePath, string $reconciliation_group_id): array
     {
         $cachePrefix = config('database.redis.options.prefix', '');
         Log::info("ingreso en validateCsv");
@@ -141,9 +142,32 @@ class CsvValidationService
             if ($this->eventDispatcher) {
                 ($this->eventDispatcher)(0, 'Precarga de datos completada', 'active', 'Valores precargados');
             }
+
+
+            if ($this->eventDispatcher) {
+                ($this->eventDispatcher)(
+                    0,
+                    'Validación de facturas contra grupo de conciliación',
+                    'active',
+                    'Verificando IDs en reconciliation_group_invoices...'
+                );
+            }
+
+            Log::info("valuesFromCsv", $valuesFromCsv["FACTURA_ID"]);
+            $this->validarFacturaIdsEnReconciliationGroupInvoice($valuesFromCsv["FACTURA_ID"], $reconciliation_group_id);
+            if ($this->eventDispatcher) {
+                ($this->eventDispatcher)(
+                    0,
+                    'Validación contra grupo completada',
+                    'active',
+                    'Facturas validadas con reconciliation_group_invoices'
+                );
+            }
         } else {
             // Log::warning("No se encontraron valores en el CSV para precargar datos de auditoría para la validación.");
         }
+
+
 
         if ($this->eventDispatcher) {
             ($this->eventDispatcher)(0, 'Validación de lineas', 'active', 'Validación de lineas...');
@@ -765,5 +789,58 @@ class CsvValidationService
         }
 
         return $errors;
+    }
+
+    function validarFacturaIdsEnReconciliationGroupInvoice(array $csvInvoiceIds, string $reconciliation_group_id): void
+    {
+        // Obtener IDs de la base de datos
+        $dbInvoiceIds = ReconciliationGroupInvoice::select(["invoice_audit_id"])
+            ->where("reconciliation_group_id", $reconciliation_group_id)
+            ->get()
+            ->pluck("invoice_audit_id")
+            ->toArray();
+
+        Log::info("dbInvoiceIds", [$dbInvoiceIds]);
+        Log::info("reconciliation_group_id", [$reconciliation_group_id]);
+
+
+        // Convertir ambos arrays a valores únicos para evitar duplicados
+        $csvIds = array_unique($csvInvoiceIds);
+        $dbIds = array_unique($dbInvoiceIds);
+
+        // Caso 1: Si el CSV está vacío
+        if (empty($csvIds)) {
+
+            $this->addError(
+                0,
+                'FACTURA_ID',
+                'La columna FACTURA_ID del CSV está vacía o no contiene IDs válidos',
+                'empty_factura_id',
+                '',
+                json_encode([])
+            );
+            return;
+        }
+
+        // Caso 2: Si hay IDs en el CSV que no existen en la BD (validación específica)
+        $missingIds = array_diff($csvIds, $dbIds);
+
+        if (!empty($missingIds)) {
+
+            // Agregar error detallado para cada ID faltante
+            foreach ($missingIds as $missingId) {
+                $this->addError(
+                    0, // Fila 0 para errores generales de validación
+                    'FACTURA_ID',
+                    "El ID de factura '$missingId' no existe en este grupo de conciliación",
+                    'invalid_factura_id',
+                    $missingId,
+                    json_encode(['factura_id' => $missingId])
+                );
+            }
+
+            // Log adicional opcional
+            Log::warning("Se encontraron " . count($missingIds) . " ID(s) de FACTURA_ID inválidos");
+        }
     }
 }
