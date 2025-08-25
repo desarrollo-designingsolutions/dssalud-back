@@ -95,7 +95,6 @@ class ProcessConciliationReportChunk implements ShouldQueue
                 ];
 
                 // Agregar a lista de invoices
-                Log::info("aaa",[$invoiceData]);
                 $pipe->rpush($this->invoicesKey, json_encode($invoiceData));
 
                 // Actualizar totales atómicamente
