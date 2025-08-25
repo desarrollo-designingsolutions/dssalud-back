@@ -52,7 +52,7 @@ class ProcessConciliationReportChunk implements ShouldQueue
             ];
             $cacheService = new CacheService();
             $cacheKey = $cacheService->generateKey("ConciliationResult_donloadFile:", $request, 'string');
-            return $cacheService->remember($cacheKey, function () {
+            $results= $cacheService->remember($cacheKey, function () {
                 return ConciliationResult::where("reconciliation_group_id", $this->reconciliationGroupId)
                     ->with([
                         'invoiceAudit',
@@ -95,6 +95,7 @@ class ProcessConciliationReportChunk implements ShouldQueue
                 ];
 
                 // Agregar a lista de invoices
+                Log::info("aaa",[$invoiceData]);
                 $pipe->rpush($this->invoicesKey, json_encode($invoiceData));
 
                 // Actualizar totales atómicamente
