@@ -88,9 +88,6 @@ class ReconciliationGroupWebController extends Controller
                 // NEW: Validación de teléfonos como array y cada item con exactamente 10 dígitos
                 'phones' => 'required|array|min:1',
                 'phones.*' => ['required', 'regex:/^\d{10}$/'],
-
-                // Si tu id es entero en DB, puedes usar integer (si prefieres no tocarlo, déjalo como string).
-                'reconciliation_group_id' => 'required|integer|exists:reconciliation_groups,id',
             ], [
                 'name.required' => 'El campo nombre es obligatorio.',
                 'message.required' => 'El campo mensaje es obligatorio.',
