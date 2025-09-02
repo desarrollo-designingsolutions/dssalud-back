@@ -59,13 +59,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .loading-title {
@@ -190,9 +185,7 @@
         }
 
         /* Main Content */
-        .main {
-            padding: 64px 0;
-        }
+        .main { padding: 64px 0; }
 
         .content-wrapper {
             max-width: 900px;
@@ -282,9 +275,7 @@
             font-weight: 600;
         }
 
-        .card-content {
-            padding: 0 32px 32px;
-        }
+        .card-content { padding: 0 32px 32px; }
 
         /* Prestador Information */
         .prestador-grid {
@@ -294,10 +285,7 @@
             margin-bottom: 32px;
         }
 
-        .info-field {
-            display: flex;
-            flex-direction: column;
-        }
+        .info-field { display: flex; flex-direction: column; }
 
         .info-label {
             font-size: 12px;
@@ -326,7 +314,7 @@
         }
 
         .info-value.nit {
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-family: 'SF Mono','Monaco','Inconsolata','Roboto Mono', monospace;
             font-size: 16px;
             color: #0f172a;
             font-weight: 600;
@@ -359,13 +347,8 @@
             letter-spacing: -0.02em;
         }
 
-        .value-number.blue {
-            color: #1e40af;
-        }
-
-        .value-number.green {
-            color: #166534;
-        }
+        .value-number.blue { color: #1e40af; }
+        .value-number.green { color: #166534; }
 
         .value-unit {
             font-size: 12px;
@@ -375,13 +358,8 @@
             letter-spacing: 0.05em;
         }
 
-        .value-unit.blue {
-            color: #3b82f6;
-        }
-
-        .value-unit.green {
-            color: #22c55e;
-        }
+        .value-unit.blue { color: #3b82f6; }
+        .value-unit.green { color: #22c55e; }
 
         /* Summary Bar */
         .summary-bar {
@@ -416,9 +394,7 @@
             font-size: 12px;
         }
 
-        .summary-right {
-            text-align: right;
-        }
+        .summary-right { text-align: right; }
 
         .summary-label {
             font-size: 12px;
@@ -455,7 +431,7 @@
 
         .process-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
             border-color: rgba(59, 130, 246, 0.3);
         }
 
@@ -479,23 +455,14 @@
             font-weight: 600;
         }
 
-        .process-card-title {
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        .process-card-content {
-            color: #cbd5e1;
-            line-height: 1.6;
-            font-size: 14px;
-        }
+        .process-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+        .process-card-content { color: #cbd5e1; line-height: 1.6; font-size: 14px; }
 
         /* Form Styles */
         .form-card {
             background: rgba(255, 255, 255, 0.98);
             border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
@@ -520,13 +487,9 @@
             font-weight: 400;
         }
 
-        .form-content {
-            padding: 0 32px 40px;
-        }
+        .form-content { padding: 0 32px 40px; }
 
-        .form-group {
-            margin-bottom: 32px;
-        }
+        .form-group { margin-bottom: 32px; }
 
         .form-label {
             display: block;
@@ -552,7 +515,7 @@
         .form-control:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
             background: white;
         }
 
@@ -573,7 +536,7 @@
         .form-textarea:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
             background: white;
         }
 
@@ -661,7 +624,7 @@
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 14px 0 rgba(59,130,246,0.4);
             transition: all 0.3s ease;
             letter-spacing: -0.01em;
             display: flex;
@@ -673,17 +636,15 @@
         .submit-btn:hover {
             background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px 0 rgba(59, 130, 246, 0.5);
+            box-shadow: 0 8px 25px 0 rgba(59,130,246,0.5);
         }
 
-        .submit-btn:active {
-            transform: translateY(0);
-        }
+        .submit-btn:active { transform: translateY(0); }
 
         .btn-icon {
             width: 16px;
             height: 16px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
             border-radius: 4px;
             display: flex;
             align-items: center;
@@ -707,8 +668,8 @@
             background: rgba(255, 255, 255, 0.98);
             border-radius: 20px;
             padding: 48px 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            border: 1px solid rgba(226,232,240,0.8);
         }
 
         .success-icon-wrapper {
@@ -720,14 +681,10 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 24px;
-            box-shadow: 0 8px 25px 0 rgba(34, 197, 94, 0.3);
+            box-shadow: 0 8px 25px 0 rgba(34,197,94,0.3);
         }
 
-        .success-icon {
-            color: white;
-            font-size: 32px;
-            font-weight: 600;
-        }
+        .success-icon { color: white; font-size: 32px; font-weight: 600; }
 
         .success-title {
             font-size: 28px;
@@ -762,58 +719,19 @@
         }
 
         /* Utility Classes */
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero-title {
-                font-size: 32px;
-            }
-
-            .prestador-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .summary-bar {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .summary-right {
-                text-align: center;
-            }
-
-            .card-content,
-            .form-content {
-                padding: 0 24px 32px;
-            }
-
-            .card-header,
-            .form-header {
-                padding: 24px 24px 0;
-            }
-
-            .process-card {
-                padding: 24px;
-            }
-
-            .form-error {
-                font-size: 12px;
-                margin-top: 8px;
-                min-height: 20px;
-                color: #dc2626;
-            }
-
-            .alert.alert-danger {
-                background-color: #fee2e2;
-                color: #dc2626;
-                padding: 10px;
-                margin-bottom: 15px;
-                border-radius: 4px;
-                font-size: 14px;
-            }
+            .hero-title { font-size: 32px; }
+            .prestador-grid { grid-template-columns: 1fr; }
+            .summary-bar { flex-direction: column; text-align: center; }
+            .summary-right { text-align: center; }
+            .card-content, .form-content { padding: 0 24px 32px; }
+            .card-header, .form-header { padding: 24px 24px 0; }
+            .process-card { padding: 24px; }
+            .form-error { font-size: 12px; margin-top: 8px; min-height: 20px; color: #dc2626; }
+            .alert.alert-danger { background-color: #fee2e2; color: #dc2626; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 14px; }
         }
     </style>
 </head>
@@ -962,6 +880,11 @@
                                     <div class="form-error text-danger" id="emails-error"></div>
                                 </div>
                                 <div class="form-group">
+                                    <label for="phones" class="form-label">Teléfonos <span class="form-error">(*)</span></label>
+                                    <input id="phones" name="phones[]" type="text" class="form-control" placeholder="Ej: 3001234567, 3159876543"><!-- NEW: placeholder guía -->
+                                    <div class="form-error text-danger" id="phones-error"></div>
+                                </div>
+                                <div class="form-group">
                                     <label for="comments" class="form-label">Comentarios Adicionales <span class="form-error">(*)</span></label>
                                     <textarea id="comments" name="message" class="form-textarea"></textarea>
                                     <div class="form-error text-danger" id="message-error"></div>
@@ -1074,14 +997,17 @@
 
             // If errors is a string (general message), convert to object with general error
             if (typeof errors === 'string') {
-                errors = {
-                    general: [errors]
-                };
+                errors = { general: [errors] };
             }
 
             // Aggregate email errors (e.g., emails.0, emails.1, etc.)
             const emailErrors = Object.keys(errors)
                 .filter(key => key.startsWith('emails.'))
+                .flatMap(key => errors[key]);
+
+            // Aggregate phone errors (e.g., phones.0, phones.1, etc.)
+            const phoneErrors = Object.keys(errors)
+                .filter(key => key.startsWith('phones.'))
                 .flatMap(key => errors[key]);
 
             // Display errors by field
@@ -1093,6 +1019,12 @@
             }
             if (emailErrors.length > 0) {
                 document.getElementById('emails-error').textContent = emailErrors.join('; ');
+            }
+            if (errors.phones) {
+                document.getElementById('phones-error').textContent = errors.phones.join('; ');
+            }
+            if (phoneErrors.length > 0) {
+                document.getElementById('phones-error').textContent = phoneErrors.join('; ');
             }
             if (errors.message) {
                 document.getElementById('message-error').textContent = errors.message.join('; ');
@@ -1114,6 +1046,26 @@
             }
         }
 
+        // =========================
+        // NEW: Utilidades de parsing/validación (coma como separador)
+        // =========================
+        function parseCommaList(input) {
+            return String(input || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean);
+        }
+
+        function isValidPhone(phone) {
+            return /^\d{10}$/.test(phone); // exactamente 10 dígitos
+        }
+
+        function validatePhones(phones) {
+            const invalid = phones.filter(p => !isValidPhone(p));
+            return { ok: invalid.length === 0, invalid };
+        }
+        // =========================
+
         // Form submission handler with AJAX
         document.addEventListener('DOMContentLoaded', function() {
             // Check if notification was already sent
@@ -1129,15 +1081,36 @@
                 e.preventDefault();
 
                 const formData = new FormData(form);
+
+                // ---- EMAILS: aceptar separados por coma
                 const emailsInput = formData.get('emails[]') || '';
                 formData.delete('emails[]');
-                const emails = emailsInput.split(';').filter(email => email.trim() !== '');
-                if (emails.length === 0) {
-                    // showError({ emails: ['Por favor, ingrese al menos un correo electrónico válido.'] });
-                    // return;
-                }
-                emails.forEach(email => formData.append('emails[]', email.trim()));
+                const emails = parseCommaList(emailsInput);
+                emails.forEach(email => formData.append('emails[]', email));
 
+                // ---- PHONES: separados por coma y exactamente 10 dígitos (NEW)
+                const phonesInput = formData.get('phones[]') || '';
+                formData.delete('phones[]');
+                let phones = parseCommaList(phonesInput);
+
+                // Limpieza defensiva: dejar solo dígitos por si hay espacios o guiones
+                phones = phones.map(p => p.replace(/\D+/g, ''));
+
+                const phoneCheck = validatePhones(phones);
+                if (phones.length === 0) {
+                    showError({ phones: ['Ingrese al menos un teléfono.'] });
+                    return;
+                }
+                if (!phoneCheck.ok) {
+                    showError({
+                        phones: [
+                            `Los siguientes teléfonos no son válidos (deben tener exactamente 10 dígitos): ${phoneCheck.invalid.join(', ')}`
+                        ]
+                    });
+                    return;
+                }
+                // Reinyectar al FormData
+                phones.forEach(p => formData.append('phones[]', p));
 
                 try {
                     const response = await fetch(form.action, {
@@ -1160,9 +1133,9 @@
 
                     if (response.ok) {
                         if (result.already_sent) {
-                            showSuccessNotification(); // Muestra que ya había sido enviada
+                            showSuccessNotification(); // Ya había sido enviada
                         } else {
-                            showSuccessContent(); // Muestra mensaje de éxito normal
+                            showSuccessContent(); // Éxito
                         }
                     } else {
                         showError(result.errors || result.message || 'Error al enviar la notificación');
@@ -1174,5 +1147,4 @@
         });
     </script>
 </body>
-
 </html>
