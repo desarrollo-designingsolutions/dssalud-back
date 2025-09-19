@@ -438,7 +438,7 @@ class FileController extends Controller
     {
         try {
             $request->validate([
-                'files.*' => 'required|file|max:30720',
+                'files.*' => 'required|file|max:209715200',
                 'user_id' => 'required',
                 'company_id' => 'required',
                 'fileable_type' => 'required',

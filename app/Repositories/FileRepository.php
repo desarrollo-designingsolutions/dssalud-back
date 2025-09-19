@@ -46,7 +46,7 @@ class FileRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($request) {
 
             $query = QueryBuilder::for($this->model->query())
-            ->select(["files.id","files.created_at","files.filename","files.support_type_id"])
+            ->select(["files.id","files.created_at","files.filename","files.support_type_id","files.pathname"])
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
