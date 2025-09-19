@@ -4,7 +4,9 @@ namespace App\Repositories;
 
 use App\Helpers\Constants;
 use App\Models\File;
+use App\QueryBuilder\Sort\RelatedTableSort;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class FileRepository extends BaseRepository
@@ -44,6 +46,7 @@ class FileRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($request) {
 
             $query = QueryBuilder::for($this->model->query())
+            ->select(["files.id","files.created_at","files.filename","files.support_type_id"])
                 ->allowedFilters([
                     AllowedFilter::callback('inputGeneral', function ($query, $value) {
                         $query->where(function ($query) use ($value) {
@@ -56,7 +59,14 @@ class FileRepository extends BaseRepository
                     }),
                 ])
                 ->allowedSorts([
-                    'observation',
+                    'created_at',
+                    'filename',
+                    AllowedSort::custom('support_type_name', new RelatedTableSort(
+                        'files',
+                        'support_types',
+                        'name',
+                        'support_type_id',
+                    )),
                 ])
                 ->where(function ($query) use ($request) {
                     if (isset($request['company_id']) && ! empty($request['company_id'])) {

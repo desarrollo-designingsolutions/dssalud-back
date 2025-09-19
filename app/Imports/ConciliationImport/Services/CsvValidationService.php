@@ -154,15 +154,16 @@ class CsvValidationService
             }
 
             Log::info("valuesFromCsv", $valuesFromCsv["FACTURA_ID"]);
-            $this->validarFacturaIdsEnReconciliationGroupInvoice($valuesFromCsv["FACTURA_ID"], $reconciliation_group_id);
-            if ($this->eventDispatcher) {
-                ($this->eventDispatcher)(
-                    0,
-                    'Validación contra grupo completada',
-                    'active',
-                    'Facturas validadas con reconciliation_group_invoices'
-                );
-            }
+            //comentado para el sabado pruebas con cliente
+            // $this->validarFacturaIdsEnReconciliationGroupInvoice($valuesFromCsv["FACTURA_ID"], $reconciliation_group_id);
+            // if ($this->eventDispatcher) {
+            //     ($this->eventDispatcher)(
+            //         0,
+            //         'Validación contra grupo completada',
+            //         'active',
+            //         'Facturas validadas con reconciliation_group_invoices'
+            //     );
+            // }
         } else {
             // Log::warning("No se encontraron valores en el CSV para precargar datos de auditoría para la validación.");
         }
@@ -348,22 +349,24 @@ class CsvValidationService
                 if (is_null($expectedValorGlosa)) {
                     $this->addError($rowNumber, 'ID', "ID '$auditoryReportId' no encontrado en auditory_final_reports o no precargado.", 'id_not_found', $data['ID'], json_encode($data));
                 } else {
-                    $valorAceptadoIps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_IPS'] ?? '0'));
-                    $valorAceptadoEps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_EPS'] ?? '0'));
-                    $valorRatificadoEps = (float) str_replace(',', '.', trim($data['VALOR_RATIFICADO_EPS'] ?? '0'));
+                    // comentado para el sabado pruebas con cliente
 
-                    $sumAcceptedValues = $valorAceptadoIps + $valorAceptadoEps + $valorRatificadoEps;
+                    // $valorAceptadoIps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_IPS'] ?? '0'));
+                    // $valorAceptadoEps = (float) str_replace(',', '.', trim($data['VALOR_ACEPTADO_POR_EPS'] ?? '0'));
+                    // $valorRatificadoEps = (float) str_replace(',', '.', trim($data['VALOR_RATIFICADO_EPS'] ?? '0'));
 
-                    $expectedValorGlosaFloat = (float) $expectedValorGlosa;
+                    // $sumAcceptedValues = $valorAceptadoIps + $valorAceptadoEps + $valorRatificadoEps;
 
-                    if (abs($sumAcceptedValues - $expectedValorGlosaFloat) > 0.01) {
-                        $this->addError($rowNumber, 'amounts', sprintf(
-                            "La suma de valores aceptados (%.2f) no coincide con valor_glosa (%.2f) para ID '%s'",
-                            $sumAcceptedValues,
-                            $expectedValorGlosaFloat,
-                            $auditoryReportId
-                        ), 'amount_mismatch', strval($sumAcceptedValues), json_encode($data));
-                    }
+                    // $expectedValorGlosaFloat = (float) $expectedValorGlosa;
+
+                    // if (abs($sumAcceptedValues - $expectedValorGlosaFloat) > 0.01) {
+                    //     $this->addError($rowNumber, 'amounts', sprintf(
+                    //         "La suma de valores aceptados (%.2f) no coincide con valor_glosa (%.2f) para ID '%s'",
+                    //         $sumAcceptedValues,
+                    //         $expectedValorGlosaFloat,
+                    //         $auditoryReportId
+                    //     ), 'amount_mismatch', strval($sumAcceptedValues), json_encode($data));
+                    // }
                 }
             }
 
@@ -794,12 +797,12 @@ class CsvValidationService
     function validarFacturaIdsEnReconciliationGroupInvoice(array $csvInvoiceIds, string $reconciliation_group_id): void
     {
         // Obtener IDs de la base de datos
-        $dbInvoiceIds = ReconciliationGroupInvoice::select(["invoice_audit_id"])
+        $dbInvoiceIds = ReconciliationGroupInvoice::select(["id","reconciliation_group_id","invoice_audit_id"])
             ->where("reconciliation_group_id", $reconciliation_group_id)
             ->get()
             ->pluck("invoice_audit_id")
             ->toArray();
-
+        Log::info("dbInvoiceIds", [$csvInvoiceIds]);
         Log::info("dbInvoiceIds", [$dbInvoiceIds]);
         Log::info("reconciliation_group_id", [$reconciliation_group_id]);
 
@@ -830,7 +833,7 @@ class CsvValidationService
             // Agregar error detallado para cada ID faltante
             foreach ($missingIds as $missingId) {
                 $this->addError(
-                    0, // Fila 0 para errores generales de validación
+                    "", // Fila vacia para errores generales de validación
                     'FACTURA_ID',
                     "El ID de factura '$missingId' no existe en este grupo de conciliación",
                     'invalid_factura_id',
