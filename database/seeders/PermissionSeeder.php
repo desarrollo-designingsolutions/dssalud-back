@@ -97,9 +97,15 @@ class PermissionSeeder extends Seeder
             ],
             [
                 'id' => 14,
+                'name' => 'contract.list',
+                'description' => 'Visualizar Menu Contratos',
+                'menu_id' => 14,
+            ],
+            [
+                'id' => 15,
                 'name' => 'saludIA.list',
                 'description' => 'Visualizar Menu Salud IA',
-                'menu_id' => 14,
+                'menu_id' => 15,
             ],
         ];
 
