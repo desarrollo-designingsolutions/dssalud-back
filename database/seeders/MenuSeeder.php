@@ -122,6 +122,14 @@ class MenuSeeder extends Seeder
                 'icon' => 'free-rights',
                 'requiredPermission' => 'conciliation.list',
             ],
+            [
+                'id' => 14,
+                'order' => 140,
+                'title' => 'Salud IA',
+                'to' => 'SaludIA-List',
+                'icon' => 'tabler-message-chatbot',
+                'requiredPermission' => 'saludIA.list',
+            ],
         ];
 
         // Inicializar la barra de progreso
@@ -130,7 +138,7 @@ class MenuSeeder extends Seeder
 
         foreach ($arrayData as $key => $value) {
             $data = Menu::find($value['id']);
-            if (! $data) {
+            if (!$data) {
                 $data = new Menu;
             }
             $data->id = $value['id'];

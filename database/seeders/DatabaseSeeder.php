@@ -21,14 +21,14 @@ class DatabaseSeeder extends Seeder
         // 3. php artisan world:seeder
 
         $this->call([
-            // WorldTableSeeder::class,
-            // MenuSeeder::class,
-            // PermissionSeeder::class,
-            // RoleSeeder::class,
-            // CompanySeeder::class,
-            // UserSeeder::class,
+            WorldTableSeeder::class,
+            MenuSeeder::class,
+            PermissionSeeder::class,
+            RoleSeeder::class,
+            CompanySeeder::class,
+            UserSeeder::class,
 
-            // ThirdSeederXlsx::class,
+                // ThirdSeederXlsx::class,
             TypeCodeGlosaSeeder::class,
             GeneralCodeGlosaSeeder::class,
             CodeGlosaSeeder::class,
