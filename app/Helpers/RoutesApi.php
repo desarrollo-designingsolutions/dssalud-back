@@ -30,5 +30,6 @@ class RoutesApi
         'routes/reconciliationGroup.php',
         'routes/conciliation.php',
         'routes/processBatch.php',
+        'routes/contract.php',
     ];
 }

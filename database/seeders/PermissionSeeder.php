@@ -95,6 +95,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menu Conciliación',
                 'menu_id' => 13,
             ],
+            [
+                'id' => 14,
+                'name' => 'contract.list',
+                'description' => 'Visualizar Menu Contratos',
+                'menu_id' => 14,
+            ],
         ];
 
         // Inicializar la barra de progreso
