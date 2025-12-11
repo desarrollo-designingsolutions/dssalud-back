@@ -17,6 +17,9 @@ use App\Jobs\File\ProcessMassUpload;
 use App\Jobs\Filing\ProcessFilingValidationTxt;
 use App\Jobs\Filing\ProcessFilingValidationZip;
 use App\Jobs\Filing\ProcessMassXmlUpload;
+use App\Models\InvoiceAudit;
+use App\Models\Patient;
+use App\Models\Service;
 use App\Notifications\BellNotification;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
@@ -27,10 +30,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
+use App\Traits\ImportHelper;
 
 class FilingController extends Controller
 {
-    use HttpResponseTrait;
+    use HttpResponseTrait, ImportHelper;
 
     public function __construct(
         protected UserRepository $userRepository,
@@ -86,7 +91,7 @@ class FilingController extends Controller
 
             if ($request->hasFile('archiveZip')) {
                 $file = $request->file('archiveZip');
-                $ruta = '/companies/company_'.$company_id.'/filings/'.$type->value.'/filing_'.$filing->id; // Ruta donde se guardará la carpeta
+                $ruta = '/companies/company_' . $company_id . '/filings/' . $type->value . '/filing_' . $filing->id; // Ruta donde se guardará la carpeta
                 $nombreArchivo = $file->getClientOriginalName(); // Obtiene el nombre original del archivo
                 $path_zip = $file->storeAs($ruta, $nombreArchivo, Constants::DISK_FILES); // Guarda el archivo con el nombre original
                 $filing->path_zip = $path_zip;
@@ -193,8 +198,8 @@ class FilingController extends Controller
                 foreach ($buildDataFinal as $invoice) {
 
                     // genero y guardo el archivo JSON de la factura
-                    $nameFile = $invoice[Constants::KEY_NUMFACT].'.json';
-                    $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice[Constants::KEY_NUMFACT].'/'.$nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = $invoice[Constants::KEY_NUMFACT] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice[Constants::KEY_NUMFACT] . '/' . $nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                     $sumTotalServices = sumVrServicio($invoice);
@@ -244,8 +249,8 @@ class FilingController extends Controller
                     $errorMessagesInvoice = $errorMessages->where('num_invoice', $invoice['numFactura'])->values();
 
                     // genero y guardo el archivo JSON de la factura
-                    $nameFile = $invoice['numFactura'].'.json';
-                    $routeJson = 'companies/company_'.$filing->company_id.'/filings/'.$filing->type->value.'/filing_'.$filing->id.'/invoices/'.$invoice['numFactura'].'/'.$nameFile; // Ruta donde se guardará la carpeta
+                    $nameFile = $invoice['numFactura'] . '.json';
+                    $routeJson = 'companies/company_' . $filing->company_id . '/filings/' . $filing->type->value . '/filing_' . $filing->id . '/invoices/' . $invoice['numFactura'] . '/' . $nameFile; // Ruta donde se guardará la carpeta
                     Storage::disk(Constants::DISK_FILES)->put($routeJson, json_encode($invoice)); // guardo el archivo
 
                     // Guardamos la factura y obtenemos el modelo creado
@@ -307,7 +312,7 @@ class FilingController extends Controller
             $uploadId = uniqid();
 
             // Resolver el modelo completo
-            $modelClass = 'App\\Models\\'.$modelType;
+            $modelClass = 'App\\Models\\' . $modelType;
             if (! class_exists($modelClass)) {
                 return ['code' => 400, 'message' => 'Modelo no válido'];
             }
@@ -412,7 +417,7 @@ class FilingController extends Controller
                     ProcessFilingValidationTxt::dispatch($filing->id, $jsonData, $lastFile);
                 } catch (\Exception $e) {
                     // Registrar error y continuar
-                    \Log::error("Error procesando archivo {$originalName}: ".$e->getMessage());
+                    \Log::error("Error procesando archivo {$originalName}: " . $e->getMessage());
 
                     continue;
                 }
@@ -539,6 +544,8 @@ class FilingController extends Controller
 
             $post = $request->all();
 
+            return $this->orquestadorCargueMasiva($post);
+
             $data = $this->filingRepository->changeStatusFilingInvoicePreRadicated($post['filing_id']);
             $this->filingRepository->changeState($post['filing_id'], StatusFilingEnum::FILING_EST_009, 'status');
 
@@ -558,5 +565,129 @@ class FilingController extends Controller
                 'data' => $data,
             ];
         });
+    }
+
+    public function orquestadorCargueMasiva($post)
+    {
+        $this->startBenchmark('123');
+        $pathJsons = $this->cargueInvoiceAudit($post);
+        $this->endBenchmark('123');
+    }
+
+    public function cargueInvoiceAudit($post)
+    {
+        $filing = $this->filingRepository->find($post['filing_id'], ['filingInvoiceRadicateds']);
+
+        $chunkData = array_chunk($filing->filingInvoiceRadicateds->toArray(), 5);
+        $dataMasive = [];
+        $dataMasiveJson = [];
+
+        foreach ($chunkData as $chunk) {
+            foreach ($chunk as $key => $filingInvoice) {
+                $uuid = (string) Str::uuid();
+                $dataMasiveJson[] = [
+                    'id' => $uuid,
+                    'path_json' => $filingInvoice['path_json'],
+                ];
+                $dataMasive[] = [
+                    'id' => $uuid,
+                    'company_id' => $filing->company_id,
+                    'third_id' => $filing->contract?->third_id,
+                    'invoice_number' => $filingInvoice['invoice_number'],
+                    'total_value' => $filingInvoice['sumVr'],
+                    'origin' => "??",
+                    'expedition_date' => null, //preguntar a carlos andres que fecha es esta
+                    'date_entry' => null, //preguntar a carlos andres que fecha es esta
+                    'date_departure' => null, //preguntar a carlos andres que fecha es esta
+                    'modality' => "??",
+
+                    'regimen' => "??",
+                    'coverage' => "??",
+                    'contract_number' => $filing->contract?->name, //preguntar a carlos andres si este es el nombre o que campo es del contrato
+                ];
+            }
+            InvoiceAudit::insert($dataMasive);
+            $data = $this->carguePatients($post, $dataMasiveJson);
+            $dataMasive = [];
+            $dataMasiveJson = [];
+        }
+
+        return $dataMasiveJson;
+    }
+
+    public function carguePatients($post, $dataMasiveJson)
+    {
+        foreach ($dataMasiveJson as $data) {
+            $invoice = openFileJson($data['path_json']);
+            $company_id = $post['company_id'];
+
+            
+            $dataPatients = [];
+            $dataServices = [];
+            foreach ($invoice['usuarios'] as $user) {
+                $uuid = (string) Str::uuid();
+                $dataServices[] = [
+                    'company_id' => $company_id,
+                    'invoice_audit_id' => $data['id'],
+                    'patient_id' => $uuid,
+                    'services' => $user['servicios'],
+                ];
+                $dataPatients[] = [
+                    'id' => $uuid,
+                    'company_id' => $company_id,
+                    'invoice_audit_id' => $data['id'],
+                    'type_identification' => $user['Tipo_de_identificacion_del_usuario'] ?? '',
+                    'identification_number' => $user['numDocumentoIdentificacion'] ?? '',
+                    'first_name' => $user['Primer_nombre_del_usuario'] ?? '',
+                    'second_name' => $user['Segundo_nombre_del_usuario'] ?? '',
+                    'first_surname' => $user['Primer_apellido_del_usuario'] ?? '',
+                    'second_surname' => $user['Segundo_apellido_del_usuario'] ?? '',
+                    'gender' => $user['Sexo'] ?? '',
+                ];
+            }
+            $chunkData = array_chunk($dataPatients, 5);
+            $chunkDataServices = array_chunk($dataServices, 5);
+
+            foreach ($chunkData as $key => $chunk) {
+                Patient::insert($chunk);
+                $data = $this->cargueServices($chunkDataServices[$key]);
+            }
+        }
+
+        return false;
+    }
+
+    public function cargueServices($dataServices)
+    {
+        foreach ($dataServices as $data) {
+            $company_id = $data['company_id'];
+
+            $dataServicesDataBase = [];
+            foreach ($data['services'] as $key => $service) {
+                foreach ($service as $k => $value) {
+                    // esta es la parte de los servicios de procedimientos, de querer guardar otros servicios se debe tener mas datos para probar
+                    $dataServicesDataBase[] = [
+                        'id' => (string) Str::uuid(),
+                        'company_id' => $company_id,
+                        'invoice_audit_id' => $data['invoice_audit_id'],
+                        'patient_id' => $data['patient_id'],
+                        'detail_code' => $value['Codigo_del_procedimiento'] ?? null,
+                        'description' => $key,
+                        'quantity' => null,
+                        'unit_value' => null,
+                        'total_value' => $value['vrServicio'] ?? 0,
+                        'value_glosa' => null,
+                        'value_approved' => null,
+                    ];
+                }
+                $chunkData = array_chunk($dataServicesDataBase, 5);
+    
+                foreach ($chunkData as $chunk) {
+                    Service::insert($chunk);
+                }
+            }
+        }
+
+        return false;
     }
 }

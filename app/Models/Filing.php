@@ -47,6 +47,11 @@ class Filing extends Model
         return $this->hasMany(FilingInvoice::class, 'filing_id')->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_001);
     }
 
+    public function filingInvoiceRadicateds(): HasMany
+    {
+        return $this->hasMany(FilingInvoice::class, 'filing_id')->where('status', StatusFilingInvoiceEnum::FILINGINVOICE_EST_002);
+    }
+
     // contar facturas con xml validados
     public function getXmlCountValidateAttribute(): int
     {
