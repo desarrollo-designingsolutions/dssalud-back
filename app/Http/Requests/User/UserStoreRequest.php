@@ -56,13 +56,15 @@ class UserStoreRequest extends FormRequest
         $merge = [];
 
         if ($this->has('thirds_id')) {
-            $thirds_id = [];
+            if ($this->thirds_id) {
+                $thirds_id = [];
+                foreach ($this->thirds_id as $third) {
+                    $thirds_id[] = getValueSelectInfinite($third);
+                }
 
-            foreach ($this->thirds_id as $third) {
-                $thirds_id[] = getValueSelectInfinite($third);
+                $merge['thirds_id'] = $thirds_id;
             }
 
-            $merge['thirds_id'] = $thirds_id;
         }
 
         $this->merge($merge);

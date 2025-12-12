@@ -7,6 +7,7 @@ use App\Events\FilingInvoiceRowUpdated;
 use App\Exports\Filing\FilingInvoiceExcelErrorsValidationExport;
 use App\Helpers\Constants;
 use App\Http\Resources\FilingInvoice\FilingInvoicePaginateResource;
+use App\Http\Resources\FilingInvoice\FilingInvoiceThirdsPaginateResource;
 use App\Repositories\CompanyRepository;
 use App\Repositories\FilingInvoiceRepository;
 use App\Repositories\FilingRepository;
@@ -26,7 +27,8 @@ class FilingInvoiceController extends Controller
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
         protected CompanyRepository $companyRepository,
-    ) {}
+    ) {
+    }
 
     // Nuevo método para paginación
     public function getPaginatedUsers(Request $request, $invoiceId)
@@ -227,6 +229,24 @@ class FilingInvoiceController extends Controller
             return [
                 'code' => 200,
                 'message' => 'Registro eliminado con éxito.',
+            ];
+        });
+    }
+
+    public function paginateThirds(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+
+            $data = $this->filingInvoiceRepository->paginateThirds($request->all());
+            $tableData = FilingInvoiceThirdsPaginateResource::collection($data);
+
+            return [
+                'code' => 200,
+                'tableData' => $tableData,
+                'lastPage' => $data->lastPage(),
+                'totalData' => $data->total(),
+                'totalPage' => $data->perPage(),
+                'currentPage' => $data->currentPage(),
             ];
         });
     }

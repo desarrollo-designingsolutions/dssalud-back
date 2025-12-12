@@ -107,6 +107,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menu Salud IA',
                 'menu_id' => 15,
             ],
+            [
+                'id' => 16,
+                'name' => 'providerInvoices.list',
+                'description' => 'Visualizar Menu Facturas del prestador',
+                'menu_id' => 16,
+            ],
         ];
 
         // Inicializar la barra de progreso

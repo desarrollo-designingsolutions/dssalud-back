@@ -139,6 +139,15 @@ class MenuSeeder extends Seeder
                 'icon' => 'tabler-message-chatbot',
                 'requiredPermission' => 'saludIA.list',
             ],
+
+            [
+                'id' => 16,
+                'order' => 160,
+                'title' => 'Facturas del prestador',
+                'to' => 'ProviderInvoices-List',
+                'icon' => 'tabler-file-dollar',
+                'requiredPermission' => 'providerInvoices.list',
+            ],
         ];
 
         // Inicializar la barra de progreso
