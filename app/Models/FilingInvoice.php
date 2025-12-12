@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FilingInvoice extends Model
 {
@@ -32,11 +33,13 @@ class FilingInvoice extends Model
                 $numberCaseInitial = Constants::NUMBER_CASE_INITIAL; // Número inicial de caso si no hay registros previos
 
                 // Obtener el último registro ordenado por el número de caso de manera descendente
-                $lastFiling = static::orderBy('case_number', 'desc')->lockForUpdate()->first();
+                // $lastFiling = static::orderBy('case_number', 'desc')->lockForUpdate()->first();
+                $lastFiling = static::orderByRaw('CAST(case_number AS UNSIGNED) DESC')->lockForUpdate()->first();
 
                 // Generar el siguiente número de caso al nuevo registro
                 $case_number = $lastFiling ? (int) $lastFiling->case_number + 1 : $numberCaseInitial;
 
+                Log::info('Asignando número de caso: ' . $case_number);
                 // Asignar el siguiente número de caso al nuevo registro
                 $model->case_number = $case_number;
             });
