@@ -25,6 +25,11 @@ class InvoiceAudit extends Model
         return $this->belongsTo(Third::class, 'third_id');
     }
 
+    public function filingInvoice()
+    {
+        return $this->belongsTo(FilingInvoice::class, 'filing_invoice_id');
+    }
+
     public function assignment()
     {
         return $this->hasMany(Assignment::class);

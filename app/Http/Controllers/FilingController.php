@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Filing\StatusFilingEnum;
 use App\Enums\Filing\StatusFilingInvoiceEnum;
 use App\Enums\Filing\TypeFilingEnum;
+use App\Enums\Service\TypeServiceEnum;
 use App\Events\FilingInvoiceRowUpdated;
 use App\Events\FilingRowUpdatedNow;
 use App\Exports\Filing\FilingExcelErrorsValidationExport;
@@ -593,6 +594,7 @@ class FilingController extends Controller
                     'id' => $uuid,
                     'company_id' => $filing->company_id,
                     'third_id' => $filing->contract?->third_id,
+                    'filing_invoice_id' => $filingInvoice['id'],
                     'invoice_number' => $filingInvoice['invoice_number'],
                     'total_value' => $filingInvoice['sumVr'],
                     'origin' => "??",
@@ -665,6 +667,18 @@ class FilingController extends Controller
             $dataServicesDataBase = [];
             foreach ($data['services'] as $key => $service) {
                 foreach ($service as $k => $value) {
+                    
+                    // necesito comparar $key con el enum TypeServiceEnum para saber a que tipo de servicio corresponde
+                    // Pero debo buscar por el dato de elementJson, si coincide que me de el valor del enum
+                    $typeService = TypeServiceEnum::fromElementJson($key);
+                    
+                    //si el tipo de servicio es procedimientos, guardar en la tabla procedures
+                    if ($typeService === TypeServiceEnum::SERVICE_TYPE_002) {
+
+                        
+                    }
+                    
+
                     // esta es la parte de los servicios de procedimientos, de querer guardar otros servicios se debe tener mas datos para probar
                     $dataServicesDataBase[] = [
                         'id' => (string) Str::uuid(),
@@ -672,7 +686,10 @@ class FilingController extends Controller
                         'invoice_audit_id' => $data['invoice_audit_id'],
                         'patient_id' => $data['patient_id'],
                         'detail_code' => $value['Codigo_del_procedimiento'] ?? null,
-                        'description' => $key,
+                        'type' => $typeService->value,
+                        'serviceable_type' => $typeService->model(),
+                        'serviceable_id' => '',
+                        'description' => $typeService->value,
                         'quantity' => null,
                         'unit_value' => null,
                         'total_value' => $value['vrServicio'] ?? 0,
