@@ -82,7 +82,7 @@ class FilingInvoiceRepository extends BaseRepository
                     AllowedSort::custom('status', new StatusOldSort($customTypes)),
                 ]);
 
-            if (! empty($request['filing_id'])) {
+            if (!empty($request['filing_id'])) {
                 $query = $query->where('filing_id', $request['filing_id']);
             }
 
@@ -100,7 +100,7 @@ class FilingInvoiceRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (! empty($request['id'])) {
+        if (!empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -119,13 +119,13 @@ class FilingInvoiceRepository extends BaseRepository
     {
         // Construcción de la consulta
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['id'])) {
+            if (!empty($request['id'])) {
                 $query->where('id', $request['id']);
             }
-            if (! empty($request['invoice_number'])) {
+            if (!empty($request['invoice_number'])) {
                 $query->where('invoice_number', $request['invoice_number']);
             }
-            if (! empty($request['filing_id'])) {
+            if (!empty($request['filing_id'])) {
                 $query->where('filing_id', $request['filing_id']);
             }
         });
@@ -139,10 +139,10 @@ class FilingInvoiceRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'description')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['idsAllowed'])) {
+            if (!empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (! empty($request['company_id'])) {
+            if (!empty($request['company_id'])) {
                 $query->whereHas('filing', function ($subQuery) use ($request) {
                     $subQuery->where('company_id', $request['company_id']);
                 });
@@ -173,15 +173,15 @@ class FilingInvoiceRepository extends BaseRepository
     public function countData($request = [])
     {
         $data = $this->model->where(function ($query) use ($request) {
-            if (! empty($request['company_id'])) {
+            if (!empty($request['company_id'])) {
                 $query->whereHas('filing', function ($subQuery) use ($request) {
                     $subQuery->where('company_id', $request['company_id']);
                 });
             }
-            if (! empty($request['status'])) {
+            if (!empty($request['status'])) {
                 $query->where('status', $request['status']);
             }
-            if (! empty($request['filing_id'])) {
+            if (!empty($request['filing_id'])) {
                 $query->where('filing_id', $request['filing_id']);
             }
         });
@@ -226,5 +226,84 @@ class FilingInvoiceRepository extends BaseRepository
         }
 
         return $errorMessages;
+    }
+
+    public function paginateThirds($request = [])
+    {
+        $customTypes = [
+            ['value' => 'FILINGINVOICE_EST_001', 'title' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001->description()],
+            ['value' => 'FILINGINVOICE_EST_002', 'title' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002->description()],
+            ['value' => 'FILINGINVOICE_EST_003', 'title' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_003->description()],
+            ['value' => 'FILINGINVOICE_EST_004', 'title' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004->description()],
+            ['value' => 'FILINGINVOICE_EST_005', 'title' => StatusFilingInvoiceEnum::FILINGINVOICE_EST_005->description()],
+        ];
+
+        $data = request();
+        $filter['files_count'] = isset($data['filter']['files_count']) ? $data['filter']['files_count'] : null;
+
+        $this->removeInvalidFilters(['files_count']);
+
+        $cacheKey = $this->cacheService->generateKey("{$this->model->getTable()}_paginate", $request, 'string');
+
+        return $this->cacheService->remember($cacheKey, function () use ($filter, $request, $customTypes) {
+
+            $query = QueryBuilder::for($this->model->query())
+                ->withCount(['files'])
+                ->allowedFilters([
+                    AllowedFilter::callback('inputGeneral', function ($query, $value) {
+                        $query->where(function ($query) use ($value) {
+                            $query->orWhere('invoice_number', 'like', "%$value%");
+                            $query->orWhere('users_count', 'like', "%$value%");
+                            $query->orWhere('case_number', 'like', "%$value%");
+
+                            $query->orWhere(function ($subQuery) use ($value) {
+                                $normalizedValue = preg_replace('/[\$\s\.,]/', '', $value);
+                                $subQuery->orWhere('sumVr', 'like', "%$normalizedValue%");
+                            });
+
+                            QueryFilters::filterByText($query, $value, 'status', [
+                                StatusFilingInvoiceEnum::FILINGINVOICE_EST_001->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_001,
+                                StatusFilingInvoiceEnum::FILINGINVOICE_EST_002->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_002,
+                            ]);
+                            QueryFilters::filterByText($query, $value, 'status_xml', [
+                                StatusFilingInvoiceEnum::FILINGINVOICE_EST_003->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_003,
+                                StatusFilingInvoiceEnum::FILINGINVOICE_EST_004->description() => StatusFilingInvoiceEnum::FILINGINVOICE_EST_004,
+                            ]);
+                        });
+                    }),
+                    AllowedFilter::custom('status', new DataSelectFilter),
+                    AllowedFilter::custom('status_xml', new DataSelectFilter),
+                    AllowedFilter::custom('date', new DateRangeFilter),
+                ])
+                ->allowedSorts([
+                    'invoice_number',
+                    'users_count',
+                    'case_number',
+                    'sumVr',
+                    'files_count',
+                    'date',
+                    AllowedSort::custom('status', new StatusOldSort($customTypes)),
+                ]);
+
+            if (!empty($request['filing_id'])) {
+                $query = $query->where('filing_id', $request['filing_id']);
+            }
+
+            if (isset($filter['files_count']) && is_numeric($filter['files_count'])) {
+                $query->having('files_count', '=', $filter['files_count']);
+            }
+
+            if (!empty($request['user_id'])) {
+                $query->whereHas('contract.third', function ($q) use ($request) {
+                    $q->whereHas('users', function ($subQuery) use ($request) {
+                        $subQuery->where('users.id', $request['user_id']);
+                    });
+                });
+            }
+
+            $query = $query->paginate(request()->perPage ?? Constants::ITEMS_PER_PAGE);
+
+            return $query;
+        }, Constants::REDIS_TTL);
     }
 }

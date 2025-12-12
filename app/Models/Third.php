@@ -87,4 +87,9 @@ class Third extends Model
     {
         return $this->belongsToMany(User::class, 'user_thirds', 'third_id', 'user_id');
     }
+
+    public function userThirds()
+    {
+        return $this->hasMany(UserThird::class);
+    }
 }
