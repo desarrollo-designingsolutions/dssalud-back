@@ -23,6 +23,7 @@ class UserFormResource extends JsonResource
             'role_id' => $this->role_id,
             'company_id' => $this->company_id,
             'third_id' => new ThirdSelectInfiniteResource($this->third),
+            'thirds_id' => ThirdSelectInfiniteResource::collection($this->thirds),
         ];
     }
 }

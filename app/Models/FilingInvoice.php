@@ -75,4 +75,9 @@ class FilingInvoice extends Model
     {
         return $this->files()->count();
     }
+    
+    public function invoiceAudit()
+    {
+        return $this->hasOne(InvoiceAudit::class, 'filing_invoice_id', 'id');
+    }
 }

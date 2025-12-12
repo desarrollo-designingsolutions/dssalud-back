@@ -35,6 +35,7 @@ class UserSeeder extends Seeder
             $data->email = $value['email'];
             $data->password = 123456789;
             $data->role_id = $value['role_id'];
+            $data->first_time = 0;
             $data->save();
 
             $role = Role::find($value['role_id']);

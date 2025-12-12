@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             UserSeeder::class,
 
-            ThirdSeederXlsx::class,
+                // ThirdSeederXlsx::class,
             TypeCodeGlosaSeeder::class,
             GeneralCodeGlosaSeeder::class,
             CodeGlosaSeeder::class,

@@ -42,7 +42,7 @@ class Third extends Model
     {
         return $this->invoiceAudits()->whereHas('assignment', function ($query) use ($filter) {
 
-            if (! empty($filter['status'])) {
+            if (!empty($filter['status'])) {
                 $query->where('status', $filter['status']);
             }
         })->count(); // Filtramos por el campo status en Assignment
@@ -66,7 +66,7 @@ class Third extends Model
         $hasPending = $this->assignments()
             ->whereNot('status', StatusAssignmentEnum::ASSIGNMENT_EST_003->value)
             ->where(function ($query) use ($request) {
-                if (! empty($request['user_id'])) {
+                if (!empty($request['user_id'])) {
                     $query->where('user_id', $request['user_id']);
                 }
             })
@@ -81,5 +81,10 @@ class Third extends Model
     public function departmentAndCity()
     {
         return $this->hasOne(ThirdDepartment::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_thirds', 'third_id', 'user_id');
     }
 }

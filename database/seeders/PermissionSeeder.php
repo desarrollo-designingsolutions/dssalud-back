@@ -95,6 +95,18 @@ class PermissionSeeder extends Seeder
                 'description' => 'Visualizar Menu Conciliación',
                 'menu_id' => 13,
             ],
+            [
+                'id' => 14,
+                'name' => 'contract.list',
+                'description' => 'Visualizar Menu Contratos',
+                'menu_id' => 14,
+            ],
+            [
+                'id' => 15,
+                'name' => 'saludIA.list',
+                'description' => 'Visualizar Menu Salud IA',
+                'menu_id' => 15,
+            ],
         ];
 
         // Inicializar la barra de progreso
@@ -103,7 +115,7 @@ class PermissionSeeder extends Seeder
 
         foreach ($arrayData as $key => $value) {
             $data = Permission::find($value['id']);
-            if (! $data) {
+            if (!$data) {
                 $data = new Permission;
             }
             $data->id = $value['id'];
