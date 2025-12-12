@@ -38,7 +38,8 @@ class QueryController extends Controller
         protected ThirdRepository $thirdRepository,
         protected CodeGlosaRepository $codeGlosaRepository,
         protected ReconciliationGroupRepository $reconciliationGroupRepository,
-    ) {}
+    ) {
+    }
 
     public function selectInfiniteCountries(Request $request)
     {
@@ -153,7 +154,6 @@ class QueryController extends Controller
 
     public function selectInfiniteContract(Request $request)
     {
-        $request['status'] = 1;
         $contract = $this->contractRepository->list($request->all());
         $dataContract = ContractSelectInfiniteResource::collection($contract);
 

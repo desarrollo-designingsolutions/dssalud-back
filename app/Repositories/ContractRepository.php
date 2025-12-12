@@ -34,7 +34,7 @@ class ContractRepository extends BaseRepository
                         $queryX->where(function ($query) use ($value) {
                             $query->orWhere('name', 'like', "%$value%");
 
-                             $query->orWhereHas('third', function ($subQuery) use ($value) {
+                            $query->orWhereHas('third', function ($subQuery) use ($value) {
                                 $subQuery->where('thirds.name', 'like', "%$value%");
                             });
                         });
@@ -46,7 +46,7 @@ class ContractRepository extends BaseRepository
 
                 ])
                 ->where(function ($query) use ($request) {
-                    if (! empty($request['company_id'])) {
+                    if (!empty($request['company_id'])) {
                         $query->where('contracts.company_id', $request['company_id']);
                     }
                 });
@@ -69,16 +69,18 @@ class ContractRepository extends BaseRepository
         return $this->cacheService->remember($cacheKey, function () use ($request, $select, $with) {
 
             $data = $this->model->select($select)->with($with)->where(function ($query) use ($request) {
-
-                if (! empty($request['company_id'])) {
+                if (!empty($request['company_id'])) {
                     $query->where('company_id', $request['company_id']);
                 }
-                if (! empty($request['is_active'])) {
+                if (!empty($request['is_active'])) {
                     $query->where('is_active', $request['is_active']);
                 }
+                if (!empty($request['third_id'])) {
+                    $query->where('third_id', $request['third_id']);
+                }
             })->where(function ($query) use ($request) {
-                if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                    $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                if (isset($request['searchQueryInfinite']) && !empty($request['searchQueryInfinite'])) {
+                    $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                 }
             });
 
@@ -103,7 +105,7 @@ class ContractRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (! empty($request['id'])) {
+        if (!empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -120,7 +122,7 @@ class ContractRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['idsAllowed'])) {
+            if (!empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
@@ -150,7 +152,7 @@ class ContractRepository extends BaseRepository
     public function searchOne($request = [], $with = [], $select = ['*'])
     {
         $data = $this->model->select($select)->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['company_id'])) {
+            if (!empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
         });

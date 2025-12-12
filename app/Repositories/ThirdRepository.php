@@ -22,13 +22,18 @@ class ThirdRepository extends BaseRepository
                 ->where(function ($query) use ($request) {
                     filterComponent($query, $request);
 
-                    if (! empty($request['company_id'])) {
+                    if (!empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
+                    }
+                    if (!empty($request['user_id'])) {
+                        $query->whereHas('users', function ($q) use ($request) {
+                            $q->where('users.id', $request['user_id']);
+                        });
                     }
                 })
                 ->where(function ($query) use ($request) {
-                    if (isset($request['searchQueryInfinite']) && ! empty($request['searchQueryInfinite'])) {
-                        $query->orWhere('name', 'like', '%'.$request['searchQueryInfinite'].'%');
+                    if (isset($request['searchQueryInfinite']) && !empty($request['searchQueryInfinite'])) {
+                        $query->orWhere('name', 'like', '%' . $request['searchQueryInfinite'] . '%');
                     }
                 });
 
@@ -47,7 +52,7 @@ class ThirdRepository extends BaseRepository
     {
         $request = $this->clearNull($request);
 
-        if (! empty($request['id'])) {
+        if (!empty($request['id'])) {
             $data = $this->model->find($request['id']);
         } else {
             $data = $this->model::newModelInstance();
@@ -64,10 +69,10 @@ class ThirdRepository extends BaseRepository
     public function selectList($request = [], $with = [], $select = [], $fieldValue = 'id', $fieldTitle = 'name')
     {
         $data = $this->model->with($with)->where(function ($query) use ($request) {
-            if (! empty($request['idsAllowed'])) {
+            if (!empty($request['idsAllowed'])) {
                 $query->whereIn('id', $request['idsAllowed']);
             }
-            if (! empty($request['company_id'])) {
+            if (!empty($request['company_id'])) {
                 $query->where('company_id', $request['company_id']);
             }
         })->get()->map(function ($value) use ($with, $select, $fieldValue, $fieldTitle) {
@@ -99,10 +104,10 @@ class ThirdRepository extends BaseRepository
             ->with([
                 'invoiceAudits' => function ($query) use ($request) {
                     $query->whereHas('assignment', function ($subQuery) use ($request) {
-                        if (! empty($request['user_id'])) {
+                        if (!empty($request['user_id'])) {
                             $subQuery->where('user_id', $request['user_id']);
                         }
-                        if (! empty($request['assignment_batch_id'])) {
+                        if (!empty($request['assignment_batch_id'])) {
                             $subQuery->where('assignment_batch_id', $request['assignment_batch_id']);
                         }
                     });
@@ -110,20 +115,20 @@ class ThirdRepository extends BaseRepository
             ])
             ->whereHas('invoiceAudits', function ($subQuery) use ($request) {
                 $subQuery->whereHas('assignment', function ($subQuery2) use ($request) {
-                    if (! empty($request['user_id'])) {
+                    if (!empty($request['user_id'])) {
                         $subQuery2->where('user_id', $request['user_id']);
                     }
-                    if (! empty($request['assignment_batch_id'])) {
+                    if (!empty($request['assignment_batch_id'])) {
                         $subQuery2->where('assignment_batch_id', $request['assignment_batch_id']);
                     }
                 });
             })
             ->where(
                 function ($query) use ($request) {
-                    if (! empty($request['third_id'])) {
+                    if (!empty($request['third_id'])) {
                         $query->where('id', $request['third_id']);
                     }
-                    if (! empty($request['company_id'])) {
+                    if (!empty($request['company_id'])) {
                         $query->where('company_id', $request['company_id']);
                     }
                 }

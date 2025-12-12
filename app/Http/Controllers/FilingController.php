@@ -43,7 +43,8 @@ class FilingController extends Controller
         protected FilingRepository $filingRepository,
         protected FilingInvoiceRepository $filingInvoiceRepository,
         protected SupportTypeRepository $supportTypeRepository,
-    ) {}
+    ) {
+    }
 
     public function paginate(Request $request)
     {
@@ -294,7 +295,7 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-            if (! $request->hasFile('files')) {
+            if (!$request->hasFile('files')) {
                 return ['code' => 400, 'message' => 'No se encontraron archivos'];
             }
 
@@ -303,7 +304,7 @@ class FilingController extends Controller
             $modelId = $request->input('fileable_id');
 
             // Validar parámetros requeridos
-            if (! $company_id || ! $modelType || ! $modelId) {
+            if (!$company_id || !$modelType || !$modelId) {
                 return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
             }
 
@@ -314,12 +315,12 @@ class FilingController extends Controller
 
             // Resolver el modelo completo
             $modelClass = 'App\\Models\\' . $modelType;
-            if (! class_exists($modelClass)) {
+            if (!class_exists($modelClass)) {
                 return ['code' => 400, 'message' => 'Modelo no válido'];
             }
             $modelInstance = $modelClass::find($modelId);
             $modelInstance->load(['filingInvoice']);
-            if (! $modelInstance) {
+            if (!$modelInstance) {
                 return ['code' => 404, 'message' => 'Instancia no encontrada'];
             }
 
@@ -444,7 +445,7 @@ class FilingController extends Controller
     {
         return $this->execute(function () use ($request) {
 
-            if (! $request->hasFile('files')) {
+            if (!$request->hasFile('files')) {
                 return ['code' => 400, 'message' => 'No se encontraron archivos'];
             }
 
@@ -453,7 +454,7 @@ class FilingController extends Controller
             $filing_id = $request->input('filing_id');
 
             // Validar parámetros requeridos
-            if (! $company_id || ! $third_nit || ! $filing_id) {
+            if (!$company_id || !$third_nit || !$filing_id) {
                 return ['code' => 400, 'message' => 'Faltan parámetros requeridos'];
             }
 

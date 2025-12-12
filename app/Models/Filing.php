@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Filing extends Model
@@ -115,5 +116,17 @@ class Filing extends Model
         }
 
         return $status;
+    }
+
+    public function thirdThroughContract(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Third::class,
+            Contract::class,
+            'id', // Clave foránea en Contract que apunta a Third
+            'id', // Clave foránea en Third
+            'contract_id', // Clave local en Filing
+            'third_id' // Clave local en Contract
+        );
     }
 }
