@@ -21,7 +21,8 @@ class UserController extends Controller
         protected UserRepository $userRepository,
         protected RoleRepository $roleRepository,
         protected CompanyRepository $companyRepository,
-    ) {}
+    ) {
+    }
 
     public function paginate(Request $request)
     {
@@ -45,11 +46,13 @@ class UserController extends Controller
         return $this->execute(function () {
             $roles = $this->roleRepository->selectList(request());
             $companies = $this->companyRepository->selectList();
+            $thirds = $this->queryController->selectInfiniteThird(request());
 
             return [
                 'code' => 200,
                 'roles' => $roles,
                 'companies' => $companies,
+                ...$thirds
             ];
         });
     }
@@ -57,11 +60,15 @@ class UserController extends Controller
     public function store(UserStoreRequest $request)
     {
         return $this->runTransaction(function () use ($request) {
-            $post = $request->except(['confirmedPassword']);
+            $post = $request->except(['confirmedPassword', 'thirds_id']);
 
             $data = $this->userRepository->store($post, withCompany: false);
 
             $data->syncRoles($request->input('role_id'));
+
+            if ($request->input('thirds_id')) {
+                $data->thirds()->sync($request->input('thirds_id'));
+            }
 
             return [
                 'code' => 200,
@@ -79,11 +86,14 @@ class UserController extends Controller
             $user = $this->userRepository->find($id);
             $form = new UserFormResource($user);
 
+            $thirds = $this->queryController->selectInfiniteThird(request());
+
             return [
                 'code' => 200,
                 'form' => $form,
                 'roles' => $roles,
                 'companies' => $companies,
+                ...$thirds
             ];
         });
     }
@@ -91,11 +101,15 @@ class UserController extends Controller
     public function update(UserStoreRequest $request, $id)
     {
         return $this->runTransaction(function () use ($request, $id) {
-            $post = $request->except(['confirmedPassword']);
+            $post = $request->except(['confirmedPassword', 'thirds_id']);
 
             $data = $this->userRepository->store($post, $id, withCompany: false);
 
             $data->syncRoles($request->input('role_id'));
+
+            if ($request->input('thirds_id')) {
+                $data->thirds()->sync($request->input('thirds_id'));
+            }
 
             clearCacheLaravel();
 
@@ -133,7 +147,7 @@ class UserController extends Controller
 
             return [
                 'code' => 200,
-                'message' => 'User '.$msg.' con éxito',
+                'message' => 'User ' . $msg . ' con éxito',
             ];
         });
     }
@@ -164,7 +178,7 @@ class UserController extends Controller
             // Cambiar la photo
             if ($request->file('photo')) {
                 $file = $request->file('photo');
-                $ruta = 'companies/company_'.$user->company_id.'/'.$user->id.$request->input('photo');
+                $ruta = 'companies/company_' . $user->company_id . '/' . $user->id . $request->input('photo');
                 $photo = $file->store($ruta, Constants::DISK_FILES);
                 $user->photo = $photo;
                 $user->save();

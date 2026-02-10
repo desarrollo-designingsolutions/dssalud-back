@@ -10,4 +10,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Contract extends Model
 {
     use Cacheable, HasUuids, SoftDeletes;
+
+    public function third()
+    {
+        return $this->belongsTo(Third::class);
+    }
 }

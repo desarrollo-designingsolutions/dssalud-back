@@ -12,4 +12,6 @@ enum RoleTypeEnum: string
     #[Description('Auditor')]
     case ROLE_TYPE_001 = 'ROLE_TYPE_001';
 
+    #[Description('Prestador')]
+    case ROLE_TYPE_002 = 'ROLE_TYPE_002';
 }

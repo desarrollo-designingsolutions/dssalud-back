@@ -25,3 +25,7 @@ Route::middleware(['check.permission:filing.new.index'])->group(function () {
 
     Route::delete('/filingInvoice/delete/{invoiceId}', [FilingInvoiceController::class, 'delete']);
 });
+
+Route::middleware(['check.permission:providerInvoices.list'])->group(function () {
+    Route::get('/filingInvoice/paginateThirds', [FilingInvoiceController::class, 'paginateThirds']);
+});

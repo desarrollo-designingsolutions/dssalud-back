@@ -111,7 +111,7 @@ class MenuSeeder extends Seeder
                 'order' => 120,
                 'title' => 'Grupo de conciliación',
                 'to' => 'ReconciliationGroup-List',
-                'icon' => 'device-desktop-dollar',
+                'icon' => 'tabler-device-desktop-dollar',
                 'requiredPermission' => 'reconciliationGroup.list',
             ],
             [
@@ -119,8 +119,34 @@ class MenuSeeder extends Seeder
                 'order' => 130,
                 'title' => 'Conciliaciones',
                 'to' => 'Conciliation-List',
-                'icon' => 'free-rights',
+                'icon' => 'tabler-free-rights',
                 'requiredPermission' => 'conciliation.list',
+            ],
+            [
+                'id' => 14,
+                'order' => 140,
+                'title' => 'Contratos',
+                'to' => 'Contract-List',
+                'icon' => 'tabler-contract',
+                'requiredPermission' => 'contract.list',
+            ],
+
+            [
+                'id' => 15,
+                'order' => 150,
+                'title' => 'Salud IA',
+                'to' => 'SaludIA-List',
+                'icon' => 'tabler-message-chatbot',
+                'requiredPermission' => 'saludIA.list',
+            ],
+
+            [
+                'id' => 16,
+                'order' => 160,
+                'title' => 'Facturas del prestador',
+                'to' => 'ProviderInvoices-List',
+                'icon' => 'tabler-file-dollar',
+                'requiredPermission' => 'providerInvoices.list',
             ],
         ];
 
@@ -130,7 +156,7 @@ class MenuSeeder extends Seeder
 
         foreach ($arrayData as $key => $value) {
             $data = Menu::find($value['id']);
-            if (! $data) {
+            if (!$data) {
                 $data = new Menu;
             }
             $data->id = $value['id'];

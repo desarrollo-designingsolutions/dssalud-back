@@ -28,11 +28,11 @@ class UserStoreRequest extends FormRequest
         $rules = [
             'name' => 'required',
             'surname' => 'required',
-            'email' => 'email|required|unique:users,email,'.$this->id,
+            'email' => 'email|required|unique:users,email,' . $this->id,
             'company_id' => 'required',
         ];
 
-        if (! $this->id) {
+        if (!$this->id) {
             $rules['password'] = 'required';
         }
 
@@ -53,7 +53,21 @@ class UserStoreRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([]);
+        $merge = [];
+
+        if ($this->has('thirds_id')) {
+            if ($this->thirds_id) {
+                $thirds_id = [];
+                foreach ($this->thirds_id as $third) {
+                    $thirds_id[] = getValueSelectInfinite($third);
+                }
+
+                $merge['thirds_id'] = $thirds_id;
+            }
+
+        }
+
+        $this->merge($merge);
     }
 
     public function failedValidation(Validator $validator)
