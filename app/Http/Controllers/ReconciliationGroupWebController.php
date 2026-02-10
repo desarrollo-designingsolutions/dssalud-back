@@ -30,9 +30,7 @@ class ReconciliationGroupWebController extends Controller
 
         $invoices = $reconciliationGroup->invoices;
 
-        $sum_value_glosa = $invoices->sum(function ($invoice) {
-            return $invoice->sumValorGlosa();
-        });
+        $sum_value_glosa = collect(DB::select('select valor_glosa from conciliacion_2026 where nit = ?', [$third->nit]))->sum('valor_glosa');
 
         $reconciliationNotification_status = $reconciliationGroup->reconciliationNotification ? 'true' : 'false';
 
@@ -59,10 +57,10 @@ class ReconciliationGroupWebController extends Controller
             // NEW: Normalización defensiva por si llegan como string (coma o ;)
             $payload = $request->all();
 
-            if (isset($payload['emails']) && is_string($payload['emails'])) { 
+            if (isset($payload['emails']) && is_string($payload['emails'])) {
                 $payload['emails'] = preg_split('/[;,]/', $payload['emails']);
             }
-            if (isset($payload['phones']) && is_string($payload['phones'])) { 
+            if (isset($payload['phones']) && is_string($payload['phones'])) {
                 $payload['phones'] = preg_split('/[;,]/', $payload['phones']);
             }
 
